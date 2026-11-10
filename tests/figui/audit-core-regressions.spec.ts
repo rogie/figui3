@@ -978,6 +978,44 @@ test.describe("fig.js audit core regressions", () => {
     });
   });
 
+  test("tooltip wraps long unbroken text without truncating it", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `<button id="anchor">Anchor</button>`;
+      const anchor = root.querySelector("#anchor") as HTMLElement;
+      const Tooltip = customElements.get("fig-tooltip") as any;
+      Tooltip.show(anchor, "a".repeat(200), { delay: 0 });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise(requestAnimationFrame);
+
+      const content = document.querySelector(
+        'dialog[variant="tooltip"][data-tooltip-managed] > span',
+      ) as HTMLElement;
+      const style = getComputedStyle(content);
+      const result = {
+        whiteSpace: style.whiteSpace,
+        overflowWrap: style.overflowWrap,
+        lineClamp: style.webkitLineClamp,
+        maxHeight: style.maxHeight,
+        fitsWidth: content.scrollWidth <= content.clientWidth,
+        fitsHeight: content.scrollHeight <= content.clientHeight,
+      };
+      Tooltip.hide(anchor);
+      return result;
+    });
+
+    expect(state).toEqual({
+      whiteSpace: "normal",
+      overflowWrap: "anywhere",
+      lineClamp: "none",
+      maxHeight: "none",
+      fitsWidth: true,
+      fitsHeight: true,
+    });
+  });
+
   test("fig-easing-curve cleans up canceled and disconnected drags", async ({
     page,
   }) => {

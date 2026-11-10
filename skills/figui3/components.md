@@ -652,7 +652,7 @@ toastRef.current?.showToast();
 />
 ```
 
-- Attrs: `type`, `src`, read-only `loaded` (image mode), `caption`, `aspect-ratio`, `fit`, `upload`, `multiple`, `loading-indicator`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `poster`
+- Attrs: `type`, `src`, read-only `loaded` (image mode), read-only `animated` (decoded GIF), `caption`, `aspect-ratio`, `fit`, `upload`, `multiple`, `loading-indicator`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `poster`
 - Use `upload="icon"` for an Add icon while empty and only Remove when populated; `label` supplies the Add tooltip and accessible name.
 - With `upload multiple`, the generated file input accepts multiple files and displays the first selection.
 - Events: `loaded` (`detail.src`, first `detail.file`, and all `detail.files`), `input` / `change`
@@ -664,6 +664,7 @@ toastRef.current?.showToast();
 ```
 
 - Attrs: same media surface attrs. The read-only `loaded` attribute supports CSS loaded-state selectors.
+- Animated GIFs use video-like `controls`, `autoplay`, `loop`, duration, seeking, and playback methods when WebCodecs `ImageDecoder` is available.
 - Events: `load`, `error`, and `loaded` (same upload detail as `fig-media`)
 
 ### `fig-video`
@@ -686,7 +687,7 @@ toastRef.current?.showToast();
 
 - Direct children: `fig-media`, `fig-image`, `fig-video`
 - Attrs: `index`, `playing`, `autoplay` (defaults true), `duration` (seconds; default `5`), `loop`, `navigation="buttons|dots"`, `progress`
-- Child `carousel-duration` overrides the host duration or intrinsic video duration.
+- Child `carousel-duration` overrides the host duration or intrinsic video/animated GIF duration.
 - Generated bottom controls: previous, next, then `fig-button-play`.
 - Dot navigation replaces the controls with centered bottom-overlay page indicators; the active dot stretches and uses a native progress element unless `progress="false"`.
 - Methods: `previous()`, `next()`, `goTo(index)`, `first()`, `last()`, `restart()`, `play()`, `pause()`, `toggle()`

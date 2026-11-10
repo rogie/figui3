@@ -278,11 +278,26 @@ export interface FigCarouselElement extends FigHTMLElement {
 export interface FigMediaElement extends FigHTMLElement {
   src: string;
   currentTime: number;
-  duration: number;
+  readonly duration: number;
+  readonly paused: boolean;
+  readonly animated: boolean;
   muted: boolean;
   loop: boolean;
+  readonly mediaEl: HTMLImageElement | HTMLVideoElement | null;
+  readonly playbackEl:
+    | (EventTarget & {
+        currentTime: number;
+        readonly duration: number;
+        readonly paused: boolean;
+        readonly ended: boolean;
+        loop: boolean;
+        play(): Promise<void> | void;
+        pause(): void;
+      })
+    | null;
   play(): Promise<void> | void;
   pause(): void;
+  toggle(): void;
 }
 
 export interface FigDialogElement extends HTMLDialogElement {

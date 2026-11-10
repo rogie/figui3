@@ -90,8 +90,8 @@ export const componentContracts: ComponentContract[] = [
     tag: "fig-truncate",
     title: "Truncate",
     group: "display",
-    markup: `<fig-truncate>This is a long string of text</fig-truncate>`,
-    attributes: [{ name: "tail", attribute: "tail", value: "true" }],
+    markup: `<fig-truncate text="This is a long string of text"></fig-truncate>`,
+    attributes: [{ name: "text", attribute: "text", value: "Updated text" }],
   },
   {
     tag: "fig-dialog",

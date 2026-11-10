@@ -630,6 +630,16 @@ export default function AttributesView({
             boolMode: "presence",
           };
         }
+        if (
+          target.controlTag === "fig-truncate" &&
+          target.controlAttributes.overflow === "fade" &&
+          mergedControlRules.position?.type === "enum"
+        ) {
+          mergedControlRules.position = {
+            ...mergedControlRules.position,
+            options: ["right", "left"],
+          };
+        }
 
         const fieldDirection = (
           target.fieldAttributes.direction ?? "horizontal"
@@ -1665,6 +1675,27 @@ export default function AttributesView({
                   const match = options.find(
                     (o) => toSentenceCaseLabel(o) === nextLabel,
                   );
+                  if (
+                    target.controlTag === "fig-truncate" &&
+                    name === "overflow" &&
+                    match === "fade" &&
+                    target.controlAttributes.position === "middle"
+                  ) {
+                    let updated = applyAttributeMutation(markup, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "overflow",
+                      value: "fade",
+                    });
+                    updated = applyAttributeMutation(updated, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "position",
+                      value: "right",
+                    });
+                    onMarkupChange(updated);
+                    return;
+                  }
                   applyChange(
                     target.fieldIndex,
                     scope,

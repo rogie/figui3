@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.4]
+
+### Added
+
+- Added WebCodecs-powered animated GIF playback to `fig-image` and `fig-media`, including controls, seeking, duration, autoplay, looping, carousel timing, and playground examples.
+- Added a preferred `text` attribute to `fig-truncate` while retaining child-text support.
+
+### Changed
+
+- Moved the truncate overflow control first and limited fade positioning to left or right in the playground.
+
+### Fixed
+
+- Allowed tooltip content and long unbroken strings to wrap without line-clamp truncation.
+
 ## [11.11.3]
 
 ### Added

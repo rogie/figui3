@@ -32,7 +32,7 @@ class FigCarousel extends HTMLElement {
   #previousButton = null;
   #nextButton = null;
   #playButton = null;
-  #activeVideo = null;
+  #activePlayback = null;
   #mutationObserver = null;
   #initialized = false;
   #syncing = false;
@@ -55,9 +55,9 @@ class FigCarousel extends HTMLElement {
     if (event.target !== this.#playButton) return;
     this.#advanceFromPlayback();
   };
-  #boundVideoTimeUpdate = () => this.#syncVideoProgress();
-  #boundVideoDurationChange = () => this.#syncVideoProgress();
-  #boundVideoEnded = () => {
+  #boundPlaybackTimeUpdate = () => this.#syncPlaybackProgress();
+  #boundPlaybackDurationChange = () => this.#syncPlaybackProgress();
+  #boundPlaybackEnded = () => {
     if (this.#activeItemDuration() !== null) return;
     this.#advanceFromPlayback();
   };
@@ -93,7 +93,7 @@ class FigCarousel extends HTMLElement {
     this.#syncPlayback();
     queueMicrotask(() => {
       if (!this.isConnected) return;
-      this.#pauseInactiveVideos();
+      this.#pauseInactivePlayback();
       this.#syncPlayback({ reset: true });
     });
   }
@@ -101,7 +101,7 @@ class FigCarousel extends HTMLElement {
   disconnectedCallback() {
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = null;
-    this.#stopActiveVideo();
+    this.#stopActivePlayback();
     this.#playButton?.pause();
     this.#stopProgressUpdates();
     this.#playbackToken += 1;
@@ -389,7 +389,7 @@ class FigCarousel extends HTMLElement {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["carousel-duration", "type", "src"],
+      attributeFilter: ["animated", "carousel-duration", "type", "src"],
     });
   }
 
@@ -425,7 +425,7 @@ class FigCarousel extends HTMLElement {
       return;
     }
 
-    this.#stopActiveVideo({ reset: true });
+    this.#stopActivePlayback({ reset: true });
     this.#playbackToken += 1;
     this.#syncing = true;
     this.#activeIndex = next;
@@ -451,7 +451,7 @@ class FigCarousel extends HTMLElement {
         slide.setAttribute("data-fig-carousel-label", label);
       }
     });
-    this.#pauseInactiveVideos();
+    this.#pauseInactivePlayback();
     this.#syncing = false;
     this.#syncControls();
     this.#syncPlayback({ reset: true });
@@ -481,26 +481,16 @@ class FigCarousel extends HTMLElement {
     return this.#slides[this.index] ?? null;
   }
 
-  #activeVideoElement() {
+  #activePlaybackElement() {
     const slide = this.#activeSlide();
     if (!slide) return null;
-    const isVideo =
-      slide.tagName === "FIG-VIDEO" ||
-      (slide.tagName === "FIG-MEDIA" && slide.mediaKind === "video");
-    if (!isVideo) return null;
-    return slide.mediaEl?.tagName === "VIDEO" ? slide.mediaEl : null;
+    return slide.playbackEl ?? null;
   }
 
-  #pauseInactiveVideos() {
+  #pauseInactivePlayback() {
     this.#slides.forEach((slide, index) => {
       if (index === this.#activeIndex) return;
-      if (
-        slide.tagName !== "FIG-VIDEO" &&
-        !(slide.tagName === "FIG-MEDIA" && slide.mediaKind === "video")
-      ) {
-        return;
-      }
-      slide.mediaEl?.pause?.();
+      slide.playbackEl?.pause?.();
     });
   }
 
@@ -608,81 +598,101 @@ class FigCarousel extends HTMLElement {
     }
 
     if (reset) {
-      this.#stopActiveVideo({ reset: true });
+      this.#stopActivePlayback({ reset: true });
       this.#playButton.reset();
       this.#playButton.setAttribute("progress", "0");
 
       const overrideDuration = this.#activeItemDuration();
-      const video = this.#activeVideoElement();
-      if (video && overrideDuration === null) {
-        this.#activeVideo = video;
-        this.#wireActiveVideo(video);
-        this.#syncVideoProgress();
+      const playback = this.#activePlaybackElement();
+      if (playback && overrideDuration === null) {
+        this.#activePlayback = playback;
+        this.#wireActivePlayback(playback);
+        this.#syncPlaybackProgress();
       } else {
         this.#playButton.removeAttribute("progress");
         this.#playButton.duration = overrideDuration ?? this.duration;
-        if (video) {
-          this.#activeVideo = video;
-          this.#wireActiveVideo(video);
+        if (playback) {
+          this.#activePlayback = playback;
+          this.#wireActivePlayback(playback);
         }
       }
     }
 
     this.#playButton.playing = this.playing;
     this.#syncControls();
-    if (this.playing && this.#activeVideo) {
-      this.#playActiveVideo(this.#activeVideo);
+    if (this.playing && this.#activePlayback) {
+      this.#playActivePlayback(this.#activePlayback);
     } else if (!this.playing) {
-      this.#activeVideo?.pause?.();
+      this.#activePlayback?.pause?.();
     }
   }
 
-  #wireActiveVideo(video) {
-    video.addEventListener("timeupdate", this.#boundVideoTimeUpdate);
-    video.addEventListener("loadedmetadata", this.#boundVideoDurationChange);
-    video.addEventListener("durationchange", this.#boundVideoDurationChange);
-    video.addEventListener("ended", this.#boundVideoEnded);
+  #wireActivePlayback(playback) {
+    playback.addEventListener("timeupdate", this.#boundPlaybackTimeUpdate);
+    playback.addEventListener(
+      "loadedmetadata",
+      this.#boundPlaybackDurationChange,
+    );
+    playback.addEventListener(
+      "durationchange",
+      this.#boundPlaybackDurationChange,
+    );
+    playback.addEventListener("ended", this.#boundPlaybackEnded);
   }
 
-  #stopActiveVideo({ reset = false } = {}) {
-    const video = this.#activeVideo;
-    if (!video) return;
-    video.removeEventListener("timeupdate", this.#boundVideoTimeUpdate);
-    video.removeEventListener("loadedmetadata", this.#boundVideoDurationChange);
-    video.removeEventListener("durationchange", this.#boundVideoDurationChange);
-    video.removeEventListener("ended", this.#boundVideoEnded);
-    video.pause?.();
+  #stopActivePlayback({ reset = false } = {}) {
+    const playback = this.#activePlayback;
+    if (!playback) return;
+    playback.removeEventListener("timeupdate", this.#boundPlaybackTimeUpdate);
+    playback.removeEventListener(
+      "loadedmetadata",
+      this.#boundPlaybackDurationChange,
+    );
+    playback.removeEventListener(
+      "durationchange",
+      this.#boundPlaybackDurationChange,
+    );
+    playback.removeEventListener("ended", this.#boundPlaybackEnded);
+    playback.pause?.();
     if (reset) {
       try {
-        video.currentTime = 0;
+        playback.currentTime = 0;
       } catch {}
     }
-    this.#activeVideo = null;
+    this.#activePlayback = null;
   }
 
-  #playActiveVideo(video) {
-    if (video.ended) video.currentTime = 0;
+  #playActivePlayback(playback) {
+    if (playback.ended) playback.currentTime = 0;
     const token = ++this.#playbackToken;
-    const result = video.play?.();
+    const result = playback.play?.();
     if (!result || typeof result.catch !== "function") return;
     result.catch(() => {
-      if (token !== this.#playbackToken || video !== this.#activeVideo) return;
+      if (
+        token !== this.#playbackToken ||
+        playback !== this.#activePlayback
+      ) {
+        return;
+      }
       this.pause();
     });
   }
 
-  #syncVideoProgress() {
-    const video = this.#activeVideo;
-    if (!video || !this.#playButton) return;
+  #syncPlaybackProgress() {
+    const playback = this.#activePlayback;
+    if (!playback || !this.#playButton) return;
     const overrideDuration = this.#activeItemDuration();
     if (overrideDuration !== null) return;
-    const duration = overrideDuration ?? video.duration;
+    const duration = overrideDuration ?? playback.duration;
     if (!Number.isFinite(duration) || duration <= 0) {
       this.#playButton.progress = 0;
       return;
     }
     this.#playButton.duration = duration;
-    this.#playButton.progress = Math.min(1, (video.currentTime || 0) / duration);
+    this.#playButton.progress = Math.min(
+      1,
+      (playback.currentTime || 0) / duration,
+    );
     this.#updateIndicatorProgress();
   }
 

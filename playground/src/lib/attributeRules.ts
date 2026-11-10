@@ -419,6 +419,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
     checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
+    controls: {
+      label: "Controls",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: false,
+    },
+    autoplay: { label: "Autoplay", type: "boolean", boolMode: "string" },
+    loop: { label: "Loop", type: "boolean", boolMode: "string" },
   },
   "fig-card": {
     src: { label: "Src", type: "string" },
@@ -1471,8 +1479,9 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-truncate": {
-    position: { label: "Position", type: "enum", options: ["right", "left", "middle"] },
     overflow: { label: "Overflow", type: "enum", options: ["ellipsis", "fade"] },
+    text: { label: "Text", type: "string" },
+    position: { label: "Position", type: "enum", options: ["right", "left", "middle"] },
     tail: { label: "Tail", type: "string" },
     tooltip: { label: "Tooltip", type: "boolean", boolMode: "presence" },
   },

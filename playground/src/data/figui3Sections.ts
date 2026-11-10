@@ -2145,6 +2145,13 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         })(),
       },
       {
+        id: "animated-gif",
+        name: "Animated GIF",
+        markup: `<div class="prop-panel">
+  <fig-image src="/images/gifs/favorite-facts.gif" alt="Calculating equations" controls aspect-ratio="4/3" fit="cover" full></fig-image>
+</div>`,
+      },
+      {
         id: "upload",
         name: "Upload",
         markup: `<div class="prop-panel">
@@ -2381,6 +2388,17 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     <fig-image src="https://picsum.photos/id/237/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
     <fig-image src="https://picsum.photos/id/1025/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
     <fig-image src="https://picsum.photos/id/1084/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+  </fig-carousel>
+</div>`,
+      },
+      {
+        id: "animated-gif",
+        name: "Animated GIF",
+        markup: `<div class="prop-panel">
+  <fig-carousel navigation="dots" loop>
+    <fig-image src="/images/gifs/kid-unamused.gif" alt="Unamused kid" aspect-ratio="4/3" fit="cover" full></fig-image>
+    <fig-image src="/images/gifs/favorite-facts.gif" alt="Calculating equations" aspect-ratio="4/3" fit="cover" full></fig-image>
+    <fig-image src="/images/gifs/its-been-84-years.gif" alt="It's been 84 years" aspect-ratio="4/3" fit="cover" full></fig-image>
   </fig-carousel>
 </div>`,
       },
@@ -2830,27 +2848,27 @@ ${versionHistoryGroup("August 11", [
     name: "Truncate",
     group: "Utilities",
     description:
-      "A text truncation utility supporting right, left, and middle ellipsis with optional tooltip on overflow.",
+      "A text truncation utility supporting ellipsis and fade overflow with an optional tooltip.",
     examples: [
       {
         id: "right",
         name: "Right",
         markup: `<div class="prop-panel">
-  <fig-truncate tooltip style="max-width: 50%;">This is a very long piece of text that should be truncated on the right side</fig-truncate>
+  <fig-truncate text="This is a very long piece of text that should be truncated on the right side" tooltip style="max-width: 50%;"></fig-truncate>
 </div>`,
       },
       {
         id: "left",
         name: "Left",
         markup: `<div class="prop-panel">
-  <fig-truncate position="left" tooltip style="max-width: 50%;">/Users/rogie/Documents/Projects/design-system/components</fig-truncate>
+  <fig-truncate text="/Users/rogie/Documents/Projects/design-system/components" position="left" tooltip style="max-width: 50%;"></fig-truncate>
 </div>`,
       },
       {
         id: "middle",
         name: "Middle",
         markup: `<div class="prop-panel">
-  <fig-truncate position="middle" tail=".mp3" tooltip style="max-width: 50%;">Stateside_feat_Bladee_and_Mechatok.mp3</fig-truncate>
+  <fig-truncate text="Stateside_feat_Bladee_and_Mechatok.mp3" position="middle" tail=".mp3" tooltip style="max-width: 50%;"></fig-truncate>
 </div>`,
       },
     ],

@@ -10,6 +10,7 @@ import {
   figDefineElement,
 } from "../runtime/index.js";
 import { AsyncOperationOwner } from "../../internal/async-operation-owner.js";
+import { AnimatedImagePlayback } from "../runtime/animated-image-playback.js";
 
 /* Media */
 const FIG_IMAGE_FORWARDED_EVENTS = ["load", "error"];
@@ -47,6 +48,7 @@ const FIG_MEDIA_FORWARDED_EVENTS = [
  * @attr {string} type - "image" (default) or "video" (for fig-media)
  * @attr {string} alt - Alt text for the generated image (default "")
  * @attr {boolean} loaded - Read-only reflected state when an image has loaded successfully
+ * @attr {boolean} animated - Read-only reflected state for a decoded animated GIF
  * @attr {boolean|string} upload - Show upload overlay; use "icon" for Add/Remove icon buttons
  * @attr {boolean} loading-indicator - Set to `false` to disable the generated image loading spinner
  * @attr {string} label - Upload button label (default "Upload")
@@ -55,9 +57,9 @@ const FIG_MEDIA_FORWARDED_EVENTS = [
  * @attr {string} fit - CSS object-fit value
  * @attr {boolean} checkerboard - Show checkerboard behind transparent media
  * @attr {string} caption - Caption text rendered below the media preview
- * @attr {boolean} controls - Video controls visibility (default false)
- * @attr {boolean} autoplay - Video autoplay
- * @attr {boolean} loop - Video loop
+ * @attr {boolean} controls - Video or animated GIF controls visibility (default false)
+ * @attr {boolean} autoplay - Video or animated GIF autoplay
+ * @attr {boolean} loop - Video or animated GIF loop
  * @attr {boolean} muted - Video muted
  * @attr {string} poster - Video poster image URL
  * @attr {string} aria-label - Accessible label forwarded to generated video
@@ -103,10 +105,16 @@ class FigMedia extends HTMLElement {
   #controlsOnPlay = null;
   #controlsOnPause = null;
   #controlsOnSeek = null;
+  #animatedPlayback = null;
+  #animatedSource = null;
   #sourceOwner = new AsyncOperationOwner();
   #sourceOperation = null;
   #imageLoadOwner = new AsyncOperationOwner();
   #blobOwner = new AsyncOperationOwner();
+  #animatedImageOwner = new AsyncOperationOwner();
+  #boundForwardAnimatedPlaybackEvent = (event) => {
+    this.#emitPlaybackEvent(event.type);
+  };
 
   static get observedAttributes() {
     return [
@@ -228,6 +236,9 @@ class FigMedia extends HTMLElement {
     if (this.#blobOwner.disposed) {
       this.#blobOwner = new AsyncOperationOwner();
     }
+    if (this.#animatedImageOwner.disposed) {
+      this.#animatedImageOwner = new AsyncOperationOwner();
+    }
     this.#beginMediaSourceOperation();
     this.#src = this.getAttribute("src") || "";
 
@@ -267,6 +278,9 @@ class FigMedia extends HTMLElement {
     this.#sourceOperation = null;
     this.#imageLoadOwner.dispose();
     this.#blobOwner.dispose();
+    this.#animatedImageOwner.dispose();
+    this.#animatedPlayback = null;
+    this.#animatedSource = null;
     this.#finishImageLoading();
     this.#removeMediaElementListeners();
     this.#removeControls();
@@ -497,6 +511,18 @@ class FigMedia extends HTMLElement {
       ) {
         this.#mediaEl.alt = this.getAttribute("alt") || "";
       }
+      const canvas = this.#animatedPlayback?.canvas;
+      if (canvas) {
+        const alt = this.getAttribute("alt") || "";
+        canvas.toggleAttribute("aria-hidden", !alt);
+        if (alt) {
+          canvas.setAttribute("role", "img");
+          canvas.setAttribute("aria-label", alt);
+        } else {
+          canvas.removeAttribute("role");
+          canvas.removeAttribute("aria-label");
+        }
+      }
       return;
     }
     if (this.#mediaEl.tagName !== "VIDEO") return;
@@ -576,8 +602,18 @@ class FigMedia extends HTMLElement {
     if (this.#mediaEl.tagName === "IMG") {
       this.#syncMediaAccessibility();
       this.#syncImageLoadingState();
+      this.#syncAnimatedImagePlayback();
+      if (this.#animatedPlayback) {
+        this.#animatedPlayback.loop = this.#isEnabledAttr("loop", false);
+        if (this.#isEnabledAttr("autoplay", false)) {
+          this.#animatedPlayback.play();
+        }
+      }
+      this.#syncControlsVisibility();
+      this.#syncControlsDisabled();
       return;
     }
+    this.#clearAnimatedImagePlayback();
     const poster = this.getAttribute("poster");
     if (poster) {
       this.#mediaEl.setAttribute("poster", poster);
@@ -600,9 +636,105 @@ class FigMedia extends HTMLElement {
     return this.#mediaEl;
   }
 
-  #hasPlayableVideo() {
-    if (this.mediaKind !== "video") return false;
-    return Boolean(this.#currentMediaSrc());
+  get playbackEl() {
+    if (this.#animatedPlayback) return this.#animatedPlayback;
+    return this.#mediaEl?.tagName === "VIDEO" ? this.#mediaEl : null;
+  }
+
+  get animated() {
+    return Boolean(this.#animatedPlayback);
+  }
+
+  get currentTime() {
+    return this.playbackEl?.currentTime ?? 0;
+  }
+
+  set currentTime(value) {
+    const playback = this.playbackEl;
+    if (!playback) return;
+    playback.currentTime = value;
+  }
+
+  get duration() {
+    return this.playbackEl?.duration ?? 0;
+  }
+
+  get paused() {
+    return this.playbackEl?.paused ?? true;
+  }
+
+  #clearAnimatedImagePlayback() {
+    this.#animatedImageOwner.cancel();
+    this.#animatedPlayback = null;
+    this.#animatedSource = null;
+    this.removeAttribute("animated");
+    if (this.#mediaEl?.tagName === "IMG") this.#mediaEl.hidden = false;
+  }
+
+  #syncAnimatedImagePlayback() {
+    const src = this.#currentMediaSrc();
+    if (this.mediaKind !== "image" || !src) {
+      this.#clearAnimatedImagePlayback();
+      this.#syncControlsVisibility();
+      return;
+    }
+    if (this.#animatedSource === src) return;
+
+    this.#clearAnimatedImagePlayback();
+    this.#animatedSource = src;
+    const operation = this.#animatedImageOwner.begin();
+    const abortController = new AbortController();
+    operation.own(() => abortController.abort());
+
+    AnimatedImagePlayback.create(src, {
+      signal: abortController.signal,
+    })
+      .then((playback) => {
+        if (
+          !playback ||
+          !operation.isCurrent() ||
+          !this.isConnected ||
+          this.#currentMediaSrc() !== src
+        ) {
+          playback?.close();
+          return;
+        }
+        operation.own(() => playback.close());
+        this.#animatedPlayback = playback;
+        playback.loop = this.#isEnabledAttr("loop", false);
+        ["play", "pause", "ended", "timeupdate", "seeked"].forEach((type) => {
+          playback.addEventListener(
+            type,
+            this.#boundForwardAnimatedPlaybackEvent,
+          );
+        });
+        operation.own(() => {
+          ["play", "pause", "ended", "timeupdate", "seeked"].forEach((type) => {
+            playback.removeEventListener(
+              type,
+              this.#boundForwardAnimatedPlaybackEvent,
+            );
+          });
+        });
+        this.#mediaEl.hidden = true;
+        this.#previewEl.append(playback.canvas);
+        this.setAttribute("animated", "");
+        this.#syncMediaAccessibility();
+        this.#syncControlsVisibility();
+        this.#syncControlsDisabled();
+        this.#emitPlaybackEvent("loadedmetadata");
+        this.#emitPlaybackEvent("durationchange");
+        if (this.#isEnabledAttr("autoplay", false)) playback.play();
+      })
+      .catch(() => {
+        if (!operation.isCurrent()) return;
+        this.#animatedSource = src;
+        this.#syncControlsVisibility();
+      });
+  }
+
+  #hasPlayableMedia() {
+    return Boolean(this.playbackEl && this.#currentMediaSrc());
   }
 
   #syncControlsDisabled() {
@@ -610,9 +742,9 @@ class FigMedia extends HTMLElement {
       this.#controlsEl ||
       this.querySelector(":scope > fig-media-controls");
     if (!controls) return;
-    if (this.mediaKind !== "video") return;
+    if (!this.playbackEl && this.mediaKind !== "video") return;
 
-    if (this.#hasPlayableVideo()) {
+    if (this.#hasPlayableMedia()) {
       // Only clear disabled when we set it for the empty state.
       if (controls.hasAttribute("data-fig-empty-disabled")) {
         controls.removeAttribute("disabled");
@@ -629,7 +761,7 @@ class FigMedia extends HTMLElement {
   }
 
   #syncControlsVisibility() {
-    if (this.mediaKind !== "video") {
+    if (this.mediaKind !== "video" && !this.#animatedPlayback) {
       this.#removeControls();
       return;
     }
@@ -674,9 +806,10 @@ class FigMedia extends HTMLElement {
   }
 
   #wireControlsToMedia() {
-    if (!this.#controlsEl || !this.#mediaEl) return;
+    const playback = this.playbackEl;
+    if (!this.#controlsEl || !playback) return;
     if (
-      this.#controlsWiredFor === this.#mediaEl &&
+      this.#controlsWiredFor === playback &&
       this.#controlsWiredControls === this.#controlsEl
     ) {
       this.#syncControlsDisabled();
@@ -685,69 +818,70 @@ class FigMedia extends HTMLElement {
     this.#unwireControls();
 
     const controls = this.#controlsEl;
-    const video = this.#mediaEl;
-    this.#controlsWiredFor = video;
+    this.#controlsWiredFor = playback;
     this.#controlsWiredControls = controls;
 
     let pendingSeekTime = null;
-    const syncFromVideo = () => {
+    const syncFromPlayback = () => {
       this.#syncControlsDisabled();
-      if (!this.#hasPlayableVideo()) return;
-      controls.playing = !video.paused && !video.ended;
-      if (Number.isFinite(video.duration)) controls.duration = video.duration;
+      if (!this.#hasPlayableMedia()) return;
+      controls.playing = !playback.paused && !playback.ended;
+      if (Number.isFinite(playback.duration)) {
+        controls.duration = playback.duration;
+      }
       if (pendingSeekTime !== null) {
-        if (Math.abs(video.currentTime - pendingSeekTime) < 0.25) {
+        if (Math.abs(playback.currentTime - pendingSeekTime) < 0.25) {
           pendingSeekTime = null;
         } else {
           return;
         }
       }
-      controls.time = video.currentTime || 0;
+      controls.time = playback.currentTime || 0;
     };
     const onPlay = () => {
-      if (!this.#hasPlayableVideo()) return;
-      const p = video.play?.();
+      if (!this.#hasPlayableMedia()) return;
+      const p = playback.play?.();
       if (p && typeof p.catch === "function") p.catch(() => {});
     };
-    const onPause = () => video.pause?.();
+    const onPause = () => playback.pause?.();
     const onSeek = (e) => {
-      if (!this.#hasPlayableVideo()) return;
+      if (!this.#hasPlayableMedia()) return;
       const next = Number(e?.detail?.time);
       if (!Number.isFinite(next)) return;
       pendingSeekTime = next;
-      try { video.currentTime = next; } catch {}
+      try { playback.currentTime = next; } catch {}
     };
 
-    this.#controlsSync = syncFromVideo;
+    this.#controlsSync = syncFromPlayback;
     this.#controlsOnPlay = onPlay;
     this.#controlsOnPause = onPause;
     this.#controlsOnSeek = onSeek;
 
-    video.addEventListener("play", syncFromVideo);
-    video.addEventListener("pause", syncFromVideo);
-    video.addEventListener("ended", syncFromVideo);
-    video.addEventListener("timeupdate", syncFromVideo);
-    video.addEventListener("loadedmetadata", syncFromVideo);
-    video.addEventListener("durationchange", syncFromVideo);
-    video.addEventListener("seeked", syncFromVideo);
+    playback.addEventListener("play", syncFromPlayback);
+    playback.addEventListener("pause", syncFromPlayback);
+    playback.addEventListener("ended", syncFromPlayback);
+    playback.addEventListener("timeupdate", syncFromPlayback);
+    playback.addEventListener("loadedmetadata", syncFromPlayback);
+    playback.addEventListener("durationchange", syncFromPlayback);
+    playback.addEventListener("seeked", syncFromPlayback);
     controls.addEventListener("play", onPlay);
     controls.addEventListener("pause", onPause);
     controls.addEventListener("seek", onSeek);
 
-    syncFromVideo();
+    syncFromPlayback();
   }
 
   #unwireControls() {
-    const video = this.#controlsWiredFor;
+    const playback = this.#controlsWiredFor;
     const controls = this.#controlsWiredControls;
-    if (video && this.#controlsSync) {
-      video.removeEventListener("play", this.#controlsSync);
-      video.removeEventListener("pause", this.#controlsSync);
-      video.removeEventListener("ended", this.#controlsSync);
-      video.removeEventListener("timeupdate", this.#controlsSync);
-      video.removeEventListener("loadedmetadata", this.#controlsSync);
-      video.removeEventListener("durationchange", this.#controlsSync);
-      video.removeEventListener("seeked", this.#controlsSync);
+    if (playback && this.#controlsSync) {
+      playback.removeEventListener("play", this.#controlsSync);
+      playback.removeEventListener("pause", this.#controlsSync);
+      playback.removeEventListener("ended", this.#controlsSync);
+      playback.removeEventListener("timeupdate", this.#controlsSync);
+      playback.removeEventListener("loadedmetadata", this.#controlsSync);
+      playback.removeEventListener("durationchange", this.#controlsSync);
+      playback.removeEventListener("seeked", this.#controlsSync);
     }
     if (controls) {
       if (this.#controlsOnPlay) controls.removeEventListener("play", this.#controlsOnPlay);
@@ -771,20 +905,21 @@ class FigMedia extends HTMLElement {
   }
 
   toggle() {
-    if (!this.#mediaEl || this.mediaKind !== "video") return;
-    if (this.#mediaEl.paused || this.#mediaEl.ended) this.play();
+    const playback = this.playbackEl;
+    if (!playback) return;
+    if (playback.paused || playback.ended) this.play();
     else this.pause();
   }
 
   play() {
-    if (this.mediaKind !== "video" || !this.#mediaEl) return;
-    const p = this.#mediaEl.play();
+    const playback = this.playbackEl;
+    if (!playback) return;
+    const p = playback.play();
     if (p && typeof p.catch === "function") p.catch(() => {});
   }
 
   pause() {
-    if (this.mediaKind !== "video" || !this.#mediaEl) return;
-    this.#mediaEl.pause();
+    this.playbackEl?.pause();
   }
 
   #createFileInput() {
@@ -882,7 +1017,8 @@ class FigMedia extends HTMLElement {
   }
 
   #emitPlaybackEvent(type) {
-    if (!this.#mediaEl) return;
+    const playback = this.playbackEl;
+    if (!playback) return;
     this.dispatchEvent(
       new CustomEvent(type, {
         bubbles: true,
@@ -890,8 +1026,8 @@ class FigMedia extends HTMLElement {
         composed: true,
         detail: {
           src: this.#src || "",
-          currentTime: this.#mediaEl.currentTime,
-          duration: this.#mediaEl.duration,
+          currentTime: playback.currentTime,
+          duration: playback.duration,
         },
       }),
     );

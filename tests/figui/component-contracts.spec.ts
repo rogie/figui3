@@ -15586,6 +15586,109 @@ test.describe("media accessibility", () => {
     await expect(page.locator("#authored-waveform")).toHaveAttribute("progress", "0");
   });
 
+  test("fig-image gives animated GIFs video-like playback and controls", async ({
+    page,
+  }) => {
+    const animatedGif =
+      "data:image/gif;base64,R0lGODlhAQABAIAAAP8AAAAA/yH/C05FVFNDQVBFMi4wAwEAAAAh+QQAUAAAACwAAAAAAQABAAACAkQBACH5BABQAAAALAAAAAABAAEAAAICTAEAOw==";
+    const staticGif =
+      "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+    await page.evaluate(
+      ({ animatedGif }) => {
+        const root = document.querySelector("#fixture-root")!;
+        root.innerHTML = `
+          <fig-image id="animated-gif" src="${animatedGif}" alt="Animated demo" controls loop></fig-image>
+          <fig-image id="autoplay-gif" src="${animatedGif}" autoplay></fig-image>
+        `;
+      },
+      { animatedGif },
+    );
+
+    const animated = page.locator("#animated-gif");
+    const autoplay = page.locator("#autoplay-gif");
+    await expect(animated).toHaveAttribute("animated", "");
+    await expect(autoplay).toHaveAttribute("animated", "");
+    await expect(animated.locator("canvas[data-animated-image]")).toHaveCount(1);
+    await expect(animated.locator(":scope > fig-media-controls")).toHaveCount(1);
+
+    const initial = await animated.evaluate((host: any) => ({
+      animated: host.animated,
+      paused: host.playbackEl.paused,
+      duration: host.playbackEl.duration,
+      loop: host.playbackEl.loop,
+      imageHidden: host.mediaEl.hidden,
+      canvasLabel: host
+        .querySelector("canvas[data-animated-image]")
+        ?.getAttribute("aria-label"),
+    }));
+    expect(initial).toEqual({
+      animated: true,
+      paused: true,
+      duration: 1.6,
+      loop: true,
+      imageHidden: true,
+      canvasLabel: "Animated demo",
+    });
+    await expect
+      .poll(() => autoplay.evaluate((host: any) => host.playbackEl.paused))
+      .toBe(false);
+
+    await animated.evaluate((host: any) => host.play());
+    await expect
+      .poll(() => animated.evaluate((host: any) => host.playbackEl.currentTime))
+      .toBeGreaterThan(0);
+    await animated.evaluate((host: any) => {
+      host.pause();
+      host
+        .querySelector(":scope > fig-media-controls")
+        .dispatchEvent(
+          new CustomEvent("seek", { detail: { time: 1.2 }, bubbles: true }),
+        );
+    });
+    await expect
+      .poll(() => animated.evaluate((host: any) => host.playbackEl.currentTime))
+      .toBeCloseTo(1.2, 1);
+
+    await animated.evaluate(
+      (host, staticGif) => host.setAttribute("src", staticGif),
+      staticGif,
+    );
+    await expect(animated).not.toHaveAttribute("animated");
+    await expect(animated.locator("canvas[data-animated-image]")).toHaveCount(0);
+    await expect(animated.locator(":scope > fig-media-controls")).toHaveCount(0);
+    await expect
+      .poll(() => animated.evaluate((host: any) => host.mediaEl.hidden))
+      .toBe(false);
+
+    const fallback = await page.evaluate(async ({ animatedGif }) => {
+      const Decoder = (globalThis as any).ImageDecoder;
+      try {
+        (globalThis as any).ImageDecoder = undefined;
+        const image = document.createElement("fig-image") as any;
+        image.setAttribute("src", animatedGif);
+        image.setAttribute("controls", "");
+        document.querySelector("#fixture-root")!.append(image);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        return {
+          animated: image.animated,
+          imageHidden: image.mediaEl.hidden,
+          canvas: Boolean(image.querySelector("canvas[data-animated-image]")),
+          controls: Boolean(
+            image.querySelector(":scope > fig-media-controls"),
+          ),
+        };
+      } finally {
+        (globalThis as any).ImageDecoder = Decoder;
+      }
+    }, { animatedGif });
+    expect(fallback).toEqual({
+      animated: false,
+      imageHidden: false,
+      canvas: false,
+      controls: false,
+    });
+  });
+
   test("fig-image forwards host alt to generated and slotted images", async ({ page }) => {
     await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");

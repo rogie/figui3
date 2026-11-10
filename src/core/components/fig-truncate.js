@@ -12,17 +12,26 @@ import { FigTooltip } from "./fig-tooltip.js";
 
 /* Text Truncation */
 class FigTruncate extends HTMLElement {
-  static observedAttributes = ["overflow", "position", "tail", "tooltip"];
+  static observedAttributes = [
+    "overflow",
+    "position",
+    "tail",
+    "text",
+    "tooltip",
+  ];
 
+  #childText = null;
   #originalText = null;
   #boundEnter = null;
   #boundLeave = null;
   #observer = null;
 
   connectedCallback() {
-    this.#originalText = this.textContent;
+    this.#childText = this.textContent;
+    this.#originalText = this.getAttribute("text") ?? this.#childText;
     this.#observer ??= new MutationObserver(() => {
-      this.#originalText = this.textContent;
+      this.#childText = this.textContent;
+      this.#originalText = this.getAttribute("text") ?? this.#childText;
       this.#render();
     });
     this.#observe();
@@ -45,6 +54,9 @@ class FigTruncate extends HTMLElement {
       this.#teardownTooltip();
       if (this.isConnected) this.#setupTooltip();
       return;
+    }
+    if (name === "text") {
+      this.#originalText = newValue ?? this.#childText ?? "";
     }
     this.#render();
   }

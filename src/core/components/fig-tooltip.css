@@ -21,14 +21,9 @@ dialog[is="fig-popup"][variant="tooltip"] {
   pointer-events: none;
 
   & > span {
+    white-space: normal;
+    overflow-wrap: anywhere;
     text-wrap: balance;
-    max-height: 2.5rem;
-    overflow-y: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    line-clamp: 2;
-    text-overflow: ellipsis;
     width: auto;
     padding: var(--spacer-1) var(--spacer-2);
   }

@@ -727,6 +727,53 @@ test("infers video duration, reports progress, and advances on ended", async ({
   });
 });
 
+test("uses animated GIF duration, progress, and completion", async ({ page }) => {
+  const animatedGif =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAP8AAAAA/yH/C05FVFNDQVBFMi4wAwEAAAAh+QQAUAAAACwAAAAAAQABAAACAkQBACH5BABQAAAALAAAAAABAAEAAAICTAEAOw==";
+  await page.evaluate(
+    async ({ animatedGif }) => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <fig-carousel id="gif-carousel" navigation="dots" autoplay="false">
+          <fig-image src="${animatedGif}"></fig-image>
+          <fig-image></fig-image>
+        </fig-carousel>
+      `;
+      await customElements.whenDefined("fig-carousel");
+    },
+    { animatedGif },
+  );
+
+  const carousel = page.locator("#gif-carousel");
+  const gif = carousel.locator("fig-image").first();
+  await expect(gif).toHaveAttribute("animated", "");
+
+  await carousel.evaluate((element: any) => {
+    element.play();
+    element.currentItem.playbackEl.currentTime = 0.4;
+  });
+  const progress = await carousel.evaluate((element) => {
+    const playButton = element.querySelector("fig-button-play")!;
+    return {
+      duration: playButton.getAttribute("duration"),
+      progress: playButton.getAttribute("progress"),
+      dot: element.querySelector<HTMLProgressElement>(
+        ".fig-carousel-indicator progress",
+      )?.value,
+    };
+  });
+  expect(progress.duration).toBe("1.6");
+  expect(Number(progress.progress)).toBeCloseTo(0.25, 2);
+  expect(progress.dot).toBeCloseTo(0.25, 2);
+
+  await carousel.evaluate((element: any) => {
+    element.currentItem.playbackEl.currentTime = 1.55;
+  });
+  await expect
+    .poll(() => carousel.evaluate((element: any) => element.index))
+    .toBe(1);
+});
+
 test("restart seeks active video to zero without changing playback state", async ({
   page,
 }) => {
