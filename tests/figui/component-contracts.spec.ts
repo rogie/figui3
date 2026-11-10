@@ -142,15 +142,14 @@ test.describe("fig.js component contracts", () => {
           </fig-button>
         </div>
       `;
-      const property = root.querySelector("#property-button") as HTMLElement;
+      const property = root.querySelector("#property-button") as HTMLElement & {
+        disabled?: boolean;
+      };
       const secondary = root.querySelector("#secondary-button") as HTMLElement;
-      const native = property.shadowRoot?.querySelector(
-        "button",
-      ) as HTMLButtonElement;
       let clicks = 0;
       property.addEventListener("click", () => clicks++);
-      native.click();
-      native.focus();
+      property.click();
+      property.focus();
 
       const icon = property.querySelector(':scope > fig-icon[slot="prepend"]');
       const styles = getComputedStyle(property);
@@ -165,9 +164,7 @@ test.describe("fig.js component contracts", () => {
       const beforeDisabled = {
         registered: Boolean(customElements.get("fig-property-button")),
         clicks,
-        focused:
-          property.matches(":focus") ||
-          property.shadowRoot?.activeElement === native,
+        focused: property.matches(":focus"),
         variant: property.getAttribute("variant"),
         full: property.hasAttribute("full"),
         align: styles.getPropertyValue("--fig-button-content-alignment").trim(),
@@ -181,9 +178,9 @@ test.describe("fig.js component contracts", () => {
         paddingRight: styles.paddingRight,
         flexGrow: styles.flexGrow,
         flexBasis: styles.flexBasis,
-        hasPopup: native.getAttribute("aria-haspopup"),
-        expanded: native.getAttribute("aria-expanded"),
-        controls: native.getAttribute("aria-controls"),
+        hasPopup: property.getAttribute("aria-haspopup"),
+        expanded: property.getAttribute("aria-expanded"),
+        controls: property.getAttribute("aria-controls"),
         surface: {
           backgroundColor: styles.backgroundColor,
           color: styles.color,
@@ -207,7 +204,7 @@ test.describe("fig.js component contracts", () => {
       ) as HTMLElement;
       const customStyles = getComputedStyle(custom);
       property.setAttribute("disabled", "");
-      native.click();
+      property.click();
       return {
         ...beforeDisabled,
         selectedBoxShadow,
@@ -223,7 +220,7 @@ test.describe("fig.js component contracts", () => {
           paddingLeft: customStyles.paddingLeft,
         },
         clicksAfterDisabled: clicks,
-        disabled: native.disabled,
+        disabled: property.disabled,
       };
     });
 
@@ -2447,7 +2444,7 @@ test.describe("AI lab styling components", () => {
     expect(
       await page.locator("#disabled .fig-attachment-remove").evaluate(
         (button) =>
-          (button as HTMLElement & { button?: HTMLButtonElement }).button?.disabled,
+          (button as HTMLElement & { disabled?: boolean }).disabled,
       ),
     ).toBe(true);
   });
@@ -5663,41 +5660,38 @@ test.describe("button accessibility", () => {
     await page.waitForTimeout(50);
 
     const getState = (selector: string) =>
-      page.locator(selector).evaluate((host) => {
-        const button = host.shadowRoot?.querySelector("button");
-        return {
-          hostPressed: host.getAttribute("aria-pressed"),
-          buttonPressed: button?.getAttribute("aria-pressed"),
-          selected: host.getAttribute("selected"),
-        };
-      });
+      page.locator(selector).evaluate((host) => ({
+        hostPressed: host.getAttribute("aria-pressed"),
+        disabled: host.getAttribute("aria-disabled"),
+        selected: host.getAttribute("selected"),
+      }));
 
     await expect.poll(() => getState("#toggle")).toEqual({
       hostPressed: "false",
-      buttonPressed: "false",
+      disabled: null,
       selected: null,
     });
 
-    await page.locator("#toggle").evaluate((host) => {
-      host.shadowRoot?.querySelector("button")?.click();
+    await page.locator("#toggle").evaluate((host: HTMLElement) => {
+      host.click();
     });
     await expect.poll(() => getState("#toggle")).toEqual({
       hostPressed: "true",
-      buttonPressed: "true",
+      disabled: null,
       selected: "",
     });
 
     await expect.poll(() => getState("#disabled-toggle")).toEqual({
       hostPressed: "false",
-      buttonPressed: "false",
+      disabled: "true",
       selected: null,
     });
-    await page.locator("#disabled-toggle").evaluate((host) => {
-      host.shadowRoot?.querySelector("button")?.click();
+    await page.locator("#disabled-toggle").evaluate((host: HTMLElement) => {
+      host.click();
     });
     await expect.poll(() => getState("#disabled-toggle")).toEqual({
       hostPressed: "false",
-      buttonPressed: "false",
+      disabled: "true",
       selected: null,
     });
   });
@@ -5715,9 +5709,7 @@ test.describe("button accessibility", () => {
 
     const alignment = (selector: string) =>
       page.locator(selector).evaluate((host) => {
-        const control = host.shadowRoot?.querySelector("button");
-        if (!control) throw new Error(`Missing shadow button for ${host.id}`);
-        const style = getComputedStyle(control);
+        const style = getComputedStyle(host);
         return {
           justifyContent: style.justifyContent,
           textAlign: style.textAlign,
@@ -7852,7 +7844,7 @@ test.describe("split input accessibility", () => {
         generatedChevrons: button?.querySelectorAll(
           'fig-icon[data-generated="select-chevron"]',
         ).length,
-        nativeButtonInSelect: button?.shadowRoot?.querySelector("button") !== null,
+        nativeButtonInSelect: Boolean(button?.querySelector(":scope > button")),
         dropdownLabel: dropdown?.getAttribute("aria-label"),
       };
     });
@@ -10780,9 +10772,7 @@ test.describe("fill picker accessibility", () => {
     const state = await page.evaluate(() => {
       const dialog = document.querySelector("dialog.fig-fill-picker-dialog");
       const closeButton = dialog?.querySelector(".fig-fill-picker-close");
-      const nativeClose = closeButton?.shadowRoot?.querySelector("button");
       const eyedropper = dialog?.querySelector(".fig-fill-picker-eyedropper");
-      const nativeEyedropper = eyedropper?.shadowRoot?.querySelector("button");
       const fillType = dialog?.querySelector(".fig-fill-picker-type");
       const fillTypeTrigger = fillType?.shadowRoot?.querySelector("fig-button");
       const inputMode = dialog?.querySelector(".fig-fill-picker-input-mode");
@@ -10792,8 +10782,8 @@ test.describe("fill picker accessibility", () => {
         'fig-slider[type="opacity"] input[type="range"]',
       );
       return {
-        closeLabel: nativeClose?.getAttribute("aria-label"),
-        eyedropperLabel: nativeEyedropper?.getAttribute("aria-label"),
+        closeLabel: closeButton?.getAttribute("aria-label"),
+        eyedropperLabel: eyedropper?.getAttribute("aria-label"),
         fillTypeLabel: fillTypeTrigger?.getAttribute("aria-label"),
         eyedropperWidth: eyedropper?.getBoundingClientRect().width,
         inputModeWidth: inputMode?.getBoundingClientRect().width,
@@ -16174,12 +16164,10 @@ test.describe("media accessibility", () => {
 
     const labels = await page.evaluate(() => {
       const iconButton = document.querySelector("#icon-button");
-      const nativeIconButton = iconButton?.shadowRoot?.querySelector("button");
       const clearButton = document.querySelector("fig-input-file .fig-input-file-clear");
-      const nativeClearButton = clearButton?.shadowRoot?.querySelector("button");
       return {
-        icon: nativeIconButton?.getAttribute("aria-label"),
-        clear: nativeClearButton?.getAttribute("aria-label"),
+        icon: iconButton?.getAttribute("aria-label"),
+        clear: clearButton?.getAttribute("aria-label"),
       };
     });
 

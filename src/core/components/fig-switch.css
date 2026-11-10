@@ -59,7 +59,7 @@ input[type="checkbox"].switch {
       )
     );
     transition: var(--input-transition);
-    box-shadow: var(--handle-shadow);
+    box-shadow: var(--figma-handle-shadow);
   }
 
   &[indeterminate="true"]::after {

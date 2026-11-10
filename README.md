@@ -193,6 +193,7 @@ without echoing through those interaction callbacks.
 | Component | Tag | Description |
 |---|---|---|
 | [Button](#button) | `<fig-button>` | Buttons with variants, toggle, select, upload |
+| [Play Button](#play-button) | `<fig-button-play>` | Play/pause button with a timed progress ring |
 | [Dropdown](#dropdown) | `<fig-dropdown>` | Native select wrapper with Figma styling |
 | [Select](#select) | `<fig-select>` | Custom listbox select (requires `fig-editor.js`) |
 | [Split Input](#split-input) | `<fig-split-input>` | Text or number input with dropdown suggestions |
@@ -200,6 +201,7 @@ without echoing through those interaction callbacks.
 | [Radio](#radio) | `<fig-radio>` | Radio button |
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
+| [Carousel](#carousel) | `<fig-carousel>` | Timed image and video carousel with generated playback controls |
 | [Audio](#audio) | `<fig-audio>` | Waveform audio player with shared media controls |
 | [Audio Waveform](#audio-waveform) | `<fig-audio-waveform>` | Responsive waveform generated from an audio URL |
 | [Input Slider](#input-slider) | `<fig-input-slider>` | Experimental standalone slider primitives |
@@ -271,6 +273,7 @@ without echoing through those interaction callbacks.
 | `selected` | boolean | `false` | Selected state (toggle type) |
 | `disabled` | boolean | `false` | Disabled state |
 | `icon` | boolean | `false` | Icon-only styling |
+| `pill` | boolean | `false` | Fully rounded button shape |
 | `align` | string | `"center"` | Content alignment: `"start"`, `"center"`, or `"end"` |
 | `href` | string | — | URL for link buttons |
 | `target` | string | — | Link target (e.g. `"_blank"`) |
@@ -282,6 +285,7 @@ without echoing through those interaction callbacks.
 <fig-button variant="destructiveSecondary">Destructive secondary</fig-button>
 <fig-button variant="destructiveGhost">Destructive ghost</fig-button>
 <fig-button variant="destructiveLink">Destructive link</fig-button>
+<fig-button pill>Pill</fig-button>
 <fig-button full align="start">Start aligned</fig-button>
 <fig-button variant="property">
   <fig-icon name="settings" slot="prepend"></fig-icon>
@@ -296,6 +300,33 @@ without echoing through those interaction callbacks.
 `type="select"` and `type="upload"` are visual wrappers for native select/file controls. They avoid nested native buttons, show the shared focus outline on the wrapper, and open the native picker from keyboard activation where supported.
 
 `variant="property"` shares the secondary visual treatment and adds the full-width, start-aligned property-trigger layout. Author a leading icon with `slot="prepend"`. The consumer owns any corresponding popup or dialog and can use `selected`, `aria-haspopup`, `aria-expanded`, and `aria-controls` on the button.
+
+---
+
+#### Play Button
+
+`<fig-button-play>` embeds a secondary, pill-shaped icon `fig-button` and
+switches between the shared play and pause icons. Without `progress`, it runs
+an internal timer and preserves elapsed time across pause/resume. Authoring
+`progress` switches it to externally controlled mode.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `playing` | boolean | `false` | Current play/pause state |
+| `duration` | number | `5` | Internal timer duration in seconds |
+| `progress` | number | — | Controlled progress from `0` to `1` |
+| `variant` | string | `"secondary"` | Forwarded to the embedded `fig-button` |
+| `size` | string | — | Forwarded button size: `"compact"` or `"large"` |
+| `disabled` | boolean | `false` | Disables interaction and pauses the timer |
+
+```html
+<fig-button-play duration="8"></fig-button-play>
+<fig-button-play progress="0.4" playing></fig-button-play>
+```
+
+Methods: `play()`, `pause()`, `toggle()`, and `reset()`. User interaction emits
+bubbling `play` and `pause` events. The internal timer emits `complete` at the
+end.
 
 ---
 
@@ -1970,6 +2001,61 @@ Use the `caption` attribute for a plain-text caption, or a direct `<figcaption>`
 Native load lifecycle events are re-emitted from the `fig-media` host as bubbling, composed `CustomEvent`s. Image mode emits `load` and `error`. Video mode forwards `loadstart`, `progress`, `suspend`, `abort`, `error`, `emptied`, `stalled`, `loadedmetadata`, `loadeddata`, `canplay`, `canplaythrough`, `playing`, `waiting`, `seeking`, `seeked`, `durationchange`, `timeupdate`, `ratechange`, `resize`, and `volumechange`; existing `play`, `pause`, and `ended` events remain available. Event `detail` includes `src`, `media`, and `originalEvent`, plus video timing and readiness state.
 
 For generated images, a spinner appears when loading exceeds 150ms and is removed on `load` or `error`. The host reflects `aria-busy="true"` while pending. Authored media or preview content does not receive an automatic spinner.
+
+---
+
+#### Carousel
+
+`<fig-carousel>`
+
+Presents direct `fig-media`, `fig-image`, and `fig-video` children one at a
+time. It generates previous and next ghost pill buttons followed by a ghost
+`fig-button-play` at the bottom-right. Playback starts automatically by
+default.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `index` | number | `0` | Zero-based active item |
+| `playing` | boolean | `true` initially | Current playback state |
+| `autoplay` | boolean | `true` | Set to `"false"` to start paused |
+| `duration` | number | `5` | Default image/item duration in seconds |
+| `loop` | boolean | `false` | Wrap navigation and playback at the ends |
+| `navigation` | string | `"buttons"` | `"buttons"` or centered overlay `"dots"` |
+| `progress` | boolean | `true` | Set to `"false"` for a static active dot in dot navigation |
+
+Videos use their intrinsic duration and advance on `ended`. Set
+`carousel-duration` on any direct child to override that item with a fixed
+duration in seconds. Inactive videos are paused automatically.
+
+```html
+<fig-carousel duration="4" loop>
+  <fig-image src="cover.jpg" aspect-ratio="16/9" full></fig-image>
+  <fig-video src="demo.mp4" muted aspect-ratio="16/9" full></fig-video>
+  <fig-image
+    src="detail.jpg"
+    carousel-duration="8"
+    aspect-ratio="16/9"
+    full
+  ></fig-image>
+</fig-carousel>
+```
+
+Dot navigation replaces the button row. Its active dot stretches to a pill and
+uses a native `progress` element to show item progress. Dots and the active pill
+share the native progress element's `--progress-height`.
+
+```html
+<fig-carousel navigation="dots" duration="4" loop>
+  <fig-image src="cover.jpg" aspect-ratio="16/9" full></fig-image>
+  <fig-image src="detail.jpg" aspect-ratio="16/9" full></fig-image>
+</fig-carousel>
+```
+
+Methods: `previous()`, `next()`, `goTo(index)`, `first()`, `last()`,
+`restart()`, `play()`, `pause()`, and `toggle()`. Read-only navigation state is
+available through `items`, `currentItem`, `canGoPrevious`, and `canGoNext`.
+The bubbling `change` event includes `index`, `previousIndex`, and `item` in
+`event.detail`.
 
 ---
 

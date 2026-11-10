@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.0]
+
+### Added
+
+- Added `fig-carousel` with timed image and video playback, button or dot navigation, looping, progress indicators, and public navigation methods.
+- Added `fig-button-play` with internal or controlled progress, play/pause events, and timer controls.
+- Added pill-shaped buttons, UI3 heading typography tokens, and broader native HTML styling and playground examples.
+
+### Changed
+
+- Reworked `fig-button` as an accessible light-DOM control with native keyboard activation, improved disabled behavior, and stable select/upload wrappers.
+- Consolidated core variables, native controls, disclosures, dialogs, popovers, tables, progress, and meter styling into focused shared utilities.
+- Expanded playground attribute controls, component manifests, documentation, skills, and type declarations for the new components and native elements.
+- Switched carousel dot playback indicators from native meters to progress elements while preserving animated pagination transitions.
+
+### Fixed
+
+- Preserved icon-only playground buttons across button type changes and kept native control typography and layout consistent across component surfaces.
+
 ## [11.10.3]
 
 ### Changed
@@ -4682,7 +4701,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Elevation shadow variables (`--figma-elevation-*`, `--handle-shadow`) now use `light-dark()` inline for theme switching, removing the need for separate `.figma-dark` and `@media (prefers-color-scheme: dark)` override blocks.
+- Elevation shadow variables (`--figma-elevation-*`, `--figma-handle-shadow`) now use `light-dark()` inline for theme switching, removing the need for separate `.figma-dark` and `@media (prefers-color-scheme: dark)` override blocks.
 
 ### Fixed
 

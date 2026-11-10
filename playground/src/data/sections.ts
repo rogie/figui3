@@ -738,6 +738,16 @@ export const legacyPropsKitSections: Section[] = [
 </div>`,
       },
       {
+        id: "pill",
+        name: "Pill",
+        markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Action</label>
+    <fig-button pill>Continue</fig-button>
+  </fig-field>
+</div>`,
+      },
+      {
         id: "no-label",
         name: "No label",
         markup: `<div class="prop-panel">

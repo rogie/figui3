@@ -1,0 +1,47 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-button-play {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  > fig-button {
+    position: relative;
+    z-index: 1;
+  }
+
+  > .fig-button-play-ring {
+    position: absolute;
+    z-index: 2;
+    inset: -3px;
+    width: calc(100% + 6px);
+    height: calc(100% + 6px);
+    overflow: visible;
+    pointer-events: none;
+    transform: rotate(-90deg);
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  .fig-button-play-track {
+    stroke: var(--figma-color-bordertranslucent);
+  }
+
+  .fig-button-play-progress {
+    stroke: var(--figma-color-border-selected);
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    .fig-button-play-track,
+    .fig-button-play-progress {
+      stroke: var(--figma-color-border-disabled);
+    }
+  }
+}

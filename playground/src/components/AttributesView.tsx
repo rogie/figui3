@@ -2569,6 +2569,61 @@ export default function AttributesView({
                       const maxSizeAfterLayout =
                         target.controlTag === "fig-chooser" &&
                         entry.name === "layout";
+
+                      if (
+                        target.controlTag === "fig-carousel" &&
+                        entry.name === "progress"
+                      ) {
+                        const variableName =
+                          "--fig-carousel-indicator-duration";
+                        const styleValue =
+                          target.controlAttributes.style ?? "";
+                        const durationMatch = styleValue.match(
+                          /--fig-carousel-indicator-duration:\s*([\d.]+)ms/i,
+                        );
+                        const duration = durationMatch
+                          ? Number(durationMatch[1])
+                          : 300;
+                        const durationField = (
+                          <fig-field
+                            columns="2/5"
+                            key={`control-carousel-transition-duration-${target.fieldIndex}`}
+                          >
+                            <label>Transition duration</label>
+                            <fig-slider
+                              full
+                              text="true"
+                              value={String(duration)}
+                              min="0"
+                              max="1000"
+                              step="10"
+                              units="ms"
+                              onInput={(e: any) => {
+                                const nextDuration = Number(
+                                  e.currentTarget?.value ??
+                                    (e as CustomEvent).detail?.value,
+                                );
+                                if (!Number.isFinite(nextDuration)) return;
+                                const cleaned = styleValue
+                                  .replace(
+                                    /--fig-carousel-indicator-duration:\s*[^;]+;?/gi,
+                                    "",
+                                  )
+                                  .trim()
+                                  .replace(/;$/, "");
+                                applyChange(
+                                  target.fieldIndex,
+                                  "control",
+                                  "style",
+                                  `${cleaned ? `${cleaned}; ` : ""}${variableName}: ${nextDuration}ms`,
+                                );
+                              }}
+                            ></fig-slider>
+                          </fig-field>
+                        );
+                        return [field, durationField];
+                      }
+
                       if (maxSizeAfterLayout) {
                         const currentLayout =
                           target.controlAttributes.layout ?? "vertical";

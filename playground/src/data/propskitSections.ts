@@ -536,7 +536,7 @@ export const propskitSections: PropsKitSection[] = [
     ],
   },
   {
-    id: "media",
+    id: "propskit-media",
     name: "Media",
     description: "Render media uploads and selectable image or video options.",
     group: "Getting started",

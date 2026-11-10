@@ -54,6 +54,24 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
   },
   {
+    tag: "fig-button-play",
+    title: "Play Button",
+    group: "input",
+    markup: `<fig-button-play duration="5"></fig-button-play>`,
+    attributes: [
+      { name: "controlled progress", attribute: "progress", value: "0.5" },
+      { name: "disabled", attribute: "disabled", value: "" },
+    ],
+    properties: [
+      {
+        name: "progress property",
+        property: "progress",
+        value: 0.75,
+        expected: 0.75,
+      },
+    ],
+  },
+  {
     tag: "fig-dropdown",
     title: "Dropdown",
     group: "input",
@@ -337,6 +355,21 @@ export const componentContracts: ComponentContract[] = [
     group: "media",
     markup: `<fig-image src="https://picsum.photos/320/180.webp?random=2" fit="cover" size="auto" checkerboard="true"></fig-image>`,
     attributes: [{ name: "fit", attribute: "fit", value: "contain" }],
+  },
+  {
+    tag: "fig-carousel",
+    title: "Carousel",
+    group: "media",
+    markup: `<fig-carousel autoplay="false"><fig-image src="https://picsum.photos/320/180.webp?random=20" full></fig-image><fig-image src="https://picsum.photos/320/180.webp?random=21" full></fig-image></fig-carousel>`,
+    attributes: [
+      { name: "duration", attribute: "duration", value: "8" },
+      { name: "loop", attribute: "loop", value: "" },
+      { name: "dot navigation", attribute: "navigation", value: "dots" },
+      { name: "static progress", attribute: "progress", value: "false" },
+    ],
+    properties: [
+      { name: "index property", property: "index", value: 1, expected: 1 },
+    ],
   },
   {
     tag: "fig-card",

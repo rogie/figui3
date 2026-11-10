@@ -674,6 +674,25 @@ toastRef.current?.showToast();
 
 - Controls render **below** the preview, not as an overlay.
 
+### `fig-carousel`
+
+```tsx
+<fig-carousel duration="4" loop>
+  <fig-image src={cover} aspect-ratio="16/9" full />
+  <fig-video src={video} muted aspect-ratio="16/9" full />
+  <fig-image src={detail} carousel-duration="8" aspect-ratio="16/9" full />
+</fig-carousel>
+```
+
+- Direct children: `fig-media`, `fig-image`, `fig-video`
+- Attrs: `index`, `playing`, `autoplay` (defaults true), `duration` (seconds; default `5`), `loop`, `navigation="buttons|dots"`, `progress`
+- Child `carousel-duration` overrides the host duration or intrinsic video duration.
+- Generated bottom controls: previous, next, then `fig-button-play`.
+- Dot navigation replaces the controls with centered bottom-overlay page indicators; the active dot stretches and uses a native progress element unless `progress="false"`.
+- Methods: `previous()`, `next()`, `goTo(index)`, `first()`, `last()`, `restart()`, `play()`, `pause()`, `toggle()`
+- Read-only: `items`, `currentItem`, `canGoPrevious`, `canGoNext`
+- Event: `change` with `detail.index`, `detail.previousIndex`, and `detail.item`
+
 ### `fig-card`
 
 ```tsx

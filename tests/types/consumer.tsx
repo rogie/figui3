@@ -1,5 +1,6 @@
 import type * as React from "react";
 import type {
+  FigCarouselElement,
   FigCustomEvent,
   FigSliderDetail,
   FigSliderElement,
@@ -27,6 +28,16 @@ const inputSlider = document.createElement("fig-input-slider");
 inputSlider.setInteractionValue(42);
 inputSlider.commitInteractionChange(0);
 inputSlider.resetToDefault();
+
+const carousel = document.createElement("fig-carousel");
+carousel.goTo(2);
+carousel.first();
+carousel.last();
+carousel.restart();
+const currentCarouselItem = carousel.currentItem;
+const canAdvanceCarousel: boolean = carousel.canGoNext;
+void currentCarouselItem;
+void canAdvanceCarousel;
 
 const SliderConstructor: typeof FigInputSlider = FigInputSlider;
 const schemaLabel: string = figInputSliderSchema.value.label;
@@ -64,6 +75,7 @@ void joystickX;
 void propsRoot;
 
 const sliderRef = null as React.Ref<FigSliderElement>;
+const carouselRef = null as React.Ref<FigCarouselElement>;
 const onSliderInput = (
   event: React.SyntheticEvent<
     FigSliderElement,
@@ -90,6 +102,10 @@ const jsx = (
     />
     <fig-stack direction="vertical" />
     <fig-audio-waveform variant="ribbon" progress={0.5} />
+    <fig-carousel ref={carouselRef} duration={4} loop>
+      <fig-image src="cover.jpg" />
+      <fig-video src="demo.mp4" muted />
+    </fig-carousel>
     <fig-input-slider-hue value="180" />
     <fig-input-slider-wheel value="0" />
     <dialog is="fig-popup" position="bottom" />

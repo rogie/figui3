@@ -46,7 +46,7 @@ const GETTING_STARTED_SECTION_ORDER = [
   "toggles",
   "text",
   "groups",
-  "media",
+  "propskit-media",
 ] as const;
 
 const MEDIA_EXAMPLE_ORDER = [
@@ -111,6 +111,16 @@ function compareSections(
     const bRank = editorSectionRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
     if (aRank !== bRank) return aRank - bRank;
   }
+  if (group === "Load indicators") {
+    const aIsPlayButton = a.id === "button-play";
+    const bIsPlayButton = b.id === "button-play";
+    if (aIsPlayButton !== bIsPlayButton) return aIsPlayButton ? 1 : -1;
+  }
+  if (group === "Media") {
+    const aIsCarousel = a.id === "carousel";
+    const bIsCarousel = b.id === "carousel";
+    if (aIsCarousel !== bIsCarousel) return aIsCarousel ? 1 : -1;
+  }
   return compareNames(a.name, b.name);
 }
 
@@ -140,7 +150,7 @@ function sortExamples(section: Section): Section {
         const bRank = toggleExampleRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
         if (aRank !== bRank) return aRank - bRank;
       }
-      if (section.id === "media") {
+      if (section.id === "propskit-media") {
         const aRank = mediaExampleRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
         const bRank = mediaExampleRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
         if (aRank !== bRank) return aRank - bRank;

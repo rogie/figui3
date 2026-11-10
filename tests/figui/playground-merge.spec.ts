@@ -220,7 +220,7 @@ test.describe("PropsKit playground migration", () => {
     );
 
     expect(legacyPropsKitSections).toHaveLength(54);
-    expect(oldKeys).toHaveLength(125);
+    expect(oldKeys).toHaveLength(126);
     expect(Object.keys(propkitMigration).sort()).toEqual(oldKeys.sort());
     for (const oldKey of oldKeys) {
       expect(
@@ -329,7 +329,17 @@ test.describe("PropsKit playground migration", () => {
       .map((section) => section.id)
       .sort();
 
-    expect(loadingIds).toEqual(["shimmer", "skeleton", "spinner"]);
+    expect(loadingIds).toEqual([
+      "button-play",
+      "shimmer",
+      "skeleton",
+      "spinner",
+    ]);
+
+    const orderedLoadingIds = sortSectionsWithinGroups(figui3Sections)
+      .filter((section) => section.group === "Load indicators")
+      .map((section) => section.id);
+    expect(orderedLoadingIds.at(-1)).toBe("button-play");
   });
 
   test('names default field compositions "Label + input"', () => {
@@ -389,7 +399,9 @@ test("audio waveform exposes bar and ribbon variants", () => {
 });
 
 test("PropsKit media splits image, video, and audio examples", () => {
-  const section = propskitSections.find((entry) => entry.id === "media");
+  const section = propskitSections.find(
+    (entry) => entry.id === "propskit-media",
+  );
   expect(section?.examples.map((example) => example.name)).toEqual([
     "Image (empty)",
     "Image",
@@ -401,7 +413,7 @@ test("PropsKit media splits image, video, and audio examples", () => {
     "Audio (with URL)",
   ]);
   const sortedSection = sortSectionsWithinGroups(propskitSections).find(
-    (entry) => entry.id === "media",
+    (entry) => entry.id === "propskit-media",
   );
   expect(sortedSection?.examples.map((example) => example.name)).toEqual([
     "Audio (empty)",
@@ -428,6 +440,21 @@ test("PropsKit media splits image, video, and audio examples", () => {
   expect(
     section?.examples.find((example) => example.id === "audio-url")?.markup,
   ).toContain('/audio/skrillex-ft-elliphant.mp3');
+});
+
+test("Carousel is the final section in the Media group", () => {
+  const mediaSections = sortSectionsWithinGroups(figui3Sections).filter(
+    (section) => section.group === "Media",
+  );
+  expect(mediaSections.at(-1)?.id).toBe("carousel");
+  expect(controlAttributeRules["fig-carousel"]).toMatchObject({
+    index: { type: "number" },
+    autoplay: { type: "boolean", defaultChecked: true },
+    duration: { type: "number", units: "s" },
+    loop: { type: "boolean" },
+    navigation: { type: "enum", options: ["buttons", "dots"] },
+    progress: { type: "boolean", defaultChecked: true },
+  });
 });
 
 test("disabled components expose an Attributes view toggle", () => {
@@ -827,7 +854,7 @@ test("PropsKit examples form the Getting started navigation group", () => {
     "toggles",
     "text",
     "groups",
-    "media",
+    "propskit-media",
   ]);
   for (const section of propskitSections) {
     expect(section.group).toBe("Getting started");
@@ -923,7 +950,7 @@ test("PropsKit examples form the Getting started navigation group", () => {
     "toggles",
     "text",
     "groups",
-    "media",
+    "propskit-media",
   ]);
   expect(mergedSections[7].group).toBe("Inputs");
 });
@@ -998,6 +1025,43 @@ test.describe.serial("ExampleView DOM synchronization", () => {
       new Promise((resolve) => setTimeout(resolve, 2_000)),
     ]);
     if (playgroundServer.exitCode === null) playgroundServer.kill("SIGKILL");
+  });
+
+  test("button icon control keeps the preview icon-only across type changes", async ({
+    page,
+  }) => {
+    await page.goto(`${playgroundUrl}/propskit`);
+    const state = await page.evaluate(async () => {
+      const {
+        applyButtonIconMutation,
+        applyButtonTypeMutation,
+      } = await import("/src/lib/attributeParser.ts");
+      let markup = `<div class="prop-panel">
+        <fig-field>
+          <label>Action</label>
+          <fig-button><span>Apply Changes</span></fig-button>
+        </fig-field>
+      </div>`;
+      markup = applyButtonIconMutation(markup, 0, true);
+      markup = applyButtonTypeMutation(markup, 0, "toggle");
+
+      const template = document.createElement("template");
+      template.innerHTML = markup;
+      const button = template.content.querySelector("fig-button")!;
+      return {
+        label: button.getAttribute("aria-label"),
+        text: button.textContent?.trim() ?? "",
+        children: Array.from(button.children).map((child) =>
+          child.tagName.toLowerCase(),
+        ),
+      };
+    });
+
+    expect(state).toEqual({
+      label: "Apply Changes",
+      text: "",
+      children: ["fig-icon"],
+    });
   });
 
   test("PropsKit source is editable and rebuilds the preview", async ({

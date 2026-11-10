@@ -7,6 +7,33 @@ test.describe("fig.js audit core regressions", () => {
     await bootFigFixture(page);
   });
 
+  test("fig-button pill attribute applies the full radius token", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <fig-button id="default-button">Default</fig-button>
+        <fig-button id="pill-button" pill>Pill</fig-button>
+        <fig-button id="false-button" pill="false">False</fig-button>
+      `;
+      await new Promise(requestAnimationFrame);
+      const radius = (selector: string) =>
+        getComputedStyle(root.querySelector(selector)!).borderRadius;
+      return {
+        defaultRadius: radius("#default-button"),
+        pillRadius: radius("#pill-button"),
+        falseRadius: radius("#false-button"),
+        fullRadiusToken: getComputedStyle(document.documentElement)
+          .getPropertyValue("--radius-full")
+          .trim(),
+      };
+    });
+
+    expect(state.pillRadius).toBe(state.fullRadiusToken);
+    expect(state.falseRadius).toBe(state.defaultRadius);
+  });
+
   test("fig-button synchronizes disabled to select and upload controls", async ({
     page,
   }) => {
@@ -74,15 +101,27 @@ test.describe("fig.js audit core regressions", () => {
       authored.remove();
       await new Promise(requestAnimationFrame);
       const afterAuthoredRemoved = read();
+      button
+        .querySelector('[data-generated="select-chevron"]')
+        ?.remove();
+      await new Promise(requestAnimationFrame);
+      const afterChevronRemoved = read();
+      const extra = document.createElement("fig-icon");
+      extra.setAttribute("slot", "append");
+      extra.setAttribute("data-generated", "select-chevron");
+      extra.setAttribute("name", "chevron");
+      button.append(extra);
+      await new Promise(requestAnimationFrame);
+      const afterDuplicate = read();
       return {
         initial,
         afterButton,
         afterSelect,
         withAuthoredAppend,
         afterAuthoredRemoved,
-        appendSlot: Boolean(
-          button.shadowRoot?.querySelector('slot[name="append"]'),
-        ),
+        afterChevronRemoved,
+        afterDuplicate,
+        shadowRoot: button.shadowRoot,
       };
     });
 
@@ -92,7 +131,9 @@ test.describe("fig.js audit core regressions", () => {
       afterSelect: { count: 1, name: "chevron", size: "small" },
       withAuthoredAppend: { count: 0, name: null, size: null },
       afterAuthoredRemoved: { count: 1, name: "chevron", size: "small" },
-      appendSlot: true,
+      afterChevronRemoved: { count: 1, name: "chevron", size: "small" },
+      afterDuplicate: { count: 1, name: "chevron", size: "small" },
+      shadowRoot: null,
     });
   });
 

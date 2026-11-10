@@ -40,6 +40,13 @@ fig-header {
     }
   }
 
+  & > h3 {
+    font-size: var(--text-body-medium-font-size);
+    font-weight: var(--body-medium-strong-fontWeight);
+    line-height: var(--line-height);
+    letter-spacing: var(--body-letter-spacing);
+  }
+
   & > span,
   & > label {
     color: var(--figma-color-text-secondary);

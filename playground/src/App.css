@@ -121,6 +121,17 @@ nav {
   fig-header {
     justify-content: space-between;
     padding-right: var(--spacer-2);
+
+    > h1 {
+      font-size: var(--text-heading-small-font-size);
+      font-weight: var(--text-heading-small-font-weight);
+      line-height: var(--text-heading-small-line-height);
+      letter-spacing: var(--text-heading-small-letter-spacing);
+    }
+  }
+
+  fig-group > fig-header > h3 {
+    font-size: var(--text-body-medium-font-size);
   }
 }
 .attributes-sidebar {
@@ -177,14 +188,12 @@ main {
   overflow: visible;
   display: flex;
   flex-direction: column;
+}
 
-  h2 {
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 1.4;
-    color: var(--figma-color-text);
-    margin-bottom: var(--spacer-4);
-  }
+.example-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-3);
 }
 
 .example-view-container {

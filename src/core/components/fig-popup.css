@@ -3,6 +3,10 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
+dialog[is^="fig-popup"] {
+  inset: auto;
+}
+
 dialog[is="fig-popup"] {
   --z-index: 999999;
   --fig-popup-beak-offset: 50%;
@@ -18,6 +22,8 @@ dialog[is="fig-popup"] {
   z-index: var(--z-index);
   position: fixed;
   margin: 0;
+  padding: 0;
+  gap:0;
   min-width: 0;
   padding: 0;
   overflow: auto;

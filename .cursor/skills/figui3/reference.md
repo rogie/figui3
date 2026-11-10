@@ -29,9 +29,19 @@ Import pure color math from `@rogieking/figui3/fig-color.js`.
 - `variant`: `""` (primary), `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`
 - `type`: `button`, `toggle`, `submit`, `select`, `upload`
 - `size`: `""`, `large`, `compact`
-- `selected`, `disabled`, `icon` (presence)
+- `selected`, `disabled`, `icon`, `pill` (presence; `"false"` disables)
 - `variant="property"` shares secondary styling and adds full-width, start-aligned layout
 - Property icons use authored `slot="prepend"` content; consumers manage the popup/dialog
+
+## `fig-button-play`
+
+- `playing`, `disabled` (presence; `"false"` disables)
+- `duration`: internal timer duration in seconds; default `5`
+- `progress`: controlled fraction from `0` to `1`; presence disables the internal timer
+- `variant`: forwarded to the inner `fig-button`; default `secondary`
+- `size`: forwarded to the inner `fig-button`
+- Methods: `play()`, `pause()`, `toggle()`, `reset()`
+- Events: `play`, `pause`, `complete`
 
 ## `fig-input-text`
 
@@ -137,7 +147,9 @@ Without `fig-fill-picker`, fill/color render a preview. With the picker register
 - Surface lives in `fig-preview`
 - `fig-audio`: `src`, `autoplay`, `controls`, `muted`, `loop`; composes waveform and shared controls
 - `fig-image` / `fig-video`: `upload`, `fit`, `aspect-ratio`, `checkerboard`, `loading-indicator`
+- `fig-carousel`: direct media children; `index`, `playing`, `autoplay`, `duration`, `loop`, `navigation="buttons|dots"`, `progress`; child `carousel-duration` override; methods `previous()`, `next()`, `goTo(index)`, `first()`, `last()`, `restart()`, `play()`, `pause()`, `toggle()`
 - Video controls render **below** the preview, not as an overlay
+- Carousel controls render at the bottom-right in previous, next, play/pause order
 - Slotted image overlays stay in light DOM
 
 ## `fig-layer` (core registration, standalone styles)

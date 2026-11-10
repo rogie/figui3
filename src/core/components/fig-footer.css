@@ -15,7 +15,10 @@ fig-footer {
   box-shadow: 0 -1px 0 0 var(--figma-color-border);
 
   & h3 {
+    font-size: var(--text-body-medium-font-size);
     font-weight: var(--body-medium-strong-fontWeight);
+    line-height: var(--line-height);
+    letter-spacing: var(--body-letter-spacing);
     flex-grow: 1;
     display: flex;
     align-items: baseline;

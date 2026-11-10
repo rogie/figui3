@@ -26,8 +26,12 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
     --fig-menu-item-padding: var(--spacer-1,0.25rem) var(--spacer-4,1rem) var(--spacer-1,0.25rem) var(--spacer-2,0.5rem);
   }
 
-  h3{
+  h3 {
     margin: 0 0 var(--spacer-1) 0;
+    font-size: var(--text-body-medium-font-size);
+    font-weight: var(--body-medium-strong-fontWeight);
+    line-height: var(--line-height);
+    letter-spacing: var(--body-letter-spacing);
   }
 
   label {

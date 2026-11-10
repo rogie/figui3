@@ -30,10 +30,27 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 </fig-button>
 ```
 
-- Attrs: `variant` (`""` primary, `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`, `compact`), `align`, `selected`, `disabled`, `icon`, `close-dialog`
+- Attrs: `variant` (`""` primary, `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`, `compact`), `align`, `selected`, `disabled`, `icon`, `pill`, `close-dialog`
 - `variant="property"` shares secondary styling and adds full-width, start-aligned property-trigger layout; use `slot="prepend"` for its leading icon
 - Property triggers own no popup behavior; consumers manage the popup/dialog and reflect `selected`, `aria-haspopup`, `aria-expanded`, and `aria-controls`
 - Events: `click`; toggle also reflects `selected`
+
+### `fig-button-play`
+
+```tsx
+<fig-button-play
+  duration="8"
+  playing={playing || undefined}
+  onPlay={onPlay}
+  onPause={onPause}
+/>
+```
+
+- Embeds `<fig-button variant="secondary" icon pill>` with a play/pause `fig-icon`.
+- Attrs: `playing`, `duration` (seconds, default `5`), `progress` (`0`–`1`), `variant`, `size`, `disabled`.
+- Omitting `progress` uses the internal pause/resume timer; authoring `progress` selects controlled mode.
+- Methods: `play()`, `pause()`, `toggle()`, `reset()`.
+- Events: `play`, `pause`, and internal-timer `complete`.
 
 ### `fig-button-combo`
 
@@ -689,6 +706,25 @@ toastRef.current?.showToast();
 ```
 
 - Controls render **below** the preview, not as an overlay.
+
+### `fig-carousel`
+
+```tsx
+<fig-carousel duration="4" loop>
+  <fig-image src={cover} aspect-ratio="16/9" full />
+  <fig-video src={video} muted aspect-ratio="16/9" full />
+  <fig-image src={detail} carousel-duration="8" aspect-ratio="16/9" full />
+</fig-carousel>
+```
+
+- Direct children: `fig-media`, `fig-image`, `fig-video`
+- Attrs: `index`, `playing`, `autoplay` (defaults true), `duration` (seconds; default `5`), `loop`, `navigation="buttons|dots"`, `progress`
+- Child `carousel-duration` overrides the host duration or intrinsic video duration.
+- Generated bottom controls: previous, next, then `fig-button-play`.
+- Dot navigation replaces the controls with centered bottom-overlay page indicators; the active dot stretches and uses a native progress element unless `progress="false"`.
+- Methods: `previous()`, `next()`, `goTo(index)`, `first()`, `last()`, `restart()`, `play()`, `pause()`, `toggle()`
+- Read-only: `items`, `currentItem`, `canGoPrevious`, `canGoNext`
+- Event: `change` with `detail.index`, `detail.previousIndex`, and `detail.item`
 
 ### `fig-card`
 

@@ -30,7 +30,7 @@ fig-slider {
     0px 0 0 0.5px rgba(0, 0, 0, 0.1), var(--figma-elevation-100);
   --slider-handle-shadow-focus:
     inset 0 0 0 4px var(--slider-thumb-color),
-    inset 0 0 0 5px rgba(0, 0, 0, 0.1), var(--handle-shadow),
+    inset 0 0 0 5px rgba(0, 0, 0, 0.1), var(--figma-handle-shadow),
     0 0 0 1px var(--figma-color-border-selected);
   --slider-transition: none;
   --handle-transition: var(--slider-transition);

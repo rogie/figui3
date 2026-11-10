@@ -118,7 +118,6 @@ export const propskitDialogExamples: Record<string, PropsKitExample> = {
       color: {
         type: "color",
         default: "#000000",
-        text: true,
         alpha: true,
       },
       blur: {
@@ -191,7 +190,6 @@ export const propskitDialogExamples: Record<string, PropsKitExample> = {
         type: "color",
         label: "Shadow Tint",
         default: "#000000",
-        text: true,
       },
       photoShape: {
         type: "options",
@@ -355,7 +353,6 @@ export const propskitDialogExamples: Record<string, PropsKitExample> = {
         color: {
           type: "color",
           default: "#0D99FF",
-          text: true,
           alpha: true,
         },
         opacity: {

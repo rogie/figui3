@@ -9,7 +9,7 @@ already registered by `fig.js`.
 
 Import: `fig.css` + `fig.js`
 
-Core registrations, including `fig-layer`. 67 registrations:
+Core registrations, including `fig-layer`. 69 registrations:
 
 - `<fig-3d-rotate>`
 - `<fig-angle>`
@@ -18,7 +18,9 @@ Core registrations, including `fig-layer`. 67 registrations:
 - `<fig-avatar>`
 - `<fig-button>`
 - `<fig-button-combo>`
+- `<fig-button-play>`
 - `<fig-card>`
+- `<fig-carousel>`
 - `<fig-checkbox>`
 - `<fig-chit>`
 - `<fig-choice>`

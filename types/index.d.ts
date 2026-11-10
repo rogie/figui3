@@ -35,13 +35,25 @@ export interface FigRemoveDetail {
   value?: unknown;
 }
 
+export interface FigPlaybackDetail {
+  playing?: boolean;
+  progress: number;
+}
+
+export interface FigCarouselDetail extends FigValueDetail<number> {
+  index: number;
+  previousIndex: number;
+  item: FigMediaElement | null;
+}
+
 export interface FigEventDetailMap {
   input:
     | FigPrimitiveValue
     | FigValueDetail
     | FigCheckedDetail
     | FigColorDetail
-    | FigSliderDetail;
+    | FigSliderDetail
+    | FigCarouselDetail;
   change:
     | FigPrimitiveValue
     | FigValueDetail
@@ -57,6 +69,9 @@ export interface FigEventDetailMap {
   webcamstream: { stream: MediaStream };
   openchange: { open: boolean };
   visibilitychange: { visible: boolean };
+  play: FigPlaybackDetail;
+  pause: FigPlaybackDetail;
+  complete: FigPlaybackDetail;
 }
 
 export type FigCustomEvent<
@@ -226,6 +241,40 @@ export interface FigAudioWaveformElement extends FigHTMLElement {
   variant: "bars" | "ribbon";
 }
 
+export interface FigButtonPlayElement extends FigHTMLElement {
+  playing: boolean;
+  duration: number;
+  progress: number;
+  disabled: boolean;
+  play(): void;
+  pause(): void;
+  toggle(): void;
+  reset(): void;
+}
+
+export interface FigCarouselElement extends FigHTMLElement {
+  index: number;
+  playing: boolean;
+  autoplay: boolean;
+  duration: number;
+  loop: boolean;
+  navigation: "buttons" | "dots";
+  progress: boolean;
+  readonly items: FigMediaElement[];
+  readonly currentItem: FigMediaElement | null;
+  readonly canGoNext: boolean;
+  readonly canGoPrevious: boolean;
+  previous(): void;
+  next(): void;
+  goTo(index: number): void;
+  first(): void;
+  last(): void;
+  restart(): void;
+  play(): void;
+  pause(): void;
+  toggle(): void;
+}
+
 export interface FigMediaElement extends FigHTMLElement {
   src: string;
   currentTime: number;
@@ -274,9 +323,11 @@ export interface FigTagNameMap {
   "fig-audio-waveform": FigAudioWaveformElement;
   "fig-avatar": FigHTMLElement;
   "fig-button": FigHTMLElement;
+  "fig-button-play": FigButtonPlayElement;
   "fig-button-combo": FigHTMLElement;
   "fig-canvas-control": FigValueElement;
   "fig-card": FigHTMLElement;
+  "fig-carousel": FigCarouselElement;
   "fig-chat-message": FigHTMLElement;
   "fig-checkbox": FigCheckedElement;
   "fig-chit": FigHTMLElement;

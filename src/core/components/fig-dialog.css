@@ -5,6 +5,8 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 dialog[is="fig-dialog"] {
   /* Non-modal stacking is assigned in FigDialog.show() via figGetHighestZIndex. */
+  padding: 0;
+  gap:0;
 
   &[autoresize]:not([autoresize="false"]) {
     height: max-content;

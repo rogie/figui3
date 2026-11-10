@@ -143,7 +143,9 @@ Without `fig-fill-picker`, fill/color render a preview. With the picker register
 - Surface lives in `fig-preview`
 - `fig-audio`: `src`, `autoplay`, `controls`, `muted`, `loop`; composes waveform and shared controls
 - `fig-image` / `fig-video`: `upload`, `fit`, `aspect-ratio`, `checkerboard`, `loading-indicator`
+- `fig-carousel`: direct media children; `index`, `playing`, `autoplay`, `duration`, `loop`, `navigation="buttons|dots"`, `progress`; child `carousel-duration` override; methods `previous()`, `next()`, `goTo(index)`, `first()`, `last()`, `restart()`, `play()`, `pause()`, `toggle()`
 - Video controls render **below** the preview, not as an overlay
+- Carousel controls render at the bottom-right in previous, next, play/pause order
 - Slotted image overlays stay in light DOM
 
 ## `fig-layer` (core registration, standalone styles)

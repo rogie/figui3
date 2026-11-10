@@ -208,6 +208,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     icon: { label: "Icon", type: "boolean", boolMode: "presence" },
+    pill: { label: "Pill", type: "boolean", boolMode: "presence" },
   },
   "fig-dropdown": {
     value: { label: "Value", type: "string" },
@@ -479,6 +480,36 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     loop: { label: "Loop", type: "boolean", boolMode: "string" },
     muted: { label: "Muted", type: "boolean", boolMode: "string" },
     poster: { label: "Poster", type: "string" },
+  },
+  "fig-carousel": {
+    index: { label: "Index", type: "number", min: 0, max: 20, step: 1 },
+    playing: { label: "Playing", type: "boolean", boolMode: "presence" },
+    autoplay: {
+      label: "Autoplay",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    duration: {
+      label: "Duration",
+      type: "number",
+      min: 0.1,
+      max: 60,
+      step: 0.1,
+      units: "s",
+    },
+    loop: { label: "Loop", type: "boolean", boolMode: "presence" },
+    navigation: {
+      label: "Navigation",
+      type: "enum",
+      options: ["buttons", "dots"],
+    },
+    progress: {
+      label: "Progress",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
   },
   "fig-video": {
     caption: { label: "Caption", type: "string" },
@@ -1155,6 +1186,41 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-spinner": {
     size: { label: "Size", type: "enum", options: ["default", "small"] },
   },
+  "fig-button-play": {
+    playing: { label: "Playing", type: "boolean", boolMode: "presence" },
+    duration: {
+      label: "Duration",
+      type: "number",
+      min: 0.1,
+      max: 60,
+      step: 0.1,
+      units: "s",
+    },
+    progress: {
+      label: "Progress",
+      type: "number",
+      min: 0,
+      max: 1,
+      step: 0.05,
+    },
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: [
+        "secondary",
+        "primary",
+        "ghost",
+        "destructive",
+        "destructiveSecondary",
+      ],
+    },
+    size: {
+      label: "Size",
+      type: "enum",
+      options: ["", "compact", "large"],
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-shimmer": {
     duration: {
       label: "Duration",
@@ -1322,6 +1388,9 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   progress: {
     value: { label: "Value", type: "number", min: 0, max: 100, step: 1 },
     max: { label: "Max", type: "number", min: 1, max: 100, step: 1 },
+  },
+  meter: {
+    value: { label: "Value", type: "number", min: 0, max: 100, step: 0.1 },
   },
   "fig-canvas-control": {
     type: {

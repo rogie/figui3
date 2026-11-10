@@ -123,6 +123,33 @@ function createButtonIcon(doc: Document): HTMLElement {
   return icon;
 }
 
+function makeButtonIconOnly(button: Element, doc: Document) {
+  const label = Array.from(button.childNodes)
+    .filter((node) => {
+      if (node.nodeType === Node.TEXT_NODE) return true;
+      if (node.nodeType !== Node.ELEMENT_NODE) return false;
+      const tag = (node as Element).tagName.toLowerCase();
+      return tag !== "fig-dropdown" && tag !== "input";
+    })
+    .map((node) => node.textContent?.trim() ?? "")
+    .filter(Boolean)
+    .join(" ");
+  if (!button.hasAttribute("aria-label") && label) {
+    button.setAttribute("aria-label", label);
+  }
+
+  Array.from(button.childNodes).forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      node.remove();
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const tag = (node as Element).tagName.toLowerCase();
+    if (tag !== "fig-dropdown" && tag !== "input") node.remove();
+  });
+  button.prepend(createButtonIcon(doc));
+}
+
 function createDefaultFieldControl(
   doc: Document,
   controlTag: FieldControlMutation["controlTag"] | PropertyControlTag,
@@ -348,6 +375,7 @@ function isSupportedControl(element: Element): boolean {
   return (
     isFigTag(element) ||
     element.tagName.toLowerCase() === "progress" ||
+    element.tagName.toLowerCase() === "meter" ||
     Boolean(element.getAttribute("data-playground-control"))
   );
 }
@@ -705,7 +733,7 @@ export function applyButtonTypeMutation(
   });
 
   const ensureText = (text: string) => {
-    ensureButtonText(element, text);
+    if (!element.hasAttribute("icon")) ensureButtonText(element, text);
   };
 
   if (nextType === "select") {
@@ -729,6 +757,9 @@ export function applyButtonTypeMutation(
     } else {
       ensureText("Primary");
     }
+  }
+  if (element.hasAttribute("icon")) {
+    makeButtonIconOnly(element, root.ownerDocument);
   }
 
   return getExampleSourceMarkup(serializeSourceMarkup(root));
@@ -769,17 +800,7 @@ export function applyButtonIconMutation(
 
   if (enabled) {
     element.setAttribute("icon", "");
-    Array.from(element.childNodes).forEach((node) => {
-      if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim())
-        node.remove();
-      if (
-        node.nodeType === Node.ELEMENT_NODE &&
-        ["svg", "fig-icon"].includes((node as Element).tagName.toLowerCase())
-      ) {
-        node.remove();
-      }
-    });
-    element.prepend(createButtonIcon(root.ownerDocument));
+    makeButtonIconOnly(element, root.ownerDocument);
   } else {
     element.removeAttribute("icon");
     Array.from(element.children).forEach((child) => {

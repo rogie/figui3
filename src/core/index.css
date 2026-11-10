@@ -4,11 +4,12 @@ Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 @import url("../../icons.css");
-@import url("styles/foundations.css");
+@import url("styles/variables.css");
+@import url("utilities/native.css");
 @import url("components/fig-input-number.css");
-@import url("utilities/native-form-controls.css");
 @import url("components/fig-dropdown.css");
 @import url("components/fig-button.css");
+@import url("components/fig-button-play.css");
 @import url("components/fig-button-combo.css");
 @import url("components/fig-input-combo.css");
 @import url("components/fig-tab.css");
@@ -18,15 +19,14 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
 @import url("components/fig-audio.css");
 @import url("components/fig-input-file.css");
 @import url("components/fig-media.css");
+@import url("components/fig-carousel.css");
 @import url("components/fig-media-controls.css");
 @import url("components/fig-easing-curve.css");
 @import url("components/fig-angle.css");
 @import url("components/fig-3d-rotate.css");
 @import url("components/fig-origin-grid.css");
 @import url("components/fig-combo-input.css");
-@import url("utilities/native-disclosure.css");
 @import url("components/fig-slider.css");
-@import url("utilities/dialog-surfaces.css");
 @import url("components/fig-dialog.css");
 @import url("components/fig-popup.css");
 @import url("components/fig-tooltip.css");

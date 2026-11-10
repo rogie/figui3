@@ -55,7 +55,11 @@ export type FigReactProps<TElement extends HTMLElement> = Omit<
   full?: FigBooleanAttribute;
   compact?: FigBooleanAttribute;
   icon?: FigBooleanAttribute;
+  pill?: FigBooleanAttribute;
   selected?: FigBooleanAttribute;
+  playing?: FigBooleanAttribute;
+  duration?: string | number;
+  progress?: string | number;
   variant?: string;
   size?: string;
   name?: string;
