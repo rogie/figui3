@@ -19,7 +19,7 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
   display: inline-flex;
   align-items: center;
   justify-content: var(--fig-button-content-alignment);
-  gap: var(--spacer-2);
+  gap: 0;
   font-weight: 500;
   line-height: 1rem;
   text-align: var(--fig-button-text-alignment);

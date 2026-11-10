@@ -35,7 +35,6 @@ fig-input-file {
   }
 
   .fig-input-file-filename:has(> .fig-input-file-audio-waveform) {
-    column-gap: var(--spacer-1);
     overflow: hidden;
 
     &:is(:focus, :focus-within) {

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.1]
+
+### Fixed
+
+- Removed unintended gaps from buttons and audio file controls.
+
 ## [11.11.0]
 
 ### Added
