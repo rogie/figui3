@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.2]
+
+### Added
+
+- Added truncating authored labels for `fig-button` via `slot="label"` or direct `<label>` children, with documentation, playground guidance, and browser coverage.
+
+### Changed
+
+- Reworked fill-picker media rows with equal-width `fig-property` columns and content-sized media and camera selects.
+- Simplified the button playground examples around the new overflow and truncation guidance.
+
+### Fixed
+
+- Hid steppers on fill-picker alpha and gradient-stop position inputs.
+- Preserved the selected color treatment for property-button leading icons.
+
 ## [11.11.1]
 
 ### Fixed

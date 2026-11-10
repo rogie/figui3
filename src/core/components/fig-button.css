@@ -352,6 +352,18 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
       order: -1;
     }
 
+    > :is([slot="label"], label) {
+      display: block;
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      color: inherit;
+      font: inherit;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     > [slot="append"] {
       order: 1;
     }
@@ -365,7 +377,7 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
       --fig-button-text-alignment: start;
       width: 100%;
 
-      > fig-icon[slot="prepend"] {
+      &:not([selected]):not([selected="false"]) > fig-icon[slot="prepend"] {
         color: var(--figma-color-icon-secondary);
       }
 

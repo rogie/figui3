@@ -1729,7 +1729,7 @@ class FigFillPicker extends HTMLElement {
     const wrap = (tooltip, child) =>
       figEditorCreateElement("fig-tooltip", { text: tooltip }, child);
 
-    const num = (cls, label, min, max, step, units) =>
+    const num = (cls, label, min, max, step, units, steppers) =>
       figEditorCreateElement("fig-input-number", {
         className: cls,
         "aria-label": label,
@@ -1737,6 +1737,7 @@ class FigFillPicker extends HTMLElement {
         max,
         step,
         units,
+        steppers,
       });
 
     const showAlpha = this.getAttribute("alpha") !== "false";
@@ -1744,7 +1745,7 @@ class FigFillPicker extends HTMLElement {
       showAlpha
         ? wrap(
             "Alpha",
-            num("fig-fill-picker-ci-a", "Alpha", 0, 100, 0.1, "%"),
+            num("fig-fill-picker-ci-a", "Alpha", 0, 100, 0.1, "%", "false"),
           )
         : null;
     const combo = (children, extraClass = "") =>
@@ -2831,6 +2832,7 @@ class FigFillPicker extends HTMLElement {
               max: "100",
               value: stop.position,
               units: "%",
+              steppers: "false",
             }),
             figEditorCreateElement("fig-input-color", {
               className: "fig-fill-picker-stop-color",
@@ -2983,9 +2985,16 @@ class FigFillPicker extends HTMLElement {
     });
     if (this.#image.scaleMode !== "tile") scale.style.display = "none";
     const header = figEditorCreateElement(
-      "fig-field",
-      { className: "fig-fill-picker-media-header" },
-      [scaleMode, scale],
+      "fig-property",
+      { className: "fig-fill-picker-media-header", ratio: "1:1" },
+      figEditorCreateElement(
+        "div",
+        {
+          className: "fig-fill-picker-media-header-controls",
+          slot: "input",
+        },
+        [scaleMode, scale],
+      ),
     );
     const preview = figEditorCreateElement("fig-image", {
       className:
@@ -3179,9 +3188,16 @@ class FigFillPicker extends HTMLElement {
       ),
     );
     const header = figEditorCreateElement(
-      "fig-field",
-      { className: "fig-fill-picker-media-header" },
-      scaleMode,
+      "fig-property",
+      { className: "fig-fill-picker-media-header", ratio: "1:1" },
+      figEditorCreateElement(
+        "div",
+        {
+          className: "fig-fill-picker-media-header-controls",
+          slot: "input",
+        },
+        scaleMode,
+      ),
     );
     const preview = figEditorCreateElement("fig-media", {
       className:
@@ -3483,7 +3499,6 @@ class FigFillPicker extends HTMLElement {
         {
           className: "fig-fill-picker-camera-select",
           label: "Camera",
-          full: true,
         },
         document.createElement("fig-select-options"),
       ),

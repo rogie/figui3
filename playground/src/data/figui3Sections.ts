@@ -3392,6 +3392,22 @@ ${versionHistoryGroup("August 11", [
   },
 ]);
 
+const buttonOverflowTruncationExample: Example = {
+  id: "overflow-truncation",
+  name: "Overflow / truncation",
+  description:
+    'Wrap button text in an authored <code>&lt;label&gt;</code> or an element with <code>slot="label"</code> to allow long labels to truncate with an ellipsis.',
+  markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Effect</label>
+    <fig-button variant="property" full>
+      <fig-icon name="settings" slot="prepend"></fig-icon>
+      <span slot="label">Drop shadow with a deliberately long name that truncates</span>
+    </fig-button>
+  </fig-field>
+</div>`,
+};
+
 const groupNoChildrenExample: Example = {
   id: "no-children",
   name: "No children",
@@ -3462,7 +3478,12 @@ function insertExampleAfter(
 
 export const figui3Sections: Section[] = insertExampleAfter(
   insertExampleAfter(
-    mergePropsKitSections(figui3BaseSections),
+    insertExampleAfter(
+      mergePropsKitSections(figui3BaseSections),
+      "button",
+      "default",
+      buttonOverflowTruncationExample,
+    ),
     "group",
     "default",
     groupNoChildrenExample,

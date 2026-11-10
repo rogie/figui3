@@ -157,34 +157,22 @@ fig-fill-picker {
   }
 
   /* Media Tabs (Image/Video/Webcam) */
-  fig-field.fig-fill-picker-media-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    grid-template-columns: unset;
-    grid-template-areas: unset;
-    padding-left: var(--spacer-3);
-    padding-right: var(--spacer-2);
+  .fig-fill-picker-media-header-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--spacer-2);
+  }
 
-    > *:not([slot="leading"]):not([slot="trailing"]):not(label) {
-      grid-area: unset;
-    }
+  .fig-fill-picker-media-header :is(
+      .fig-fill-picker-scale-mode,
+      .fig-fill-picker-scale
+    ) {
+    width: 100%;
+  }
 
-    .fig-fill-picker-scale-mode {
-      flex: 0 0 auto;
-      width: 4.5rem;
-    }
-
-    .fig-fill-picker-scale {
-      width: 56px;
-      flex: 0 0 auto;
-    }
-
-    .fig-fill-picker-media-rotate {
-      flex-shrink: 0;
-      margin-left: auto;
-    }
+  .fig-fill-picker-media-header .fig-fill-picker-media-rotate {
+    flex-shrink: 0;
+    margin-left: auto;
   }
 
   .fig-fill-picker-media-preview {
@@ -308,6 +296,11 @@ fig-fill-picker {
   }
 
   /* Webcam Tab */
+  .fig-fill-picker-webcam-camera .fig-fill-picker-camera-select {
+    flex: 0 1 auto !important;
+    width: auto;
+  }
+
   .fig-fill-picker-webcam-preview {
     position: relative;
     aspect-ratio: 1;

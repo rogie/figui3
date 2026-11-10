@@ -257,6 +257,89 @@ test.describe("fig.js component contracts", () => {
     expect(state.selectedBoxShadow).toBe("none");
   });
 
+  test("fig-button truncates authored label elements without mutating them", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-button id="slotted-label-button" variant="secondary" style="width: 160px">
+          <fig-icon name="settings" slot="prepend"></fig-icon>
+          <span slot="label">A deliberately long button label that must truncate</span>
+          <fig-icon name="chevron" slot="append"></fig-icon>
+        </fig-button>
+        <fig-button id="direct-label-button" variant="secondary" style="width: 160px">
+          <fig-icon name="settings" slot="prepend"></fig-icon>
+          <label>A deliberately long direct label that must truncate</label>
+          <fig-icon name="chevron" slot="append"></fig-icon>
+        </fig-button>
+      `;
+
+      const readButton = (buttonSelector: string, labelSelector: string) => {
+        const button = root.querySelector(buttonSelector);
+        const label = button?.querySelector(labelSelector);
+        const prepend = button?.querySelector('[slot="prepend"]');
+        const append = button?.querySelector('[slot="append"]');
+        if (
+          !(button instanceof HTMLElement) ||
+          !(label instanceof HTMLElement) ||
+          !(prepend instanceof HTMLElement) ||
+          !(append instanceof HTMLElement)
+        ) {
+          throw new Error(`Missing label fixture for ${buttonSelector}`);
+        }
+        const styles = getComputedStyle(label);
+        const buttonRect = button.getBoundingClientRect();
+        const prependRect = prepend.getBoundingClientRect();
+        const appendRect = append.getBoundingClientRect();
+        return {
+          labelTag: label.tagName,
+          labelSlot: label.getAttribute("slot"),
+          overflow: styles.overflow,
+          textOverflow: styles.textOverflow,
+          whiteSpace: styles.whiteSpace,
+          minWidth: styles.minWidth,
+          truncated: label.scrollWidth > label.clientWidth,
+          prependVisible:
+            prependRect.left >= buttonRect.left &&
+            prependRect.right <= buttonRect.right,
+          appendVisible:
+            appendRect.left >= buttonRect.left &&
+            appendRect.right <= buttonRect.right,
+        };
+      };
+
+      return {
+        slotted: readButton("#slotted-label-button", '[slot="label"]'),
+        direct: readButton("#direct-label-button", "label"),
+      };
+    });
+
+    expect(state.slotted).toMatchObject({
+      labelTag: "SPAN",
+      labelSlot: "label",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      minWidth: "0px",
+      truncated: true,
+      prependVisible: true,
+      appendVisible: true,
+    });
+    expect(state.direct).toMatchObject({
+      labelTag: "LABEL",
+      labelSlot: null,
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+      minWidth: "0px",
+      truncated: true,
+      prependVisible: true,
+      appendVisible: true,
+    });
+  });
+
   test("secondary combo controls share one outer border and one divider", async ({
     page,
   }) => {

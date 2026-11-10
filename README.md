@@ -289,13 +289,18 @@ without echoing through those interaction callbacks.
 <fig-button full align="start">Start aligned</fig-button>
 <fig-button variant="property">
   <fig-icon name="settings" slot="prepend"></fig-icon>
-  Effects
+  <span slot="label">Effects</span>
 </fig-button>
 <fig-button type="toggle" selected="true">Toggle</fig-button>
 <fig-button variant="ghost" icon>
   <svg><!-- icon --></svg>
 </fig-button>
 ```
+
+Wrap labels that may truncate in an authored `slot="label"` element. A direct
+`<label>` child receives the same truncation styles without FigUI adding a slot
+or otherwise mutating the authored DOM. Raw text remains supported but cannot
+reliably render an ellipsis inside the button's flex layout.
 
 `type="select"` and `type="upload"` are visual wrappers for native select/file controls. They avoid nested native buttons, show the shared focus outline on the wrapper, and open the native picker from keyboard activation where supported.
 

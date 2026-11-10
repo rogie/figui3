@@ -30,6 +30,7 @@ Import pure color math from `@rogieking/figui3/fig-color.js`.
 - `type`: `button`, `toggle`, `submit`, `select`, `upload`
 - `size`: `""`, `large`, `compact`
 - `selected`, `disabled`, `icon`, `pill` (presence; `"false"` disables)
+- Label content: author `slot="label"` for reliable single-line ellipsis; a direct `<label>` child is styled equivalently without its DOM being mutated
 - `variant="property"` shares secondary styling and adds full-width, start-aligned layout
 - Property icons use authored `slot="prepend"` content; consumers manage the popup/dialog
 

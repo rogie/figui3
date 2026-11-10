@@ -718,41 +718,12 @@ export const legacyPropsKitSections: Section[] = [
       "A property row action button for applying, resetting, or opening a related workflow.",
     examples: [
       {
-        id: "primary",
-        name: "Primary",
-        markup: `<div class="prop-panel">
-  <fig-field>
-    <label>Action</label>
-    <fig-button full>Apply Changes</fig-button>
-  </fig-field>
-</div>`,
-      },
-      {
-        id: "secondary",
-        name: "Secondary",
-        markup: `<div class="prop-panel">
-  <fig-field>
-    <label>Reset</label>
-    <fig-button variant="secondary" full>Reset Settings</fig-button>
-  </fig-field>
-</div>`,
-      },
-      {
         id: "pill",
         name: "Pill",
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Action</label>
     <fig-button pill>Continue</fig-button>
-  </fig-field>
-</div>`,
-      },
-      {
-        id: "no-label",
-        name: "No label",
-        markup: `<div class="prop-panel">
-  <fig-field>
-    <fig-button full>Generate Preview</fig-button>
   </fig-field>
 </div>`,
       },

@@ -26,11 +26,12 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
   onClick={onClick}
 >
   <fig-icon name="settings" slot="prepend" />
-  Effects
+  <span slot="label">Effects</span>
 </fig-button>
 ```
 
 - Attrs: `variant` (`""` primary, `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`, `compact`), `align`, `selected`, `disabled`, `icon`, `pill`, `close-dialog`
+- Wrap truncatable text in an authored `slot="label"` element. A direct `<label>` child receives the same styles without DOM mutation; raw text remains supported but cannot reliably ellipsize in flex layout.
 - `variant="property"` shares secondary styling and adds full-width, start-aligned property-trigger layout; use `slot="prepend"` for its leading icon
 - Property triggers own no popup behavior; consumers manage the popup/dialog and reflect `selected`, `aria-haspopup`, `aria-expanded`, and `aria-controls`
 - Events: `click`; toggle also reflects `selected`
