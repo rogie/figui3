@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.5]
+
+### Changed
+
+- Simplified carousel page navigation with persistent progress elements and renamed page classes and CSS tokens.
+- Changed the default `fig-button-play` variant to `ghost`.
+
 ## [11.11.4]
 
 ### Added

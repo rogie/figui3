@@ -4,19 +4,26 @@ Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 fig-carousel {
-  --fig-carousel-indicator-easing: cubic-bezier(0.22, 1, 0.36, 1);
-  --fig-carousel-indicator-height: 0.375rem;
-  --fig-carousel-active-indicator-width: var(--spacer-4);
-  --fig-carousel-indicator-shadow: var(--figma-handle-shadow);
-  --fig-carousel-indicator-track: color-mix(
-    in srgb,
-    var(--handle-color) 30%,
-    transparent
+  --fig-carousel-page-easing: var(
+    --fig-carousel-indicator-easing,
+    cubic-bezier(0.22, 1, 0.36, 1)
   );
-  --fig-carousel-indicator-inactive-color: color-mix(
-    in srgb,
-    var(--handle-color) 100%,
-    transparent
+  --fig-carousel-page-height: var(--fig-carousel-indicator-height, 0.375rem);
+  --fig-carousel-active-page-width: var(
+    --fig-carousel-active-indicator-width,
+    var(--spacer-4)
+  );
+  --fig-carousel-page-shadow: var(
+    --fig-carousel-indicator-shadow,
+    var(--figma-handle-shadow)
+  );
+  --fig-carousel-page-track: var(
+    --fig-carousel-indicator-track,
+    color-mix(in srgb, var(--handle-color) 30%, transparent)
+  );
+  --fig-carousel-page-inactive-color: var(
+    --fig-carousel-indicator-inactive-color,
+    color-mix(in srgb, var(--handle-color) 100%, transparent)
   );
 
   display: flex;
@@ -52,13 +59,13 @@ fig-carousel {
     }
   }
 
-  .fig-carousel-indicators {
+  .fig-carousel-pages {
     align-items: center;
     display: flex;
     gap: 0;
   }
 
-  fig-button.fig-carousel-indicator[icon][variant="ghost"] {
+  .fig-carousel-pages > fig-button[icon][variant="ghost"] {
     --fig-button-control-height: 100%;
     --fig-button-control-margin: 0;
     --fig-button-control-overflow: hidden;
@@ -69,21 +76,29 @@ fig-carousel {
     box-sizing: border-box;
     display: inline-flex;
     flex: 0 0
-      calc(var(--fig-carousel-indicator-height) + (var(--spacer-half) * 2));
+      calc(var(--fig-carousel-page-height) + (var(--spacer-half) * 2));
     height: calc(
-      var(--fig-carousel-indicator-height) + (var(--spacer-1) * 2)
+      var(--fig-carousel-page-height) + (var(--spacer-1) * 2)
     );
     justify-content: center;
     margin: 0;
     min-width: 0;
     padding: var(--spacer-1) var(--spacer-half);
     transition:
-      flex-basis var(--fig-carousel-indicator-duration, 300ms)
-        var(--fig-carousel-indicator-easing),
-      width var(--fig-carousel-indicator-duration, 300ms)
-        var(--fig-carousel-indicator-easing);
+      flex-basis
+        var(
+          --fig-carousel-page-duration,
+          var(--fig-carousel-indicator-duration, 300ms)
+        )
+        var(--fig-carousel-page-easing),
+      width
+        var(
+          --fig-carousel-page-duration,
+          var(--fig-carousel-indicator-duration, 300ms)
+        )
+        var(--fig-carousel-page-easing);
     width: calc(
-      var(--fig-carousel-indicator-height) + (var(--spacer-half) * 2)
+      var(--fig-carousel-page-height) + (var(--spacer-half) * 2)
     );
 
     &,
@@ -99,47 +114,45 @@ fig-carousel {
 
     &[data-active] {
       flex-basis: calc(
-        var(--fig-carousel-active-indicator-width) + (var(--spacer-half) * 2)
+        var(--fig-carousel-active-page-width) + (var(--spacer-half) * 2)
       );
       width: calc(
-        var(--fig-carousel-active-indicator-width) + (var(--spacer-half) * 2)
+        var(--fig-carousel-active-page-width) + (var(--spacer-half) * 2)
       );
 
-      .fig-carousel-dot {
-        background-color: var(--fig-carousel-indicator-track);
+      .fig-carousel-page {
+        --progress-color: var(--handle-color);
+        --progress-track-color: var(--fig-carousel-page-track);
       }
     }
   }
 
-  .fig-carousel-dot {
-    background-color: var(--fig-carousel-indicator-inactive-color);
-    border-radius: var(--radius-full, 100%);
-    box-shadow: var(--fig-carousel-indicator-shadow);
-    display: block;
-    height: var(--fig-carousel-indicator-height);
-    overflow: hidden;
-    position: relative;
-    transition: background-color var(--fig-carousel-indicator-duration, 300ms)
-      var(--fig-carousel-indicator-easing);
-    width: 100%;
-  }
+  progress.fig-carousel-page {
+    --progress-color: var(--fig-carousel-page-inactive-color);
+    --progress-height: var(--fig-carousel-page-height);
+    --progress-radius: var(--radius-full, 100%);
+    --progress-track-color: var(--fig-carousel-page-inactive-color);
 
-  .fig-carousel-dot > progress {
-    border-radius: inherit;
-    height: 100%;
-    inset: 0;
+    background-color: var(--progress-track-color);
+    border-radius: var(--radius-full, 100%);
+    box-shadow: var(--fig-carousel-page-shadow);
+    display: block;
+    height: var(--fig-carousel-page-height);
     margin: 0;
+    overflow: hidden;
     pointer-events: none;
-    position: absolute;
+    transition: background-color
+      var(
+        --fig-carousel-page-duration,
+        var(--fig-carousel-indicator-duration, 300ms)
+      )
+      var(--fig-carousel-page-easing);
     width: 100%;
-    --progress-bar-min-width: 0;
-    --progress-color: var(--handle-color);
-    --progress-track-color: var(--fig-carousel-indicator-track);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    fig-button.fig-carousel-indicator[icon][variant="ghost"],
-    .fig-carousel-dot {
+    .fig-carousel-pages > fig-button[icon][variant="ghost"],
+    .fig-carousel-page {
       transition: none;
     }
   }

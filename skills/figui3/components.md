@@ -689,7 +689,7 @@ toastRef.current?.showToast();
 - Attrs: `index`, `playing`, `autoplay` (defaults true), `duration` (seconds; default `5`), `loop`, `navigation="buttons|dots"`, `progress`
 - Child `carousel-duration` overrides the host duration or intrinsic video/animated GIF duration.
 - Generated bottom controls: previous, next, then `fig-button-play`.
-- Dot navigation replaces the controls with centered bottom-overlay page indicators; the active dot stretches and uses a native progress element unless `progress="false"`.
+- Page navigation replaces the controls with centered `.fig-carousel-pages`; each `progress.fig-carousel-page` persists, and the active page stretches to show progress unless `progress="false"`.
 - Methods: `previous()`, `next()`, `goTo(index)`, `first()`, `last()`, `restart()`, `play()`, `pause()`, `toggle()`
 - Read-only: `items`, `currentItem`, `canGoPrevious`, `canGoNext`
 - Event: `change` with `detail.index`, `detail.previousIndex`, and `detail.item`

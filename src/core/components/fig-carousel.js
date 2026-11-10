@@ -38,7 +38,7 @@ class FigCarousel extends HTMLElement {
   #syncing = false;
   #playbackToken = 0;
   #activeIndex = 0;
-  #indicatorButtons = [];
+  #pageButtons = [];
   #progressFrame = 0;
 
   #boundPrevious = () => this.previous();
@@ -127,7 +127,7 @@ class FigCarousel extends HTMLElement {
       return;
     }
     if (name === "progress") {
-      this.#syncIndicators();
+      this.#syncPages();
       this.#syncProgressUpdates();
       return;
     }
@@ -311,30 +311,32 @@ class FigCarousel extends HTMLElement {
     controls.setAttribute("data-navigation", this.navigation);
     this.#previousButton = null;
     this.#nextButton = null;
-    this.#indicatorButtons = [];
+    this.#pageButtons = [];
 
     if (this.navigation === "dots") {
-      const indicators = document.createElement("div");
-      indicators.className = "fig-carousel-indicators";
-      indicators.setAttribute("role", "group");
-      indicators.setAttribute("aria-label", "Carousel pages");
+      const pages = document.createElement("div");
+      pages.className = "fig-carousel-pages";
+      pages.setAttribute("role", "group");
+      pages.setAttribute("aria-label", "Carousel pages");
       this.#slides.forEach((_, index) => {
         const button = document.createElement("fig-button");
-        button.className = "fig-carousel-indicator";
         button.setAttribute("variant", "ghost");
         button.setAttribute("icon", "");
         button.setAttribute("aria-label", `Go to item ${index + 1}`);
         button.setAttribute("data-fig-carousel-index", String(index));
         button.addEventListener("click", () => this.goTo(index));
-        const dot = document.createElement("span");
-        dot.className = "fig-carousel-dot";
-        button.append(dot);
-        indicators.append(button);
-        this.#indicatorButtons.push(button);
+        const page = document.createElement("progress");
+        page.className = "fig-carousel-page";
+        page.max = 1;
+        page.value = 1;
+        page.setAttribute("aria-hidden", "true");
+        button.append(page);
+        pages.append(button);
+        this.#pageButtons.push(button);
       });
       play.hidden = true;
       play.setAttribute("aria-hidden", "true");
-      controls.append(indicators, play);
+      controls.append(pages, play);
     } else {
       const createNavigationButton = (action, label, iconName, handler) => {
         const button = document.createElement("fig-button");
@@ -508,7 +510,7 @@ class FigCarousel extends HTMLElement {
       this.#playButton.disabled = noItems;
       this.#playButton.playing = !noItems && this.playing;
     }
-    this.#syncIndicators();
+    this.#syncPages();
     this.#syncProgressUpdates();
   }
 
@@ -517,32 +519,18 @@ class FigCarousel extends HTMLElement {
     control.toggleAttribute("disabled", disabled);
   }
 
-  #syncIndicators() {
-    this.#indicatorButtons.forEach((button, index) => {
+  #syncPages() {
+    this.#pageButtons.forEach((button, index) => {
       const active = index === this.index;
       button.toggleAttribute("data-active", active);
       if (active) button.setAttribute("aria-current", "true");
       else button.removeAttribute("aria-current");
 
-      const dot = button.querySelector(".fig-carousel-dot");
-      if (!dot) return;
-      if (!active || !this.progress) {
-        dot.replaceChildren();
-        return;
-      }
-      this.#ensureIndicatorProgress(dot);
+      const progress = button.querySelector("progress.fig-carousel-page");
+      if (!progress) return;
+      if (active && this.progress) this.#setIndicatorProgress(progress);
+      else progress.value = 1;
     });
-  }
-
-  #ensureIndicatorProgress(dot) {
-    let progress = dot.querySelector("progress");
-    if (!progress) {
-      progress = document.createElement("progress");
-      progress.max = 1;
-      progress.setAttribute("aria-hidden", "true");
-      dot.replaceChildren(progress);
-    }
-    this.#setIndicatorProgress(progress);
   }
 
   #setIndicatorProgress(progressElement) {
@@ -578,7 +566,9 @@ class FigCarousel extends HTMLElement {
 
   #updateIndicatorProgress() {
     const progress =
-      this.#indicatorButtons[this.index]?.querySelector("progress");
+      this.#pageButtons[this.index]?.querySelector(
+        "progress.fig-carousel-page",
+      );
     if (progress) this.#setIndicatorProgress(progress);
   }
 

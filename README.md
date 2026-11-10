@@ -2026,7 +2026,7 @@ default.
 | `duration` | number | `5` | Default image/item duration in seconds |
 | `loop` | boolean | `false` | Wrap navigation and playback at the ends |
 | `navigation` | string | `"buttons"` | `"buttons"` or centered overlay `"dots"` |
-| `progress` | boolean | `true` | Set to `"false"` for a static active dot in dot navigation |
+| `progress` | boolean | `true` | Set to `"false"` for static page navigation |
 
 Videos use their intrinsic duration and advance on `ended`. Set
 `carousel-duration` on any direct child to override that item with a fixed
@@ -2045,9 +2045,9 @@ duration in seconds. Inactive videos are paused automatically.
 </fig-carousel>
 ```
 
-Dot navigation replaces the button row. Its active dot stretches to a pill and
-uses a native `progress` element to show item progress. Dots and the active pill
-share the native progress element's `--progress-height`.
+Page navigation replaces the button row. Each page is a persistent native
+`progress.fig-carousel-page` inside `.fig-carousel-pages`; the active page
+stretches to a pill and displays item progress.
 
 ```html
 <fig-carousel navigation="dots" duration="4" loop>

@@ -2605,12 +2605,11 @@ export default function AttributesView({
                         target.controlTag === "fig-carousel" &&
                         entry.name === "progress"
                       ) {
-                        const variableName =
-                          "--fig-carousel-indicator-duration";
+                        const variableName = "--fig-carousel-page-duration";
                         const styleValue =
                           target.controlAttributes.style ?? "";
                         const durationMatch = styleValue.match(
-                          /--fig-carousel-indicator-duration:\s*([\d.]+)ms/i,
+                          /--fig-carousel-(?:page|indicator)-duration:\s*([\d.]+)ms/i,
                         );
                         const duration = durationMatch
                           ? Number(durationMatch[1])
@@ -2637,7 +2636,7 @@ export default function AttributesView({
                                 if (!Number.isFinite(nextDuration)) return;
                                 const cleaned = styleValue
                                   .replace(
-                                    /--fig-carousel-indicator-duration:\s*[^;]+;?/gi,
+                                    /--fig-carousel-(?:page|indicator)-duration:\s*[^;]+;?/gi,
                                     "",
                                   )
                                   .trim()

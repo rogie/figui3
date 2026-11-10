@@ -270,7 +270,7 @@ test("restart resets active progress and preserves playback state", async ({
   expect(state.playingRestart.progress).toBeLessThan(0.01);
 });
 
-test("dot navigation overlays centered progress-sized indicators", async ({
+test("page navigation overlays centered progress-sized pages", async ({
   page,
 }) => {
   const state = await page.evaluate(async () => {
@@ -292,22 +292,23 @@ test("dot navigation overlays centered progress-sized indicators", async ({
       ":scope > [data-fig-carousel-controls]",
     )!;
     const indicators = [
-      ...carousel.querySelectorAll<HTMLElement>(".fig-carousel-indicator"),
+      ...carousel.querySelectorAll<HTMLElement>(".fig-carousel-pages > fig-button"),
     ];
-    const dots = indicators.map(
+    const dotElements = indicators.map(
       (indicator) =>
-        indicator.querySelector(".fig-carousel-dot")!.getBoundingClientRect(),
+        indicator.querySelector<HTMLProgressElement>(".fig-carousel-page")!,
     );
+    const dots = dotElements.map((dot) => dot.getBoundingClientRect());
     const hostRect = carousel.getBoundingClientRect();
     const controlsRect = controls.getBoundingClientRect();
     const referenceHeight = root
       .querySelector("progress")!
       .getBoundingClientRect().height;
     const colorProbe = document.createElement("span");
-    colorProbe.style.background = "var(--fig-carousel-indicator-inactive-color)";
+    colorProbe.style.background = "var(--fig-carousel-page-inactive-color)";
     carousel.append(colorProbe);
     const dotStyle = getComputedStyle(
-      indicators[1].querySelector(".fig-carousel-dot")!,
+      indicators[1].querySelector(".fig-carousel-page")!,
     );
     const usesInactiveColor =
       dotStyle.backgroundColor === getComputedStyle(colorProbe).backgroundColor;
@@ -325,6 +326,8 @@ test("dot navigation overlays centered progress-sized indicators", async ({
       indicatorIcons: indicators.map((indicator) =>
         indicator.hasAttribute("icon"),
       ),
+      dotTags: dotElements.map((dot) => dot.tagName),
+      inactiveDotValues: dotElements.slice(0, 2).map((dot) => dot.value),
       indicatorSize: {
         width: indicators[0].getBoundingClientRect().width,
         height: indicators[0].getBoundingClientRect().height,
@@ -355,7 +358,7 @@ test("dot navigation overlays centered progress-sized indicators", async ({
         .querySelector("[aria-current]")
         ?.getAttribute("data-fig-carousel-index"),
       progressCount: carousel.querySelectorAll(
-        ".fig-carousel-indicator progress",
+        ".fig-carousel-pages > fig-button progress",
       ).length,
       separated: indicators.every((indicator, index) => {
         const next = indicators[index + 1];
@@ -374,6 +377,8 @@ test("dot navigation overlays centered progress-sized indicators", async ({
     indicatorTags: ["FIG-BUTTON", "FIG-BUTTON", "FIG-BUTTON"],
     indicatorVariants: ["ghost", "ghost", "ghost"],
     indicatorIcons: [true, true, true],
+    dotTags: ["PROGRESS", "PROGRESS", "PROGRESS"],
+    inactiveDotValues: [1, 1],
       indicatorSize: { width: 10, height: 14 },
       indicatorControlOverflow: "hidden",
     visiblePlayButton: false,
@@ -388,12 +393,12 @@ test("dot navigation overlays centered progress-sized indicators", async ({
     bottomInset: 4,
     index: 2,
     currentIndex: "2",
-    progressCount: 1,
+    progressCount: 3,
     separated: true,
   });
 });
 
-test("dot indicators suppress button interaction visuals", async ({ page }) => {
+test("page buttons suppress interaction visuals", async ({ page }) => {
   await page.evaluate(async () => {
     const root = document.querySelector("#fixture-root")!;
     root.innerHTML = `
@@ -406,7 +411,7 @@ test("dot indicators suppress button interaction visuals", async ({ page }) => {
     await new Promise(requestAnimationFrame);
   });
 
-  const indicator = page.locator(".fig-carousel-indicator").first();
+  const indicator = page.locator(".fig-carousel-pages > fig-button").first();
   const visualState = () =>
     indicator.evaluate((element) => {
       const style = getComputedStyle(element);
@@ -439,11 +444,11 @@ test("dot indicators suppress button interaction visuals", async ({ page }) => {
   expect(pressed).toEqual(resting);
 });
 
-test("active and previous dot widths transition together", async ({ page }) => {
+test("active and previous page widths transition together", async ({ page }) => {
   const state = await page.evaluate(async () => {
     const root = document.querySelector("#fixture-root")!;
     root.innerHTML = `
-      <fig-carousel navigation="dots" autoplay="false" style="--fig-carousel-indicator-duration: 400ms">
+      <fig-carousel navigation="dots" autoplay="false" style="--fig-carousel-page-duration: 400ms">
         <fig-image></fig-image>
         <fig-image></fig-image>
         <fig-image></fig-image>
@@ -452,12 +457,12 @@ test("active and previous dot widths transition together", async ({ page }) => {
     await customElements.whenDefined("fig-carousel");
     await new Promise(requestAnimationFrame);
     const dots = [
-      ...document.querySelectorAll<HTMLElement>(".fig-carousel-dot"),
+      ...document.querySelectorAll<HTMLElement>(".fig-carousel-page"),
     ];
     const widths = () => dots.map((dot) => dot.getBoundingClientRect().width);
     const start = widths();
     document
-      .querySelectorAll<HTMLElement>(".fig-carousel-indicator")[1]
+      .querySelectorAll<HTMLElement>(".fig-carousel-pages > fig-button")[1]
       .click();
     await new Promise((resolve) => setTimeout(resolve, 100));
     const mid = widths();
@@ -475,11 +480,11 @@ test("active and previous dot widths transition together", async ({ page }) => {
   expect(state.end[2]).toBeCloseTo(state.end[0], 0);
 });
 
-test("incoming dot color interpolates from inactive to track", async ({ page }) => {
+test("incoming page color interpolates from inactive to track", async ({ page }) => {
   const state = await page.evaluate(async () => {
     const root = document.querySelector("#fixture-root")!;
     root.innerHTML = `
-      <fig-carousel navigation="dots" autoplay="false" style="--fig-carousel-indicator-duration: 400ms">
+      <fig-carousel navigation="dots" autoplay="false" style="--fig-carousel-page-duration: 400ms">
         <fig-image></fig-image>
         <fig-image></fig-image>
       </fig-carousel>
@@ -487,7 +492,7 @@ test("incoming dot color interpolates from inactive to track", async ({ page }) 
     await customElements.whenDefined("fig-carousel");
     await new Promise((resolve) => setTimeout(resolve, 450));
     const carousel = root.querySelector("fig-carousel")!;
-    const dots = [...carousel.querySelectorAll<HTMLElement>(".fig-carousel-dot")];
+    const dots = [...carousel.querySelectorAll<HTMLElement>(".fig-carousel-page")];
     const channels = (color: string) => {
       const values = color.match(/[\d.]+/g)?.map(Number) ?? [];
       if (values.length === 3) values.push(1);
@@ -499,11 +504,11 @@ test("incoming dot color interpolates from inactive to track", async ({ page }) 
       probe.style.backgroundColor = `var(${token})`;
       return getComputedStyle(probe).backgroundColor;
     };
-    const inactive = tokenColor("--fig-carousel-indicator-inactive-color");
-    const track = tokenColor("--fig-carousel-indicator-track");
+    const inactive = tokenColor("--fig-carousel-page-inactive-color");
+    const track = tokenColor("--fig-carousel-page-track");
     const incoming = dots[1];
     const start = getComputedStyle(incoming).backgroundColor;
-    carousel.querySelectorAll<HTMLElement>(".fig-carousel-indicator")[1].click();
+    carousel.querySelectorAll<HTMLElement>(".fig-carousel-pages > fig-button")[1].click();
     await new Promise((resolve) => setTimeout(resolve, 100));
     const mid = getComputedStyle(incoming).backgroundColor;
     await new Promise((resolve) => setTimeout(resolve, 400));
@@ -525,7 +530,7 @@ test("incoming dot color interpolates from inactive to track", async ({ page }) 
   expect(state.alphaAdvanced).toBe(true);
 });
 
-test("static dot navigation keeps the active pill without progress", async ({
+test("static page navigation keeps the active pill without progress", async ({
   page,
 }) => {
   const state = await page.evaluate(async () => {
@@ -540,7 +545,7 @@ test("static dot navigation keeps the active pill without progress", async ({
     await new Promise(requestAnimationFrame);
     const carousel = root.querySelector("fig-carousel")!;
     const dots = [
-      ...carousel.querySelectorAll<HTMLElement>(".fig-carousel-dot"),
+      ...carousel.querySelectorAll<HTMLElement>(".fig-carousel-page"),
     ].map((dot) => dot.getBoundingClientRect().width);
     return {
       progressCount: carousel.querySelectorAll("progress").length,
@@ -548,7 +553,7 @@ test("static dot navigation keeps the active pill without progress", async ({
     };
   });
 
-  expect(state).toEqual({ progressCount: 0, activeWider: true });
+  expect(state).toEqual({ progressCount: 2, activeWider: true });
 });
 
 test("progress starts as the pagination transition begins", async ({
@@ -557,7 +562,7 @@ test("progress starts as the pagination transition begins", async ({
   const state = await page.evaluate(async () => {
     const root = document.querySelector("#fixture-root")!;
     root.innerHTML = `
-      <fig-carousel id="carousel" navigation="dots" duration="2" style="--fig-carousel-indicator-duration: 400ms">
+      <fig-carousel id="carousel" navigation="dots" duration="2" style="--fig-carousel-page-duration: 400ms">
         <fig-image></fig-image>
         <fig-image></fig-image>
       </fig-carousel>
@@ -566,12 +571,12 @@ test("progress starts as the pagination transition begins", async ({
     await new Promise(requestAnimationFrame);
     const carousel = root.querySelector("fig-carousel")!;
     const indicators = [
-      ...carousel.querySelectorAll<HTMLElement>(".fig-carousel-indicator"),
+      ...carousel.querySelectorAll<HTMLElement>(".fig-carousel-pages > fig-button"),
     ];
     const widths = () =>
       indicators.map(
         (indicator) =>
-          indicator.querySelector(".fig-carousel-dot")!.getBoundingClientRect()
+          indicator.querySelector(".fig-carousel-page")!.getBoundingClientRect()
             .width,
       );
     const progressValues = () =>
@@ -582,20 +587,9 @@ test("progress starts as the pagination transition begins", async ({
       );
     const startWidths = widths();
     indicators[1].click();
-    const activeProgress =
-      indicators[1].querySelector<HTMLProgressElement>("progress")!;
-    const trackProbe = document.createElement("span");
-    trackProbe.style.background =
-      "var(--fig-carousel-indicator-track)";
-    carousel.append(trackProbe);
     const atStart = {
       widths: widths(),
       progress: progressValues(),
-      progressTrack: getComputedStyle(activeProgress).backgroundColor,
-      expectedTrack: getComputedStyle(trackProbe).backgroundColor,
-      progressBarMinWidth: getComputedStyle(activeProgress)
-        .getPropertyValue("--progress-bar-min-width")
-        .trim(),
     };
     await new Promise((resolve) => setTimeout(resolve, 100));
     return {
@@ -609,18 +603,16 @@ test("progress starts as the pagination transition begins", async ({
   });
 
   expect(state.startWidths[0]).toBeGreaterThan(state.startWidths[1]);
-  expect(state.atStart.progress[0]).toBeNull();
+  expect(state.atStart.progress[0]).toBe(1);
   expect(state.atStart.progress[1]).toBe(0);
-  expect(state.atStart.progressTrack).toBe(state.atStart.expectedTrack);
-  expect(state.atStart.progressBarMinWidth).toBe("0");
   expect(state.mid.widths[0]).toBeLessThan(state.startWidths[0]);
   expect(state.mid.widths[1]).toBeGreaterThan(state.startWidths[1]);
   expect(state.mid.widths[1]).toBeLessThan(state.startWidths[0]);
-  expect(state.mid.progress[0]).toBeNull();
+  expect(state.mid.progress[0]).toBe(1);
   expect(state.mid.progress[1]).toBeGreaterThan(0);
 });
 
-test("dot progress follows timed image progress", async ({ page }) => {
+test("page progress follows timed image progress", async ({ page }) => {
   await page.evaluate(async () => {
     const root = document.querySelector("#fixture-root")!;
     root.innerHTML = `
@@ -635,7 +627,8 @@ test("dot progress follows timed image progress", async ({ page }) => {
   await expect
     .poll(() =>
       page
-        .locator("#carousel .fig-carousel-indicator progress")
+        .locator("#carousel .fig-carousel-pages > fig-button progress")
+        .first()
         .evaluate((progress: HTMLProgressElement) => progress.value),
     )
     .toBeGreaterThan(0);
@@ -706,7 +699,7 @@ test("infers video duration, reports progress, and advances on ended", async ({
     const progress = playButton.getAttribute("progress");
     const duration = playButton.getAttribute("duration");
     const progressValue = carousel.querySelector<HTMLProgressElement>(
-      ".fig-carousel-indicator progress",
+      ".fig-carousel-pages > fig-button progress",
     )?.value;
     video.dispatchEvent(new Event("ended"));
     return {
@@ -758,7 +751,7 @@ test("uses animated GIF duration, progress, and completion", async ({ page }) =>
       duration: playButton.getAttribute("duration"),
       progress: playButton.getAttribute("progress"),
       dot: element.querySelector<HTMLProgressElement>(
-        ".fig-carousel-indicator progress",
+        ".fig-carousel-pages > fig-button progress",
       )?.value,
     };
   });
@@ -907,7 +900,7 @@ test("syncs dynamic children and pauses video on disconnect", async ({ page }) =
     await new Promise(requestAnimationFrame);
     const itemCount = carousel.items.length;
     const indicatorCount = carousel.querySelectorAll(
-      ".fig-carousel-indicator",
+      ".fig-carousel-pages > fig-button",
     ).length;
     carousel.remove();
     return {

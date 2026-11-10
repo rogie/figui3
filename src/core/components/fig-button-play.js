@@ -142,7 +142,7 @@ class FigButtonPlay extends HTMLElement {
     ring.append(track, progress);
 
     const button = document.createElement("fig-button");
-    button.setAttribute("variant", "secondary");
+    button.setAttribute("variant", "ghost");
     button.setAttribute("icon", "");
     button.setAttribute("pill", "");
     const icon = createFigIcon("play");
@@ -162,7 +162,7 @@ class FigButtonPlay extends HTMLElement {
     this.#icon.setAttribute("name", playing ? "pause" : "play");
     this.#button.setAttribute(
       "variant",
-      this.getAttribute("variant") || "secondary",
+      this.getAttribute("variant") || "ghost",
     );
 
     const size = this.getAttribute("size");

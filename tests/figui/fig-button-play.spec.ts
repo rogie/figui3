@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(() => customElements.whenDefined("fig-button-play"));
 });
 
-test("embeds a secondary pill icon button and forwards variants", async ({
+test("embeds a ghost pill icon button and forwards variants", async ({
   page,
 }) => {
   const result = await page.evaluate(() => {
@@ -22,7 +22,7 @@ test("embeds a secondary pill icon button and forwards variants", async ({
       iconName: icon?.getAttribute("name"),
       label: button?.getAttribute("aria-label"),
     };
-    control.setAttribute("variant", "ghost");
+    control.setAttribute("variant", "secondary");
     control.setAttribute("playing", "");
     return {
       initial,
@@ -34,13 +34,13 @@ test("embeds a secondary pill icon button and forwards variants", async ({
 
   expect(result).toEqual({
     initial: {
-      variant: "secondary",
+      variant: "ghost",
       icon: true,
       pill: true,
       iconName: "play",
       label: "Play",
     },
-    forwardedVariant: "ghost",
+    forwardedVariant: "secondary",
     playingIcon: "pause",
     playingLabel: "Pause",
   });
