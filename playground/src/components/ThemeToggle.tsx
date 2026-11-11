@@ -10,8 +10,6 @@ interface Props {
   setTheme: (dark: boolean) => void;
   includeEditorControls: boolean;
   setIncludeEditorControls: (include: boolean) => void;
-  /** When true, About content lives in this popover instead of the nav title. */
-  aboutInSettings?: boolean;
 }
 
 export default function ThemeToggle({
@@ -19,7 +17,6 @@ export default function ThemeToggle({
   setTheme,
   includeEditorControls,
   setIncludeEditorControls,
-  aboutInSettings = false,
 }: Props) {
   const tooltip = isDark ? "Switch to light mode" : "Switch to dark mode";
   const toggleTheme = () => setTheme(!isDark);
@@ -83,11 +80,7 @@ export default function ThemeToggle({
         ref={popupRef}
         {...popupAttrs}
         open={preferencesOpen ? true : undefined}
-        className={
-          aboutInSettings
-            ? "preferences-popup preferences-popup--with-about"
-            : "preferences-popup"
-        }
+        className="preferences-popup"
         aria-labelledby="preferences-popup-title"
       >
         <fig-header>
@@ -109,14 +102,10 @@ export default function ThemeToggle({
               onChange={handleModeChange}
             ></fig-options>
           </fig-field>
-          {aboutInSettings ? (
-            <>
-              <fig-separator />
-              <fig-group name="About" compact open>
-                <InfoAboutContent />
-              </fig-group>
-            </>
-          ) : null}
+          <fig-separator />
+          <fig-group name="About" compact open>
+            <InfoAboutContent />
+          </fig-group>
         </fig-content>
       </dialog>
     </fig-stack>

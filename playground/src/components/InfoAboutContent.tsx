@@ -26,7 +26,7 @@ type InfoLink = {
 const PLAYGROUND_URL = "https://rog.ie/figui3";
 const AUTHOR_URL = "https://rog.ie";
 
-/** Shared About body for the title popup and Preferences → About section. */
+/** About body inside Preferences → About group. */
 export default function InfoAboutContent() {
   const buildCopyTooltipRef = useRef<HTMLElement>(null);
   const { showCopyTooltip } = useCopyTooltip();

@@ -7,8 +7,6 @@ import React, {
 } from "react";
 import type { Section } from "../data/sections";
 import ThemeToggle from "./ThemeToggle";
-import InfoPopup from "./InfoPopup";
-import { getAboutPlacement } from "../lib/aboutPlacement";
 import { copyText } from "../lib/prompt";
 import { INSTALL_COMMAND, INSTALL_PROMPT } from "../lib/installPrompt";
 import { useCopyTooltip } from "../hooks/useCopyTooltip";
@@ -60,10 +58,6 @@ export default function Nav({
   const promptCopyTooltipRef = useRef<HTMLElement>(null);
   const { showCopyTooltip } = useCopyTooltip();
   const [searchQuery, setSearchQuery] = useState("");
-  const aboutInSettings = useMemo(
-    () => getAboutPlacement() === "settings",
-    [],
-  );
   const normalizedSearch = searchQuery.trim().toLocaleLowerCase();
   const filteredSections = useMemo(() => {
     if (!normalizedSearch) return sections;
@@ -243,17 +237,12 @@ export default function Nav({
   return (
     <nav>
       <fig-header borderless>
-        {aboutInSettings ? (
-          <h1>{appTitle}</h1>
-        ) : (
-          <InfoPopup appTitle={appTitle} isDark={isDark} />
-        )}
+        <h1>{appTitle}</h1>
         <ThemeToggle
           isDark={isDark}
           setTheme={setTheme}
           includeEditorControls={includeEditorControls}
           setIncludeEditorControls={setIncludeEditorControls}
-          aboutInSettings={aboutInSettings}
         />
       </fig-header>
       <fig-header className="nav-search-header">

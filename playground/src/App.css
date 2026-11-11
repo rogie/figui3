@@ -122,9 +122,7 @@ nav {
     justify-content: space-between;
     padding-right: var(--spacer-2);
 
-    /* Live propskit uses fig-header > h1; playground wraps title in .nav-title-trigger. */
-    > h1,
-    .nav-title-trigger h1 {
+    > h1 {
       font-size: var(--text-heading-small-font-size);
       font-weight: var(--text-heading-small-font-weight);
       line-height: var(--text-heading-small-line-height);
@@ -171,67 +169,13 @@ nav {
   gap: var(--spacer-1);
 }
 
-.nav-title-info {
-  padding: 0;
-  gap: var(--spacer-1);
-  align-items: center;
-}
-
-/* Single hit-target for title + about icon (shared hover/press). */
-.nav-title-trigger {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacer-1);
-  margin: 0;
-  padding: 0 var(--spacer-1) 0 var(--spacer-2);
-  border: 0;
-  border-radius: var(--radius-medium);
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-
-  h1 {
-    margin: 0;
-  }
-
-  svg {
-    width: var(--spacer-4);
-    height: var(--spacer-4);
-    flex-shrink: 0;
-
-    *[fill]:not([fill="none"]) {
-      fill: currentColor;
-    }
-
-    *[stroke]:not([stroke="none"]) {
-      stroke: currentColor;
-    }
-  }
-
-  &:hover {
-    background-color: var(--figma-color-bg-transparent-hover);
-  }
-
-  &:active {
-    background-color: var(--figma-color-bg-transparent-pressed);
-  }
-}
-
 .preferences-popup {
-  width: 180px;
+  width: 240px;
   padding: var(--spacer-2);
 
   fig-field {
     width: 100%;
   }
-}
-
-/* About section merged into Preferences (`?about=settings`). */
-.preferences-popup--with-about {
-  width: 240px;
 
   > fig-content > fig-separator {
     --fig-separator-margin-block: var(--spacer-1);
@@ -264,36 +208,6 @@ nav {
     > fig-separator {
       --fig-separator-margin-block: var(--spacer-2);
     }
-  }
-}
-
-.info-popup {
-  /* Narrower than default field popups; still fits version + credit lines. */
-  width: 240px;
-  padding: var(--spacer-2);
-
-  fig-content {
-    padding-block: var(--spacer-2);
-
-    > p:not(.info-build-text) {
-      margin-block: 0 var(--spacer-1);
-      color: var(--figma-color-text-secondary);
-      line-height: 1.4;
-    }
-
-    a {
-      color: var(--figma-color-text-brand);
-      text-decoration: none;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-
-    > fig-separator {
-      --fig-separator-margin-block: var(--spacer-2);
-    }
-
   }
 }
 
