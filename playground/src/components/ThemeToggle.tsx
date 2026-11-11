@@ -3,12 +3,15 @@ import SunIcon from "../icons/sun.svg?react";
 import MoonIcon from "../icons/moon.svg?react";
 import AdjustIcon from "../icons/icon.24.adjust.svg?react";
 import { useFigPopupAnchor } from "../hooks/useFigPopupAnchor";
+import InfoAboutContent from "./InfoAboutContent";
 
 interface Props {
   isDark: boolean;
   setTheme: (dark: boolean) => void;
   includeEditorControls: boolean;
   setIncludeEditorControls: (include: boolean) => void;
+  /** When true, About content lives in this popover instead of the nav title. */
+  aboutInSettings?: boolean;
 }
 
 export default function ThemeToggle({
@@ -16,6 +19,7 @@ export default function ThemeToggle({
   setTheme,
   includeEditorControls,
   setIncludeEditorControls,
+  aboutInSettings = false,
 }: Props) {
   const tooltip = isDark ? "Switch to light mode" : "Switch to dark mode";
   const toggleTheme = () => setTheme(!isDark);
@@ -79,7 +83,11 @@ export default function ThemeToggle({
         ref={popupRef}
         {...popupAttrs}
         open={preferencesOpen ? true : undefined}
-        className="preferences-popup"
+        className={
+          aboutInSettings
+            ? "preferences-popup preferences-popup--with-about"
+            : "preferences-popup"
+        }
         aria-labelledby="preferences-popup-title"
       >
         <fig-header>
@@ -101,6 +109,14 @@ export default function ThemeToggle({
               onChange={handleModeChange}
             ></fig-options>
           </fig-field>
+          {aboutInSettings ? (
+            <>
+              <fig-separator />
+              <fig-group name="About" compact open>
+                <InfoAboutContent />
+              </fig-group>
+            </>
+          ) : null}
         </fig-content>
       </dialog>
     </fig-stack>

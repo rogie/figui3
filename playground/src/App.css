@@ -122,7 +122,9 @@ nav {
     justify-content: space-between;
     padding-right: var(--spacer-2);
 
-    > h1 {
+    /* Live propskit uses fig-header > h1; playground wraps title in .nav-title-trigger. */
+    > h1,
+    .nav-title-trigger h1 {
       font-size: var(--text-heading-small-font-size);
       font-weight: var(--text-heading-small-font-weight);
       line-height: var(--text-heading-small-line-height);
@@ -227,14 +229,45 @@ nav {
   }
 }
 
+/* About section merged into Preferences (`?about=settings`). */
+.preferences-popup--with-about {
+  width: 240px;
+
+  > fig-content > fig-separator {
+    --fig-separator-margin-block: var(--spacer-1);
+  }
+
+  fig-group[name="About"] {
+    padding-bottom: var(--spacer-2);
+
+    > fig-header {
+      --fig-header-height: var(--spacer-5);
+      height: var(--spacer-5);
+      padding-block: 0;
+    }
+
+    .info-about {
+      padding-top: 0;
+    }
+  }
+}
+
 .info-popup {
   /* Narrower than default field popups; still fits version + credit lines. */
   width: 240px;
   padding: var(--spacer-2);
 
+  > fig-header > h3 {
+    padding-left: var(--spacer-3);
+  }
+}
+
+/* Shared About body in info popup or Preferences → About group. */
+.info-about {
   .info-popup-intro {
     padding-inline: var(--spacer-3);
-    margin-bottom: var(--spacer-2);
+    /* Tighter gap before “Crafted by” credit line. */
+    margin-bottom: var(--spacer-1);
 
     p {
       margin: 0;
