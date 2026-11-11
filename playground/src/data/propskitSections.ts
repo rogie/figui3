@@ -298,7 +298,7 @@ const audioEmptySource = createMediaSource("Audio", `{
 const audioUrlSource = createMediaSource("Audio", `{
   audio: {
     type: "audio",
-    default: "/audio/skrillex-ft-elliphant.mp3"
+    default: "https://samplelib.com/mp3/sample-15s.mp3"
   }
 }`);
 
@@ -664,7 +664,7 @@ export const propskitSections: PropsKitSection[] = [
         createConfig: () => ({
           audio: {
             type: "audio",
-            default: "/audio/skrillex-ft-elliphant.mp3",
+            default: "https://samplelib.com/mp3/sample-15s.mp3",
           },
         }),
       },

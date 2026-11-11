@@ -427,6 +427,20 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "previous-next",
+        name: "Previous and next",
+        markup: `<div class="prop-panel">
+  <fig-button-combo>
+    <fig-button variant="secondary" icon aria-label="Previous">
+      <fig-icon name="chevron" style="transform: rotate(90deg);"></fig-icon>
+    </fig-button>
+    <fig-button variant="secondary" icon aria-label="Next">
+      <fig-icon name="chevron" style="transform: rotate(-90deg);"></fig-icon>
+    </fig-button>
+  </fig-button-combo>
+</div>`,
+      },
+      {
         id: "button-menu",
         name: "Button menu",
         markup: `<div class="prop-panel">
@@ -1464,7 +1478,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Audio</label>
-    <fig-input-file accepts="audio/*" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
+    <fig-input-file accepts="audio/*" preview url="https://samplelib.com/mp3/sample-15s.mp3" filename="sample-15s.mp3" full></fig-input-file>
   </fig-field>
 </div>`,
       },
@@ -2148,7 +2162,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "animated-gif",
         name: "Animated GIF",
         markup: `<div class="prop-panel">
-  <fig-image src="/images/gifs/favorite-facts.gif" alt="Calculating equations" controls aspect-ratio="4/3" fit="cover" full></fig-image>
+  <fig-image src="https://media.giphy.com/media/WRQBXSCnEFJIuxktnw/giphy.gif" alt="Calculating equations" controls aspect-ratio="4/3" fit="cover" full></fig-image>
 </div>`,
       },
       {
@@ -2288,14 +2302,14 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-audio src="/audio/skrillex-ft-elliphant.mp3" controls></fig-audio>
+  <fig-audio src="https://samplelib.com/mp3/sample-15s.mp3" controls></fig-audio>
 </div>`,
       },
       {
         id: "looping",
         name: "Looping",
         markup: `<div class="prop-panel">
-  <fig-audio src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" controls loop></fig-audio>
+  <fig-audio src="https://samplelib.com/mp3/sample-15s.mp3" controls loop></fig-audio>
 </div>`,
       },
     ],
@@ -2396,9 +2410,9 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         name: "Animated GIF",
         markup: `<div class="prop-panel">
   <fig-carousel navigation="dots" loop>
-    <fig-image src="/images/gifs/kid-unamused.gif" alt="Unamused kid" aspect-ratio="4/3" fit="cover" full></fig-image>
-    <fig-image src="/images/gifs/favorite-facts.gif" alt="Calculating equations" aspect-ratio="4/3" fit="cover" full></fig-image>
-    <fig-image src="/images/gifs/its-been-84-years.gif" alt="It's been 84 years" aspect-ratio="4/3" fit="cover" full></fig-image>
+    <fig-image src="https://media.giphy.com/media/3o7TKTDn976rzVgky4/giphy.gif" alt="Unamused kid" aspect-ratio="4/3" fit="cover" full></fig-image>
+    <fig-image src="https://media.giphy.com/media/WRQBXSCnEFJIuxktnw/giphy.gif" alt="Calculating equations" aspect-ratio="4/3" fit="cover" full></fig-image>
+    <fig-image src="https://media.giphy.com/media/FoH28ucxZFJZu/giphy.gif" alt="It's been 84 years" aspect-ratio="4/3" fit="cover" full></fig-image>
   </fig-carousel>
 </div>`,
       },
@@ -2884,14 +2898,14 @@ ${versionHistoryGroup("August 11", [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-audio-waveform url="/audio/skrillex-ft-elliphant.mp3" progress="0.35" full></fig-audio-waveform>
+  <fig-audio-waveform url="https://samplelib.com/mp3/sample-15s.mp3" progress="0.35" full></fig-audio-waveform>
 </div>`,
       },
       {
         id: "ribbon",
         name: "Ribbon",
         markup: `<div class="prop-panel">
-  <fig-audio-waveform variant="ribbon" url="/audio/skrillex-ft-elliphant.mp3" progress="0.35" full></fig-audio-waveform>
+  <fig-audio-waveform variant="ribbon" url="https://samplelib.com/mp3/sample-15s.mp3" progress="0.35" full></fig-audio-waveform>
 </div>`,
       },
     ],

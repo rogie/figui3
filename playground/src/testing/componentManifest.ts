@@ -394,7 +394,7 @@ export const componentContracts: ComponentContract[] = [
     tag: "fig-audio",
     title: "Audio",
     group: "media",
-    markup: `<fig-audio src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" controls></fig-audio>`,
+    markup: `<fig-audio src="https://samplelib.com/mp3/sample-15s.mp3" controls></fig-audio>`,
     attributes: [
       { name: "variant", attribute: "variant", value: "ribbon" },
       { name: "muted", attribute: "muted", value: "" },

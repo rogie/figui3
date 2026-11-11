@@ -171,8 +171,11 @@ function createDefaultFieldControl(
     input.setAttribute("accepts", "audio/*");
     input.setAttribute("label", "Choose audio");
     input.setAttribute("preview", "");
-    input.setAttribute("url", "/audio/skrillex-ft-elliphant.mp3");
-    input.setAttribute("filename", "skrillex-ft-elliphant.mp3");
+    input.setAttribute(
+      "url",
+      "https://samplelib.com/mp3/sample-15s.mp3",
+    );
+    input.setAttribute("filename", "sample-15s.mp3");
     input.setAttribute("full", "");
     return input;
   }

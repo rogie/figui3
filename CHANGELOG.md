@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.6]
+
+### Added
+
+- Added a previous/next secondary icon button-combo example.
+
+### Changed
+
+- Replaced bundled playground GIF and audio fixtures with CORS-enabled hosted samples.
+
 ## [11.11.5]
 
 ### Changed

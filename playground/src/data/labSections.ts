@@ -133,7 +133,7 @@ const ungroupedLabSections: Section[] = [
         name: "Audio",
         markup: `<div class="prop-panel">
   <fig-property label="Audio" activation="row">
-    <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" default-url="/audio/skrillex-ft-elliphant.mp3" default-filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
+    <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="https://samplelib.com/mp3/sample-15s.mp3" filename="sample-15s.mp3" default-url="https://samplelib.com/mp3/sample-15s.mp3" default-filename="sample-15s.mp3" full></fig-input-file>
   </fig-property>
 </div>`,
       },
@@ -212,7 +212,7 @@ const ungroupedLabSections: Section[] = [
       <fig-input-file slot="input" label="Choose file" default-url="" default-filename="" full></fig-input-file>
     </fig-property>
     <fig-property label="Audio" activation="row">
-      <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" default-url="/audio/skrillex-ft-elliphant.mp3" default-filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
+      <fig-input-file slot="input" accepts="audio/*" label="Choose audio" preview url="https://samplelib.com/mp3/sample-15s.mp3" filename="sample-15s.mp3" default-url="https://samplelib.com/mp3/sample-15s.mp3" default-filename="sample-15s.mp3" full></fig-input-file>
     </fig-property>
   </fig-group>
 </div>`,

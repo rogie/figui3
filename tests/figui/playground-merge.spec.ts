@@ -439,7 +439,9 @@ test("PropsKit media splits image, video, and audio examples", () => {
   });
   expect(
     section?.examples.find((example) => example.id === "audio-url")?.markup,
-  ).toContain('/audio/skrillex-ft-elliphant.mp3');
+  ).toContain(
+    "https://samplelib.com/mp3/sample-15s.mp3",
+  );
 });
 
 test("Carousel is the final section in the Media group", () => {
@@ -632,7 +634,7 @@ test("property all-properties example covers every supported control", () => {
     '<fig-property label="Audio" activation="row">',
   );
   expect(rowExample?.markup).toContain(
-    'accepts="audio/*" label="Choose audio" preview url="/audio/skrillex-ft-elliphant.mp3"',
+    'accepts="audio/*" label="Choose audio" preview url="https://samplelib.com/mp3/sample-15s.mp3"',
   );
   expect(section?.examples.map((entry) => entry.id)).toEqual([
     "default",
