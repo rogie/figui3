@@ -103,7 +103,7 @@ export default function ThemeToggle({
             ></fig-options>
           </fig-field>
           <fig-separator />
-          <fig-group name="About" compact open>
+          <fig-group name="About" compact>
             <InfoAboutContent />
           </fig-group>
         </fig-content>

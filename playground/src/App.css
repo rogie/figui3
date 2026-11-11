@@ -123,6 +123,9 @@ nav {
     padding-right: var(--spacer-2);
 
     > h1 {
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 0;
       font-size: var(--text-heading-small-font-size);
       font-weight: var(--text-heading-small-font-weight);
       line-height: var(--text-heading-small-line-height);
@@ -211,8 +214,8 @@ nav {
   }
 }
 
-/* About link row + build metadata (fig-content / fig-group children). */
-.info-popup-links {
+/* About link row + build metadata (Preferences → About group). */
+.info-about-links {
   padding-inline: var(--spacer-3);
   margin-block: var(--spacer-2);
   gap: var(--spacer-1);

@@ -79,7 +79,7 @@ export default function InfoAboutContent() {
           </a>
         </p>
       ) : null}
-      <fig-stack className="info-popup-links">
+      <fig-stack className="info-about-links">
         {links.map(({ id, label, href, Icon }) => (
           <fig-tooltip key={id} text={label}>
             <fig-button
@@ -101,7 +101,7 @@ export default function InfoAboutContent() {
           v{version}{" "}
           <span className="info-build-timestamp">
             ({date}, {time})
-          </span>{" "}
+          </span>
           <span className="info-build-revision">{revisionLine}</span>
         </p>
         <fig-tooltip ref={buildCopyTooltipRef} text="Copy build info">
