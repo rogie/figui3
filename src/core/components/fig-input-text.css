@@ -1,0 +1,212 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+:is(fig-input-text, fig-input-number) {
+  background-color: var(--figma-color-bg-secondary);
+  border: 0;
+  border-radius: var(--radius-medium);
+  display: inline-flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  user-select: all;
+  gap: 0;
+  min-width: 0;
+  flex: 0 1 auto;
+  color: var(--figma-color-text);
+  width: 8.9375rem;
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    flex: 1;
+    width: 100%;
+  }
+
+  &[tabular]:not([tabular="false"]) {
+    font-variant-numeric: tabular-nums;
+
+    & input {
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  &[size="large"] {
+    & > input,
+    & > textarea {
+      padding: var(--spacer-2);
+    }
+
+    & > [slot="prepend"] {
+      min-width: var(--spacer-5);
+    }
+  }
+
+  &[multiline]:not([multiline="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  &[autoresize]:not([autoresize="false"]) :is(input, textarea) {
+    field-sizing: content;
+  }
+
+  &[resizable]:not([resizable="false"]) :is(input, textarea) {
+    resize: both;
+  }
+
+  &[resizable]:not([resizable="false"]):has(textarea[style*="width"]),
+  &[resizable]:not([resizable="false"]):has(textarea[style*="height"]),
+  &[resizable]:not([resizable="false"]):has(input[style*="width"]),
+  &[resizable]:not([resizable="false"]):has(input[style*="height"]) {
+    flex: unset;
+  }
+
+  & label,
+  & [slot] {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  & [slot] {
+    user-select: none;
+    width: 1.5rem;
+    color: var(--figma-color-text-secondary);
+  }
+
+  & [slot="prepend"] {
+    order: 0;
+    padding-right: 0;
+    color: var(--figma-color-text-secondary);
+    margin-right: calc(var(--spacer-2) * -1);
+  }
+
+  & > fig-icon[slot="prepend"] {
+    color: var(--figma-color-icon-secondary);
+  }
+
+  & [slot="append"] {
+    order: 2;
+    padding-left: 0;
+    margin-left: calc(var(--spacer-2) * -1);
+
+    &[size="large"] {
+      height: var(--spacer-5);
+      min-width: var(--spacer-5);
+    }
+  }
+
+  &[type="search"]:not([data-search-has-value])
+    [data-generated="search-clear"] {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  &[type="search"] > fig-icon[data-generated="search-prefix"] {
+    color: var(--figma-color-icon-secondary);
+  }
+
+  &[type="search"]:focus-within > fig-icon[data-generated="search-prefix"] {
+    color: var(--figma-color-icon);
+  }
+
+  & [slot="prepend"],
+  & [slot="append"] {
+    svg {
+      *[fill]:not([fill="none"]) {
+        fill: currentColor;
+      }
+
+      *[stroke]:not([stroke="none"]) {
+        stroke: currentColor;
+      }
+    }
+  }
+
+  & input,
+  & textarea {
+    order: 1;
+    background-color: transparent !important;
+    flex: 1;
+
+    &:focus,
+    &:focus-visible,
+    &:active {
+      outline: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+
+  & input[type="text"]:focus,
+  & input[type="text"]:focus-visible,
+  & input[type="text"]:active {
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  & input[type="search"] {
+    appearance: textfield;
+
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration,
+    &::-webkit-search-results-button,
+    &::-webkit-search-results-decoration {
+      appearance: none;
+      display: none;
+    }
+  }
+
+  &:focus,
+  &:focus-visible,
+  &:has(:is(input, textarea):focus-visible) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &:hover {
+    box-shadow: inset 0 0 0 1px var(--figma-color-border);
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    background-color: var(--figma-color-bg);
+    pointer-events: none;
+    cursor: not-allowed;
+    color: var(--figma-color-text-disabled);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-disabled);
+
+    & [slot] {
+      color: var(--figma-color-text-disabled);
+    }
+  }
+
+  &[readonly] {
+    background-color: var(--figma-color-bg);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-disabled);
+  }
+
+  &:is(fig-input-number)[variant="ghost"] {
+    background-color: transparent;
+    box-shadow: none;
+
+    &:hover {
+      box-shadow: none;
+    }
+
+    &:is(:hover, :focus-within):not([disabled]):not([disabled="false"]) {
+      background-color: var(--figma-color-bg-secondary);
+    }
+
+    &[disabled]:not([disabled="false"]) {
+      background-color: transparent;
+      box-shadow: none;
+    }
+  }
+}
+
+fig-input-number > [slot],
+fig-input-text[type="number"] > [slot] {
+  cursor: ew-resize !important;
+}

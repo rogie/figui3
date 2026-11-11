@@ -139,6 +139,39 @@ const inputSliderAttributeRules: AttributeRuleSet = {
 };
 
 export const controlAttributeRules: Record<string, AttributeRuleSet> = {
+  "fig-stack": {
+    direction: {
+      label: "Direction",
+      type: "enum",
+      options: ["horizontal", "vertical", "grid"],
+    },
+    gap: { label: "Gap", type: "string" },
+    align: {
+      label: "Align",
+      type: "enum",
+      options: ["", "start", "center", "end", "stretch", "baseline"],
+    },
+    justify: {
+      label: "Justify",
+      type: "enum",
+      options: ["", "start", "center", "end", "between", "around", "stretch"],
+    },
+    wrap: { label: "Wrap", type: "boolean", boolMode: "presence" },
+    full: { label: "Full", type: "boolean", boolMode: "presence" },
+    columns: { label: "Columns", type: "string" },
+    "min-width": { label: "Minimum width", type: "string" },
+  },
+  "fig-tab": {
+    value: { label: "Value", type: "string" },
+    content: { label: "Content selector", type: "string" },
+    selected: { label: "Selected", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
+  "fig-choice": {
+    value: { label: "Value", type: "string" },
+    selected: { label: "Selected", type: "boolean", boolMode: "presence" },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-button": {
     variant: {
       label: "Variant",
@@ -175,6 +208,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     icon: { label: "Icon", type: "boolean", boolMode: "presence" },
+    pill: { label: "Pill", type: "boolean", boolMode: "presence" },
   },
   "fig-dropdown": {
     value: { label: "Value", type: "string" },
@@ -375,9 +409,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     upload: {
       label: "Upload",
-      type: "boolean",
-      boolMode: "presence",
-      defaultChecked: false,
+      type: "enum",
+      options: ["", "true", "icon", "false"],
     },
     "loading-indicator": {
       label: "Loading indicator",
@@ -386,6 +419,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       defaultChecked: true,
     },
     checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
+    controls: {
+      label: "Controls",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: false,
+    },
+    autoplay: { label: "Autoplay", type: "boolean", boolMode: "string" },
+    loop: { label: "Loop", type: "boolean", boolMode: "string" },
   },
   "fig-card": {
     src: { label: "Src", type: "string" },
@@ -427,9 +468,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     upload: {
       label: "Upload",
-      type: "boolean",
-      boolMode: "presence",
-      defaultChecked: false,
+      type: "enum",
+      options: ["", "true", "icon", "false"],
     },
     "loading-indicator": {
       label: "Loading indicator",
@@ -449,6 +489,36 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     muted: { label: "Muted", type: "boolean", boolMode: "string" },
     poster: { label: "Poster", type: "string" },
   },
+  "fig-carousel": {
+    index: { label: "Index", type: "number", min: 0, max: 20, step: 1 },
+    playing: { label: "Playing", type: "boolean", boolMode: "presence" },
+    autoplay: {
+      label: "Autoplay",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+    duration: {
+      label: "Duration",
+      type: "number",
+      min: 0.1,
+      max: 60,
+      step: 0.1,
+      units: "s",
+    },
+    loop: { label: "Loop", type: "boolean", boolMode: "presence" },
+    navigation: {
+      label: "Navigation",
+      type: "enum",
+      options: ["buttons", "dots"],
+    },
+    progress: {
+      label: "Progress",
+      type: "boolean",
+      boolMode: "string",
+      defaultChecked: true,
+    },
+  },
   "fig-video": {
     caption: { label: "Caption", type: "string" },
     "aspect-ratio": aspectRatioRule,
@@ -459,9 +529,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     },
     upload: {
       label: "Upload",
-      type: "boolean",
-      boolMode: "presence",
-      defaultChecked: false,
+      type: "enum",
+      options: ["", "true", "icon", "false"],
     },
     checkerboard: { label: "Checkered", type: "boolean", boolMode: "string" },
     controls: {
@@ -484,6 +553,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-audio": {
     src: { label: "Audio file", type: "string" },
+    variant: {
+      label: "Waveform",
+      type: "enum",
+      options: ["bars", "ribbon"],
+    },
     autoplay: { label: "Autoplay", type: "boolean", boolMode: "string" },
     controls: {
       label: "Controls",
@@ -676,6 +750,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   },
   "fig-audio-waveform": {
     url: { label: "Audio file", type: "string" },
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: ["bars", "ribbon"],
+    },
     progress: {
       label: "Progress",
       type: "number",
@@ -1115,6 +1194,41 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
   "fig-spinner": {
     size: { label: "Size", type: "enum", options: ["default", "small"] },
   },
+  "fig-button-play": {
+    playing: { label: "Playing", type: "boolean", boolMode: "presence" },
+    duration: {
+      label: "Duration",
+      type: "number",
+      min: 0.1,
+      max: 60,
+      step: 0.1,
+      units: "s",
+    },
+    progress: {
+      label: "Progress",
+      type: "number",
+      min: 0,
+      max: 1,
+      step: 0.05,
+    },
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: [
+        "secondary",
+        "primary",
+        "ghost",
+        "destructive",
+        "destructiveSecondary",
+      ],
+    },
+    size: {
+      label: "Size",
+      type: "enum",
+      options: ["", "compact", "large"],
+    },
+    disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
+  },
   "fig-shimmer": {
     duration: {
       label: "Duration",
@@ -1283,6 +1397,9 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     value: { label: "Value", type: "number", min: 0, max: 100, step: 1 },
     max: { label: "Max", type: "number", min: 1, max: 100, step: 1 },
   },
+  meter: {
+    value: { label: "Value", type: "number", min: 0, max: 100, step: 0.1 },
+  },
   "fig-canvas-control": {
     type: {
       label: "Type",
@@ -1362,6 +1479,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-truncate": {
+    overflow: { label: "Overflow", type: "enum", options: ["ellipsis", "fade"] },
+    text: { label: "Text", type: "string" },
     position: { label: "Position", type: "enum", options: ["right", "left", "middle"] },
     tail: { label: "Tail", type: "string" },
     tooltip: { label: "Tooltip", type: "boolean", boolMode: "presence" },

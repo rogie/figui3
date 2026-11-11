@@ -1,4 +1,8 @@
-/* Copyright (c) 2026 Rogie King. PolyForm Shield 1.0.0. See LICENSE. */
+/*!
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
 
 const COLOR_SPACES = new Set(["srgb", "display-p3"]);
 const EPSILON = 1e-7;

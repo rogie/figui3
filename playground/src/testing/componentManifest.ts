@@ -54,6 +54,24 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
   },
   {
+    tag: "fig-button-play",
+    title: "Play Button",
+    group: "input",
+    markup: `<fig-button-play duration="5"></fig-button-play>`,
+    attributes: [
+      { name: "controlled progress", attribute: "progress", value: "0.5" },
+      { name: "disabled", attribute: "disabled", value: "" },
+    ],
+    properties: [
+      {
+        name: "progress property",
+        property: "progress",
+        value: 0.75,
+        expected: 0.75,
+      },
+    ],
+  },
+  {
     tag: "fig-dropdown",
     title: "Dropdown",
     group: "input",
@@ -72,8 +90,8 @@ export const componentContracts: ComponentContract[] = [
     tag: "fig-truncate",
     title: "Truncate",
     group: "display",
-    markup: `<fig-truncate>This is a long string of text</fig-truncate>`,
-    attributes: [{ name: "tail", attribute: "tail", value: "true" }],
+    markup: `<fig-truncate text="This is a long string of text"></fig-truncate>`,
+    attributes: [{ name: "text", attribute: "text", value: "Updated text" }],
   },
   {
     tag: "fig-dialog",
@@ -339,6 +357,21 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "fit", attribute: "fit", value: "contain" }],
   },
   {
+    tag: "fig-carousel",
+    title: "Carousel",
+    group: "media",
+    markup: `<fig-carousel autoplay="false"><fig-image src="https://picsum.photos/320/180.webp?random=20" full></fig-image><fig-image src="https://picsum.photos/320/180.webp?random=21" full></fig-image></fig-carousel>`,
+    attributes: [
+      { name: "duration", attribute: "duration", value: "8" },
+      { name: "loop", attribute: "loop", value: "" },
+      { name: "dot navigation", attribute: "navigation", value: "dots" },
+      { name: "static progress", attribute: "progress", value: "false" },
+    ],
+    properties: [
+      { name: "index property", property: "index", value: 1, expected: 1 },
+    ],
+  },
+  {
     tag: "fig-card",
     title: "Card",
     group: "media",
@@ -363,6 +396,7 @@ export const componentContracts: ComponentContract[] = [
     group: "media",
     markup: `<fig-audio src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" controls></fig-audio>`,
     attributes: [
+      { name: "variant", attribute: "variant", value: "ribbon" },
       { name: "muted", attribute: "muted", value: "" },
       { name: "loop", attribute: "loop", value: "" },
     ],
@@ -380,6 +414,7 @@ export const componentContracts: ComponentContract[] = [
     group: "display",
     markup: `<fig-audio-waveform></fig-audio-waveform>`,
     attributes: [
+      { name: "variant", attribute: "variant", value: "ribbon" },
       { name: "progress", attribute: "progress", value: "0.5" },
       { name: "polarization", attribute: "polarization", value: "3" },
       { name: "full", attribute: "full", value: "" },
@@ -467,6 +502,16 @@ export const componentContracts: ComponentContract[] = [
     attributes: [
       { name: "open", attribute: "open", value: "" },
       { name: "chevron", attribute: "chevron", value: "end" },
+    ],
+  },
+  {
+    tag: "fig-stack",
+    title: "Stack",
+    group: "layout",
+    markup: `<fig-stack direction="horizontal" gap="2"><span>One</span><span>Two</span></fig-stack>`,
+    attributes: [
+      { name: "direction", attribute: "direction", value: "vertical" },
+      { name: "gap", attribute: "gap", value: "3" },
     ],
   },
   {
@@ -570,9 +615,70 @@ export const componentContracts: ComponentContract[] = [
     markup: `<fig-menu><fig-button slot="trigger">Menu</fig-button><fig-menu-item>Item</fig-menu-item><fig-separator></fig-separator><fig-menu-item>Other</fig-menu-item></fig-menu>`,
     attributes: [{ name: "open", attribute: "open", value: "" }],
   },
+  {
+    tag: "fig-property",
+    title: "Property",
+    group: "layout",
+    markup: `<fig-property label="Opacity"><fig-input-number slot="input" value="50"></fig-input-number></fig-property>`,
+    attributes: [{ name: "ratio", attribute: "ratio", value: "1:1" }],
+  },
 ];
 
 export const editorComponentContracts: ComponentContract[] = [
+  {
+    tag: "fig-select-option",
+    title: "Select Option",
+    group: "input",
+    markup: `<fig-select-option value="one">One</fig-select-option>`,
+    attributes: [{ name: "selected", attribute: "selected", value: "" }],
+  },
+  {
+    tag: "fig-select-options",
+    title: "Select Options",
+    group: "input",
+    markup: `<fig-select-options><fig-select-option value="one">One</fig-select-option></fig-select-options>`,
+  },
+  {
+    tag: "fig-select",
+    title: "Select",
+    group: "input",
+    markup: `<fig-select value="one"><fig-select-options><fig-select-option value="one">One</fig-select-option><fig-select-option value="two">Two</fig-select-option></fig-select-options></fig-select>`,
+    properties: [
+      {
+        name: "value property",
+        property: "value",
+        value: "two",
+        expected: "two",
+      },
+    ],
+  },
+  {
+    tag: "fig-fill-picker",
+    title: "Fill Picker",
+    group: "input",
+    markup: `<fig-fill-picker value="#0D99FF"></fig-fill-picker>`,
+    attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
+  },
+  {
+    tag: "fig-palette-editor",
+    title: "Palette Editor",
+    group: "input",
+    markup: `<fig-palette-editor value='["#0D99FF","#14AE5C"]'></fig-palette-editor>`,
+    attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
+  },
+  {
+    tag: "fig-interpolation-swatch",
+    title: "Interpolation Swatch",
+    group: "display",
+    markup: `<fig-interpolation-swatch></fig-interpolation-swatch>`,
+  },
+  {
+    tag: "fig-reorder",
+    title: "Reorder",
+    group: "layout",
+    markup: `<fig-reorder><div>One</div><div>Two</div></fig-reorder>`,
+    attributes: [{ name: "disabled", attribute: "disabled", value: "" }],
+  },
   {
     tag: "fig-popup-gradient",
     title: "Gradient Popup",

@@ -1,0 +1,118 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-input-color {
+  --alpha: 1;
+  display: inline-flex;
+  gap: var(--spacer-2);
+  user-select: none;
+  width: 8.9375rem;
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  &:hover {
+    outline: 1px solid var(--figma-color-border);
+    outline-offset: -1px !important;
+  }
+
+  & > .input-combo > fig-tooltip > fig-input-number {
+    flex: 0 0 var(--input-opacity-width);
+    width: var(--input-opacity-width);
+    min-width: var(--input-opacity-width);
+  }
+
+  & > .input-combo > fig-input-text {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+:is(fig-input-color, fig-input-gradient, fig-input-fill) {
+  background-color: var(--figma-color-bg-secondary);
+  border-radius: var(--radius-medium);
+  box-shadow: none !important;
+
+  & > .input-combo > :is(fig-swatch, fig-chit):not(:only-child),
+  & > .input-combo > :is(fig-swatch, fig-chit):not(:only-child) input,
+  & > .input-combo > fig-fill-picker:not(:only-child),
+  & > .input-combo
+    > fig-fill-picker:not(:only-child)
+    > :is(fig-swatch, fig-chit)
+    > input,
+  & > .input-combo > label,
+  & fig-fill-picker:not(:only-child),
+  fig-input-text,
+  :is(fig-swatch, fig-chit) {
+    &,
+    &:focus,
+    &:hover {
+      background-color: transparent !important;
+      box-shadow: none !important;
+      outline: 0 !important;
+      border: 0 !important;
+      --selected: 0;
+    }
+  }
+
+  :is(fig-swatch, fig-chit) ~ fig-input-text > input,
+  :is(fig-swatch, fig-chit) ~ label,
+  fig-fill-picker ~ fig-input-text > input {
+    padding-left: 0 !important;
+  }
+
+  & > .input-combo > fig-input-text > input {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & > .input-combo {
+    flex: 1;
+    min-width: 0;
+  }
+
+  & > .input-combo > fig-tooltip {
+    display: contents;
+  }
+
+  & > .input-combo > fig-tooltip > .fig-input-fill-opacity {
+    flex: 0 0 var(--input-opacity-width);
+    width: var(--input-opacity-width);
+    min-width: var(--input-opacity-width);
+  }
+
+  fig-input-number {
+    flex: 0;
+    flex-basis: var(--input-opacity-width);
+    box-shadow: inset 1px 0 0 0 var(--figma-color-bg) !important;
+    background-color: transparent !important;
+    outline: 0 !important;
+
+    &:focus,
+    &:focus-within,
+    &:hover {
+      outline: 0 !important;
+    }
+  }
+
+  fig-field:not([direction="vertical"]) & {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+fig-input-color {
+  &:focus-visible,
+  &:has(:focus-visible),
+  &.has-popup-open {
+    outline: var(--figma-focus-outline) !important;
+    outline-offset: var(--figma-focus-outline-offset) !important;
+  }
+}

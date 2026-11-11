@@ -1,0 +1,343 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+/* Fill Picker */
+fig-fill-picker {
+  display: contents;
+
+  > [slot^="mode-"] {
+    display: none;
+  }
+}
+
+.fig-fill-picker-dialog {
+  width: 240px;
+  padding: 0;
+
+  & > fig-content {
+    padding-bottom: var(--spacer-2-5);
+    padding-top: var(--spacer-2);
+  }
+
+  fig-tab {
+    font-size: 0.6875rem;
+    padding: var(--spacer-1) var(--spacer-1);
+  }
+
+  .fig-fill-picker-close {
+    margin-left: auto;
+  }
+
+  .fig-fill-picker-tab {
+    display: none;
+
+    &:first-child {
+      display: block;
+    }
+  }
+  .fig-fill-picker-tab:is([data-tab="solid"], [data-tab="gradient"]) {
+    fig-preview {
+      overflow: visible;
+    }
+  }
+
+  .fig-fill-picker-color-area {
+    aspect-ratio: 1;
+    width: calc(100% - var(--spacer-3) * 2);
+    margin: var(--spacer-2) var(--spacer-3);
+
+    > *:not(fig-handle) {
+      place-self: center;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: var(--radius-medium);
+    }
+  }
+
+  .fig-fill-picker-color-area fig-handle {
+    z-index: 3;
+  }
+
+  .fig-fill-picker-sliders {
+    display: grid;
+    grid-template-columns: calc(3.5rem + var(--spacer-3)) 1fr;
+    grid-template-rows: 1fr 1fr;
+    align-items: center;
+    padding-right: var(--spacer-3);
+    row-gap: var(--spacer-2);
+    column-gap: var(--spacer-2);
+    padding-bottom: var(--spacer-1);
+
+    .fig-fill-picker-eyedropper {
+      grid-column: 1;
+      grid-row: 1 / 3;
+      place-self: center;
+      margin-right: calc(var(--spacer-3) * -1);
+      width: 3.5rem;
+      aspect-ratio: 1 / 1;
+      height: 3.5rem;
+    }
+
+    fig-slider {
+      grid-column: 2;
+      min-width: 0;
+    }
+
+    &.is-hue-only {
+      grid-template-rows: 1fr;
+
+      .fig-fill-picker-eyedropper {
+        grid-row: 1;
+        width: auto;
+        height: var(--spacer-4);
+        aspect-ratio: auto;
+      }
+    }
+  }
+
+  .fig-fill-picker-inputs {
+    .fig-fill-picker-input-mode {
+      width: 3.5rem;
+      min-width: 3.5rem;
+      flex: 0 0 3.5rem !important;
+      align-self: center;
+    }
+
+    .fig-fill-picker-input-fields {
+      width: 100%;
+      min-width: 0;
+      display: flex;
+
+      .input-combo {
+        flex: 1;
+        min-width: 0;
+
+        fig-input-number > input,
+        fig-input-text:not(.fig-fill-picker-ci-hex) > input {
+          padding-inline: 0;
+          text-align: center;
+        }
+      }
+
+      fig-input-text {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .fig-fill-picker-ci-css {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .fig-fill-picker-ci-hex-row {
+        .fig-fill-picker-ci-hex {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+
+        .fig-fill-picker-ci-a {
+          flex: 0 0 3rem;
+        }
+      }
+
+      .fig-fill-picker-ci-a {
+        flex: 0 0 2.75rem;
+        min-width: 2.75rem;
+      }
+    }
+  }
+
+  /* Media Tabs (Image/Video/Webcam) */
+  .fig-fill-picker-media-header-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacer-2);
+  }
+
+  .fig-fill-picker-media-header :is(
+      .fig-fill-picker-scale-mode,
+      .fig-fill-picker-scale
+    ) {
+    width: 100%;
+  }
+
+  .fig-fill-picker-media-header .fig-fill-picker-media-rotate {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .fig-fill-picker-media-preview {
+    position: relative;
+    width: calc(100% - var(--spacer-3) * 2);
+    margin: var(--spacer-2) var(--spacer-3) var(--spacer-1);
+    border-radius: var(--radius-medium);
+
+    &.dragover {
+      outline: 2px dashed var(--figma-color-border-brand);
+      outline-offset: -2px;
+    }
+
+    &.has-media {
+      /* Replace/upload only — not fig-media-controls play. */
+      fig-preview fig-button,
+      fig-input-file fig-button {
+        visibility: hidden;
+      }
+      &:hover {
+        fig-preview fig-button,
+        fig-input-file fig-button {
+          visibility: visible;
+        }
+      }
+    }
+  }
+
+  /* Image/webcam: square host is fine (no chrome below the preview). */
+  fig-image.fig-fill-picker-media-preview {
+    aspect-ratio: 1;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fig-fill-picker-checkerboard {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(
+        45deg,
+        var(--figma-color-bg-tertiary) 25%,
+        transparent 25%
+      ),
+      linear-gradient(
+        -45deg,
+        var(--figma-color-bg-tertiary) 25%,
+        transparent 25%
+      ),
+      linear-gradient(
+        45deg,
+        transparent 75%,
+        var(--figma-color-bg-tertiary) 75%
+      ),
+      linear-gradient(
+        -45deg,
+        transparent 75%,
+        var(--figma-color-bg-tertiary) 75%
+      );
+    background-size: 16px 16px;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0px;
+  }
+
+  div.fig-fill-picker-image-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+  }
+
+  fig-image.fig-fill-picker-image-preview {
+    max-width: none;
+    max-height: none;
+    width: auto;
+  }
+
+  video.fig-fill-picker-video-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+
+  /*
+   * Video: host must grow for fig-media-controls. Keep the square on the
+   * inner fig-preview — aspect-ratio+overflow on the host was clipping
+   * the scrubber/play bar at the dialog bottom.
+   */
+  fig-media.fig-fill-picker-video-preview {
+    aspect-ratio: unset;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    max-width: none;
+    max-height: none;
+    width: calc(100% - var(--spacer-3) * 2);
+    gap: var(--spacer-2);
+
+    > fig-preview {
+      aspect-ratio: 1;
+      width: 100%;
+      max-width: none;
+      overflow: hidden;
+      border-radius: var(--radius-medium);
+    }
+  }
+
+  .fig-fill-picker-upload {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Webcam Tab */
+  .fig-fill-picker-webcam-camera .fig-fill-picker-camera-select {
+    flex: 0 1 auto !important;
+    width: auto;
+  }
+
+  .fig-fill-picker-webcam-preview {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    width: calc(100% - var(--spacer-3) * 2);
+    max-width: none;
+    max-height: none;
+    margin: 0 var(--spacer-3);
+    border-radius: var(--radius-medium);
+    overflow: hidden;
+    margin: var(--spacer-2) var(--spacer-3);
+  }
+
+  .fig-fill-picker-webcam-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .fig-fill-picker-webcam-status {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--figma-color-bg-secondary);
+    color: var(--figma-color-text-secondary);
+    font-size: 0.75rem;
+  }
+
+  .fig-fill-picker-webcam-controls {
+    display: flex;
+    padding: 0 var(--spacer-3);
+    gap: var(--spacer-1);
+
+    .fig-fill-picker-webcam-capture {
+      width: 100%;
+    }
+  }
+}

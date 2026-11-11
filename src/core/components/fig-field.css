@@ -1,0 +1,207 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Base styles are provided by ordered shared cascade partials. */
+fig-field:hover fig-input-file .fig-input-file-clear {
+  display: flex;
+}
+
+fig-field {
+  --fig-field-gap: var(--spacer-2);
+  --fig-field-left-padding: var(--spacer-3);
+  --fig-field-right-padding: var(--spacer-3);
+  --fig-field-top-padding: var(--spacer-1);
+  --fig-field-bottom-padding: var(--spacer-1);
+  --fig-field-label-max-height: var(--spacer-4);
+  --fig-field-label-ratio: 1fr;
+  --fig-field-input-ratio: 2fr;
+  display: grid;
+  grid-template-columns:
+    var(--fig-field-left-padding) minmax(0, var(--fig-field-label-ratio))
+    minmax(0, var(--fig-field-input-ratio)) var(--fig-field-right-padding);
+  grid-template-areas: "leading label input pad";
+  margin: 0;
+  padding: var(--fig-field-top-padding) 0 var(--fig-field-bottom-padding);
+  gap: 0;
+  align-items: start;
+
+  &:not([direction="vertical"]):has(> label):has(
+      > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
+          fig-button[icon]:not([icon="false"])
+        )
+        + fig-button[icon]:not([icon="false"])
+    ) {
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
+        fig-button[icon]:not([icon="false"])
+      ):has(+ fig-button[icon]:not([icon="false"])) {
+      justify-self: start;
+      width: calc(100% - var(--spacer-4) - var(--spacer-1));
+    }
+
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
+        fig-button[icon]:not([icon="false"])
+      ):has(+ fig-button[icon]:not([icon="false"])[variant="ghost"]) {
+      width: calc(100% - var(--spacer-4));
+    }
+
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
+        fig-button[icon]:not([icon="false"])
+      )
+      + fig-button[icon]:not([icon="false"]) {
+      grid-area: input;
+      justify-self: end;
+      z-index: 1;
+    }
+
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]):not(
+        fig-button[icon]:not([icon="false"])
+      )
+      + fig-button[icon]:not([icon="false"])[variant="ghost"] {
+      margin-right: calc(var(--spacer-1) * -1);
+    }
+  }
+
+  &:has(> label):has(> [slot="trailing"]) {
+    & > :not(label):not([slot="leading"]):not([slot="trailing"]) {
+      justify-self: start;
+      width: calc(100% - var(--spacer-4) - var(--spacer-1));
+    }
+
+    &:has(> [slot="trailing"][variant="ghost"])
+      > :not(label):not([slot="leading"]):not([slot="trailing"]) {
+      width: calc(100% - var(--spacer-4));
+    }
+  }
+
+  &[columns="half"] {
+    --fig-field-label-ratio: 2fr;
+  }
+
+  &[columns="2/5"] {
+    --fig-field-label-ratio: 2fr;
+    --fig-field-input-ratio: 3fr;
+  }
+
+  & > [full]:not([full="false"]) {
+    flex: 1 1 auto;
+  }
+
+  &:not(:has(> label)) > [full]:not([full="false"]) {
+    width: 100%;
+    align-self: stretch;
+  }
+
+  & > label {
+    grid-area: label;
+    display: block;
+    padding: var(--spacer-1) 0;
+    line-height: 1rem;
+    user-select: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: var(--fig-field-gap);
+    min-width: 0;
+  }
+
+  &:not([direction="vertical"]) > label {
+    align-self: start;
+    align-content: center;
+    box-sizing: border-box;
+    height: min(100%, var(--fig-field-label-max-height));
+    padding-block: 0;
+  }
+
+  & > *:not([slot="leading"]):not([slot="trailing"]):not(label) {
+    grid-area: input;
+  }
+
+  & > [slot="leading"] {
+    grid-area: leading;
+
+    &[size="small"] {
+      margin-top: var(--spacer-1);
+    }
+
+    &[name="drag-handle"] {
+      visibility: hidden;
+    }
+  }
+
+  &:hover > [slot="leading"][name="drag-handle"] {
+    visibility: visible;
+  }
+
+  & > [slot="trailing"] {
+    grid-area: input;
+    justify-self: end;
+    z-index: 1;
+
+    &[variant="ghost"] {
+      margin-right: calc(var(--spacer-1) * -1);
+    }
+  }
+
+  & > :is(progress, meter) {
+    align-self: center;
+  }
+
+  & > .fig-field-chevron {
+    --icon: var(--icon-16-chevron);
+    --size: 1rem;
+    color: var(--figma-color-text-tertiary);
+    transform: rotate(-90deg);
+    transition: transform var(--transition-duration)
+      var(--transition-timing-function);
+    flex-shrink: 0;
+    margin-top: var(--spacer-1);
+  }
+
+  &:has(> [open]:not([open="false"])) > .fig-field-chevron {
+    transform: rotate(0deg);
+  }
+
+  &:not([direction="vertical"]):not(:has(> label)) {
+    display: flex;
+    gap: var(--fig-field-gap);
+    padding-inline: var(--fig-field-left-padding) var(--fig-field-right-padding);
+
+    &:has(fig-button[icon]:not([icon="false"])[variant="ghost"]) {
+      padding-inline: var(--fig-field-left-padding)
+        calc(var(--fig-field-right-padding) * 0.5);
+    }
+
+    & > *:not(fig-button):not([slot="leading"]):not([slot="trailing"]) {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    & > [slot="leading"] {
+      order: -1;
+    }
+
+    & > [slot="trailing"] {
+      order: 1;
+      margin-left: auto;
+    }
+  }
+
+  &[direction="vertical"] {
+    grid-template-columns: var(--fig-field-left-padding) 1fr
+      var(--fig-field-right-padding);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "leading label pad"
+      ".       input pad";
+
+    & > label {
+      overflow: visible;
+      text-overflow: clip;
+      white-space: normal;
+      margin-right: 0;
+      min-width: auto;
+    }
+  }
+}

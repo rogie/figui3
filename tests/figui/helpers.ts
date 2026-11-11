@@ -12,13 +12,16 @@ export function collectPageErrors(page: Page): PageErrors {
     if (message.type() === "error") errors.consoleErrors.push(message.text());
   });
   page.on("pageerror", (error) => {
-    errors.pageErrors.push(error.message);
+    errors.pageErrors.push(error.stack || error.message);
   });
   return errors;
 }
 
-export async function bootFigFixture(page: Page) {
-  await page.goto("/tests/figui/fixture.html");
+export async function bootFigFixture(
+  page: Page,
+  path = "/tests/figui/fixture.html",
+) {
+  await page.goto(path);
   await page.waitForFunction(() => customElements.get("fig-button"));
 }
 
@@ -34,7 +37,15 @@ export async function mountContract(page: Page, contract: ComponentContract) {
     if (!root) throw new Error("Missing #fixture-root");
     root.innerHTML = markup;
   }, contract.markup);
-  await page.waitForTimeout(50);
+  const selector = contract.selector ?? contract.tag;
+  const element = page.locator(selector).first();
+  await element.waitFor({ state: "attached" });
+  await element.evaluate(async (_host, tag) => {
+    await customElements.whenDefined(tag);
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
+  }, contract.tag);
 }
 
 export async function getContractElementCount(page: Page, contract: ComponentContract) {
@@ -85,11 +96,16 @@ export async function runEventContract(
     async (element, args) => {
       const host = element as HTMLElement;
       const events: Array<{ type: string; detail: unknown }> = [];
+      let resolveEvent: (() => void) | undefined;
+      const eventReceived = new Promise<void>((resolve) => {
+        resolveEvent = resolve;
+      });
       host.addEventListener(args.event, (event) => {
         events.push({
           type: event.type,
           detail: (event as CustomEvent).detail,
         });
+        resolveEvent?.();
       });
 
       const action = args.action;
@@ -104,7 +120,16 @@ export async function runEventContract(
         target.click();
       }
 
-      await new Promise((resolve) => requestAnimationFrame(resolve));
+      await Promise.race([
+        eventReceived,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error(`Timed out waiting for ${args.event}`)),
+            1000,
+          ),
+        ),
+      ]);
+      await Promise.resolve();
       return events;
     },
     {

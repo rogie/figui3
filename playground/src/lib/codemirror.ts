@@ -9,6 +9,7 @@ import {
 import { EditorState } from "@codemirror/state";
 import { html as htmlLang } from "@codemirror/lang-html";
 import { json as jsonLang } from "@codemirror/lang-json";
+import { javascript as javascriptLang } from "@codemirror/lang-javascript";
 import {
   HighlightStyle,
   syntaxHighlighting,
@@ -131,7 +132,7 @@ function foldSvgTags(view: EditorView) {
 export function createEditor(
   parent: HTMLElement,
   options: {
-    lang?: "html" | "json";
+    lang?: "html" | "json" | "javascript";
     readOnly?: boolean;
     minimal?: boolean;
     doc?: string;
@@ -145,7 +146,12 @@ export function createEditor(
     doc = "",
     onChange,
   } = options;
-  const langExt = lang === "json" ? jsonLang() : htmlLang();
+  const langExt =
+    lang === "json"
+      ? jsonLang()
+      : lang === "javascript"
+        ? javascriptLang()
+        : htmlLang();
 
   const extensions = [
     minimal ? minimalSetup : codeSetup,

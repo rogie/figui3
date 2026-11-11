@@ -1,0 +1,48 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-preview {
+  --fig-preview-fit: contain;
+  --fig-preview-background: var(--figma-color-bg-secondary);
+  --fig-preview-aspect-ratio: 4/3;
+
+  display: block;
+  aspect-ratio: var(--fig-preview-aspect-ratio);
+  place-items: center;
+  min-width: 0;
+  max-width: 100%;
+  background-color: var(--fig-preview-background);
+  border-radius: var(--radius-medium);
+  position: relative;
+  overflow: hidden;
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &[checkerboard]:not([checkerboard="false"]) {
+    background: var(--checkerboard);
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  > :is(img, video, canvas, svg) {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: var(--fig-preview-fit);
+    object-position: center;
+  }
+}

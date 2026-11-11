@@ -163,21 +163,18 @@ test.describe("audit regressions: core components", () => {
         submits++;
       });
       const button = form.querySelector("fig-button")!;
-      const nativeButton = button.shadowRoot?.querySelector(
-        "button",
-      ) as HTMLButtonElement;
-      nativeButton.click();
+      button.click();
       const invalidSubmits = submits;
       (form.querySelector("input") as HTMLInputElement).value = "ready";
-      nativeButton.click();
+      button.click();
       return {
         invalidSubmits,
         submits,
-        nativeType: nativeButton.type,
+        role: button.getAttribute("role"),
       };
     });
 
-    expect(state).toEqual({ invalidSubmits: 0, submits: 1, nativeType: "button" });
+    expect(state).toEqual({ invalidSubmits: 0, submits: 1, role: "button" });
   });
 
   test("click tooltips retain outside-click dismissal after rendering", async ({

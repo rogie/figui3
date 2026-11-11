@@ -30,6 +30,7 @@ export default function ThemeToggle({
     theme: isDark ? "light" : "dark",
   } as any;
 
+  // Anchor preferences popover to the settings trigger; sync dismiss to React state.
   useFigPopupAnchor(popupRef, settingsButtonRef, preferencesOpen, () =>
     setPreferencesOpen(false),
   );
@@ -66,8 +67,8 @@ export default function ThemeToggle({
           icon
           aria-label="Preferences"
           aria-haspopup="dialog"
-          aria-controls="preferences-popup"
           aria-expanded={preferencesOpen}
+          aria-controls="preferences-popup"
           onClick={() => setPreferencesOpen((open) => !open)}
         >
           <AdjustIcon />

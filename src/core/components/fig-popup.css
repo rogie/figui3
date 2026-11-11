@@ -1,0 +1,129 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+dialog[is^="fig-popup"] {
+  inset: auto;
+}
+
+dialog[is="fig-popup"] {
+  --z-index: 999999;
+  --fig-popup-beak-offset: 50%;
+  --fig-popup-beak-width: 1rem;
+  --fig-popup-beak-height: 6px;
+  --fig-popup-radius: var(--radius-large);
+  --fig-popup-bg-color: var(--figma-color-bg);
+  --fig-popup-tip-clip-path: path(
+    "M16 0H0L0 1H0.757359C1.55301 1 2.31607 1.31607 2.87868 1.87868L6.29587 5.29587C7.23704 6.23704 8.76296 6.23704 9.70413 5.29587L13.1213 1.87868C13.6839 1.31607 14.447 1 15.2426 1H16V0Z"
+  );
+  --fig-popup-shadow: var(--figma-elevation-400-menu-panel);
+
+  z-index: var(--z-index);
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  gap:0;
+  min-width: 0;
+  padding: 0;
+  overflow: auto;
+  border-radius: var(--fig-popup-radius);
+  background-color: var(--fig-popup-bg-color);
+  box-shadow: var(--fig-popup-shadow);
+
+  &[autoresize]:not([autoresize="false"]) {
+    width: max-content;
+    max-width: calc(100vw - var(--spacer-4));
+    max-height: calc(100vh - var(--spacer-4));
+  }
+
+  &[open]:not([open="false"]):has(> fig-content) {
+    overflow: hidden;
+  }
+
+  > fig-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  &:has(> fig-header) {
+    --fig-sticky-header-size: var(--spacer-6);
+
+    > :is(fig-separator, fig-menu-separator)[sticky]:not([sticky="false"]) {
+      top: var(--fig-sticky-header-size);
+    }
+  }
+
+  &[theme="dark"] {
+    color-scheme: dark;
+    --fig-popup-bg-color: var(--figma-color-bg);
+  }
+
+  &[theme="light"] {
+    color-scheme: light;
+  }
+
+  &[theme="brand"],
+  &[theme="canvas"] {
+    --fig-popup-bg-color: var(--figma-color-bg-brand);
+    color-scheme: dark;
+  }
+
+  &[theme="menu"] {
+    --fig-popup-bg-color: var(--figma-color-bg-menu);
+    color: var(--figma-color-text-menu);
+    color-scheme: dark;
+    padding: var(--spacer-2) 0;
+    min-width: 6rem;
+    box-shadow: var(--figma-elevation-100);
+
+    &.fig-menu-popup {
+      max-height: calc(100vh - 1rem);
+      padding: 0;
+      overflow: hidden;
+    }
+  }
+
+  &[variant="tooltip"],
+  &[variant="popover"] {
+    overflow: visible;
+    box-shadow: inset 0 0.5px 0 0 rgba(255, 255, 255, 0.1);
+    filter: var(--fig-popover-shadow);
+
+    &::after {
+      content: "";
+      background-color: inherit;
+      clip-path: var(--fig-popup-tip-clip-path);
+      position: absolute;
+      width: var(--fig-popup-beak-width);
+      height: var(--fig-popup-beak-height);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    &[data-beak-side="bottom"]::after {
+      top: calc(100% - 1px);
+      left: var(--fig-popup-beak-offset, 50%);
+      transform: translateX(-50%);
+    }
+
+    &[data-beak-side="top"]::after {
+      top: 1px;
+      left: var(--fig-popup-beak-offset, 50%);
+      transform: translate(-50%, -100%) scaleY(-1);
+    }
+
+    &[data-beak-side="left"]::after {
+      left: var(--fig-popup-beak-height);
+      top: var(--fig-popup-beak-offset, 50%);
+      transform: translate(-100%, -50%) rotate(90deg);
+    }
+
+    &[data-beak-side="right"]::after {
+      left: calc(100% - var(--fig-popup-beak-height));
+      top: var(--fig-popup-beak-offset, 50%);
+      transform: translate(0, -50%) rotate(-90deg);
+    }
+  }
+}

@@ -6,31 +6,63 @@ Shared by `figui3`, `fig-editor`, and `fig-lab`. Per-tag recipes: [components.md
 
 ## Bootstrap
 
-Register CSS + JS before the first render. Dynamic `import()` keeps bundlers from tree-shaking registration.
+For client-only apps, register before the first render. `register()` is
+idempotent and keeps the registration side effect explicit.
 
 ```tsx
 import { createRoot } from "react-dom/client";
+import { register } from "@rogieking/figui3/register.js";
 import "@rogieking/figui3/fig.css";
 
 const bootstrap = async () => {
-  await import("@rogieking/figui3/fig.js");
+  await register();
   createRoot(document.getElementById("app")!).render(<App />);
 };
 
 bootstrap();
 ```
 
-Add editor and/or lab the same way, before render:
+Opt into editor and/or lab bundles:
 
 ```tsx
 import "@rogieking/figui3/fig-editor.css";
-await import("@rogieking/figui3/fig-editor.js");
-
 import "@rogieking/figui3/fig-lab.css";
-await import("@rogieking/figui3/fig-lab.js");
+await register({ editor: true, lab: true });
 ```
 
-SSR (Next/Remix/Astro): import the JS only on the client.
+### SSR and hydration
+
+The JavaScript bundles are safe to import in a server runtime, where
+registration becomes a no-op. However, a side-effect import in the browser
+still upgrades existing custom elements immediately. During hydration, let
+React claim the server DOM first, then register FigUI3 from an effect:
+
+```tsx
+import { useEffect } from "react";
+import { hydrateRoot } from "react-dom/client";
+import { register } from "@rogieking/figui3/register.js";
+import "@rogieking/figui3/fig.css";
+
+function RegisterFigUI() {
+  useEffect(() => {
+    void register();
+  }, []);
+  return null;
+}
+
+hydrateRoot(
+  document.getElementById("app")!,
+  <>
+    <RegisterFigUI />
+    <App />
+  </>,
+);
+```
+
+Do not statically import `fig.js`, `fig-editor.js`, or `fig-lab.js` in a
+hydrating client bundle. Those compatibility entry points still register at
+module evaluation time. Framework client-only boundaries are not enough when
+they evaluate before hydration; call `register()` from a post-hydration effect.
 
 ## Bundler registration
 
@@ -69,107 +101,17 @@ Remove this workaround after upgrading. Corrected releases declare:
 
 ## JSX types
 
+Install the packaged React augmentation once in your app:
+
 ```ts
-import "react";
-
-type FigAttrs = React.DetailedHTMLProps<
-  React.HTMLAttributes<HTMLElement>,
-  HTMLElement
-> & { [key: string]: unknown };
-
-type FigTag =
-  | "fig-3d-rotate"
-  | "fig-angle"
-  | "fig-ai-context"
-  | "fig-ai-prompt"
-  | "fig-attachment"
-  | "fig-attachments"
-  | "fig-avatar"
-  | "fig-button"
-  | "fig-button-combo"
-  | "fig-canvas-control"
-  | "fig-card"
-  | "fig-chat-message"
-  | "fig-checkbox"
-  | "fig-chit"
-  | "fig-choice"
-  | "fig-chooser"
-  | "fig-color-tip"
-  | "fig-split-input"
-  | "fig-combo-input"
-  | "fig-content"
-  | "fig-dropdown"
-  | "fig-easing-curve"
-  | "fig-field"
-  | "fig-fill-picker"
-  | "fig-footer"
-  | "fig-group"
-  | "fig-handle"
-  | "fig-header"
-  | "fig-icon"
-  | "fig-audio"
-  | "fig-image"
-  | "fig-input-color"
-  | "fig-input-combo"
-  | "fig-input-file"
-  | "fig-input-fill"
-  | "fig-input-gradient"
-  | "fig-input-number"
-  | "fig-input-rotate"
-  | "fig-input-point"
-  | "fig-input-palette"
-  | "fig-palette-editor"
-  | "fig-gradient-editor"
-  | "fig-property"
-  | "fig-input-text"
-  | "fig-input-wheel"
-  | "fig-interpolation-swatch"
-  | "fig-joystick"
-  | "fig-layer"
-  | "fig-media"
-  | "fig-media-controls"
-  | "fig-menu"
-  | "fig-menu-item"
-  | "fig-menu-separator"
-  | "fig-options"
-  | "fig-origin-grid"
-  | "fig-preview"
-  | "fig-radio"
-  | "fig-reorder"
-  | "fig-segment"
-  | "fig-segmented-control"
-  | "fig-select"
-  | "fig-select-option"
-  | "fig-select-options"
-  | "fig-separator"
-  | "fig-shimmer"
-  | "fig-skeleton"
-  | "fig-slider"
-  | "fig-spinner"
-  | "fig-swatch"
-  | "fig-switch"
-  | "fig-tab"
-  | "fig-tab-content"
-  | "fig-tabs"
-  | "fig-toolbelt"
-  | "fig-toolbelt-group"
-  | "fig-toolbelt-item"
-  | "fig-tooltip"
-  | "fig-truncate"
-  | "fig-video"
-
-declare module "react" {
-  namespace JSX {
-    interface IntrinsicElements
-      extends Record<FigTag, FigAttrs> {
-      dialog: React.DetailedHTMLProps<
-        React.DialogHTMLAttributes<HTMLDialogElement>,
-        HTMLDialogElement
-      > & { is?: string; [key: string]: unknown };
-    }
-  }
-}
+import "@rogieking/figui3/react";
 ```
+
+This covers every registered core, editor, and Lab tag. DOM queries use the
+packaged `HTMLElementTagNameMap`, refs expose component methods, and
+`onInput` / `onChange` type `nativeEvent.detail`. Customized built-ins remain
+`<dialog is="fig-dialog|fig-popup|fig-toast">`; there is no autonomous
+`<fig-toast>` tag.
 
 ## Host JSX
 
@@ -198,39 +140,112 @@ declare module "react" {
 - Native dialog open: `open={open ? true : undefined}`.
 - Optional flags / `data-*`: omit with `undefined`.
 
-Passing `value` / `checked` as JSX props on re-render is OK. Components do not emit `input` from programmatic writes and ignore value writes during drag.
+Treat FigUI3 controls as event-driven/uncontrolled in React. Components reflect
+user edits to their own `value` or `checked` state. If application state stays
+unchanged after an edit, React does not write an unchanged JSX prop again, so
+the DOM edit is not automatically rejected.
+
+For accepted edits, update application state from `input` / `change`. For a
+rejected or normalized edit, restore the committed value through the ref in
+the event handler. A reusable controlled wrapper must do both: synchronize the
+host after every committed render and restore rejected edits immediately.
+
+```tsx
+import type { FigTextInputElement } from "@rogieking/figui3";
+
+const ref = useRef<FigTextInputElement>(null);
+const committed = useRef(value);
+committed.current = value;
+
+useLayoutEffect(() => {
+  const host = ref.current;
+  if (host && host.value !== value) host.value = value;
+}); // Intentionally runs after every committed render.
+
+function handleInput(event: React.SyntheticEvent<FigTextInputElement>) {
+  const next = (event.nativeEvent as CustomEvent<string>).detail;
+  if (!isAllowed(next)) {
+    if (ref.current) ref.current.value = committed.current;
+    return;
+  }
+  setValue(next);
+}
+
+return <fig-input-text ref={ref} onInput={handleInput} />;
+```
+
+Restore rejected checked state with both the property and reflected attribute:
+
+```ts
+host.checked = checked;
+host.toggleAttribute("checked", checked);
+```
+
+For drag controls, accept live `input` updates or restore on `change` after the
+gesture commits. React 18 wrappers should attach these events natively as
+described below.
 
 ## Events
 
-Use React handlers:
+React's custom-element event behavior differs by major version:
 
-- `onClick` — `fig-button` and other clickable hosts
-- `onInput` — live (`fig-switch`, `fig-slider`, number/color/text)
-- `onChange` — commit (`fig-options`, `fig-dropdown`, often paired with `onInput`)
+| Event | React 19 | React 18 |
+|---|---|---|
+| `click` | `onClick` | `onClick` |
+| `input` | `onInput`; detail is on `nativeEvent.detail` | `onInput`; detail is on `nativeEvent.detail` |
+| `change` | `onChange`; detail is on `nativeEvent.detail` | Use `addEventListener`; JSX `onChange` is not reliable on custom elements |
+| Named custom events | Use `addEventListener` for portable code | Use `addEventListener` |
 
-Read order:
+React wraps `input` and `change` in a `SyntheticEvent`. Do not read
+`event.detail` from a React handler. Read order:
 
-1. `event.detail` (`.checked`, `.value`, or the detail payload)
+1. `(event.nativeEvent as CustomEvent).detail`
 2. `event.currentTarget.value` / `.checked`
 3. `event.target.value`
 
 ```tsx
-function readValue(event: Event) {
-  const custom = event as CustomEvent<{ checked?: boolean; value?: unknown }>;
+function readValue(event: React.SyntheticEvent<HTMLElement>) {
+  const detail = (
+    event.nativeEvent as CustomEvent<{
+      checked?: boolean;
+      value?: unknown;
+    }>
+  ).detail;
   const host = event.currentTarget as HTMLElement & {
     value?: unknown;
     checked?: boolean;
   };
-  if (typeof custom.detail?.checked === "boolean") return custom.detail.checked;
-  if (custom.detail?.value !== undefined) return custom.detail.value;
-  if (custom.detail !== undefined && custom.detail !== null) return custom.detail;
+  if (typeof detail?.checked === "boolean") return detail.checked;
+  if (detail?.value !== undefined) return detail.value;
+  if (detail !== undefined && detail !== null) return detail;
   return host.value ?? host.checked;
 }
 ```
 
-Native `addEventListener` only when React does not map the event: dialog `close` / `cancel`, delegated host clicks, imperative APIs.
+For React 18 `change`, named custom events, or code shared by React 18 and 19,
+attach a native listener through a ref. Native listeners receive the
+`CustomEvent` directly, so `event.detail` is correct:
 
-Common events: `input`, `change`, `loaded`, `optionhover`, `optionschange`, `reorder`, `remove`, `modeready`, `webcamstream`, `close`.
+```tsx
+const ref = useRef<HTMLElement>(null);
+
+useEffect(() => {
+  const host = ref.current;
+  if (!host) return;
+  const onChange = (event: Event) => {
+    const detail = (event as CustomEvent).detail;
+    // Commit detail…
+  };
+  host.addEventListener("change", onChange);
+  return () => host.removeEventListener("change", onChange);
+}, []);
+
+return <fig-slider ref={ref} />;
+```
+
+Common named events that should use native listeners: `loaded`, `optionhover`,
+`optionschange`, `reorder`, `remove`, `modeready`, `webcamstream`, dialog
+`close`, and dialog `cancel`.
 
 ## Customized built-ins
 

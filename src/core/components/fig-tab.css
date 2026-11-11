@@ -1,0 +1,64 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Tabs */
+fig-tab {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+  padding: 0 var(--spacer-2);
+  appearance: none;
+  border: 0;
+  cursor: default;
+  gap: 0 !important;
+  user-select: none;
+  line-height: 1rem;
+  border-radius: var(--radius-medium);
+  color: var(--figma-color-text-secondary);
+  position: relative;
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  &[label] {
+    &::after {
+      content: attr(label);
+      color: var(--figma-color-text-secondary);
+      height: 0 !important;
+      width: auto !important;
+      visibility: hidden;
+      overflow: hidden;
+      user-select: none;
+      pointer-events: none;
+      font-weight: var(--body-medium-strong-fontWeight);
+    }
+  }
+
+  &[selected]:not([selected="false"]) {
+    background-color: var(--figma-color-bg-secondary);
+    font-weight: var(--body-medium-strong-fontWeight);
+    color: var(--figma-color-text);
+  }
+
+  &:hover {
+    background-color: var(--figma-color-bg-secondary);
+  }
+
+  &:focus-visible,
+  &[data-focus-visible] {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: default;
+  }
+}

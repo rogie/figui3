@@ -1,0 +1,99 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--spacer-2);
+  user-select: none;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  & label span {
+    vertical-align: middle;
+  }
+}
+
+input[type="checkbox"]:not(.switch) {
+  --size: 1rem;
+  --figma-focus-outline-offset: 1px;
+  appearance: none;
+  border-radius: var(--radius-medium);
+  width: var(--size);
+  height: var(--size);
+  aspect-ratio: 1/1;
+  box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucentstrong);
+  background-color: var(--figma-color-bg-transparent);
+  vertical-align: middle;
+  flex-shrink: 0;
+
+  &::after {
+    content: "";
+    width: var(--size);
+    height: var(--size);
+    background-color: transparent;
+    mask-image: var(--icon-16-checkmark);
+  }
+
+  &:hover:not(:checked):not(:disabled)::after {
+    opacity: 0.25;
+    background-color: var(--figma-color-icon);
+  }
+
+  &:checked {
+    background-color: var(--figma-color-bg-brand);
+    box-shadow: inset 0 0 0 1px var(--figma-color-border-selected-strong);
+
+    &::after {
+      background-color: var(--figma-color-icon-onbrand);
+    }
+  }
+
+  &:focus-visible {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+
+    &:not(:checked) {
+      box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    }
+  }
+
+  &:disabled {
+    background-color: var(--figma-color-bg-disabled);
+    box-shadow: none;
+
+    &::after {
+      background-color: transparent;
+    }
+  }
+
+  &:disabled:checked::after {
+    background-color: var(--figma-color-icon-disabled);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.figma-dark):not(.figma-light)
+    input[type="checkbox"]:not(.switch):not(:disabled):hover {
+    background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='black' opacity='0.25' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
+  }
+}
+
+:root.figma-light input[type="checkbox"]:not(.switch):not(:disabled):hover {
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.50012 7.5L7.50012 10.5L11.5001 4.5' stroke='black' opacity='0.25' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.125' /%3E%3C/svg%3E%0A");
+}
+
+label.checkbox:has([type="checkbox"]) {
+  padding-left: 1.5rem;
+
+  & [type="radio"] {
+    margin-left: -1.5rem;
+  }
+}

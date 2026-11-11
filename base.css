@@ -1,3 +1,8 @@
+/*!
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
 html,
 :host {
   width: 100%;
@@ -21,15 +26,30 @@ body,
   line-height: 1.4545em;
 }
 
-h1,
-h2 {
-  font-weight: var(--body-large-strong-fontWeight);
-  font-size: var(--body-large-fontSize);
+:where(h1, h2, h3) {
+  margin: 0;
   text-wrap: pretty;
 }
-h3 {
-  font-weight: var(--body-medium-strong-fontWeight);
-  font-size: var(--body-medium-fontSize);
+
+:where(h1) {
+  font-size: var(--text-heading-large-font-size);
+  font-weight: var(--text-heading-large-font-weight);
+  line-height: var(--text-heading-large-line-height);
+  letter-spacing: var(--text-heading-large-letter-spacing);
+}
+
+:where(h2) {
+  font-size: var(--text-heading-medium-font-size);
+  font-weight: var(--text-heading-medium-font-weight);
+  line-height: var(--text-heading-medium-line-height);
+  letter-spacing: var(--text-heading-medium-letter-spacing);
+}
+
+:where(h3) {
+  font-size: var(--text-heading-small-font-size);
+  font-weight: var(--text-heading-small-font-weight);
+  line-height: var(--text-heading-small-line-height);
+  letter-spacing: var(--text-heading-small-letter-spacing);
 }
 strong{
   font-weight: var(--body-medium-strong-fontWeight);
@@ -119,24 +139,17 @@ iframe{
 
 /* Defaults */
 p {
-  margin-block: 1em;
+  margin: 0;
   text-wrap: pretty;
+
+  & + p {
+    margin-block-start: var(--spacer-2);
+  }
 }
-p:first-child {
-  margin-block-start: 0;
-}
-p:last-child {
-  margin-block-end: 0;
-}
+
 
 label, p, li, figcaption {
   color: var(--figma-color-text-secondary);
-  text-wrap: pretty;
-}
-
-h2 {
-  font-weight: var(--body-medium-strong-fontWeight);
-  margin: var(--spacer-2) 0;
   text-wrap: pretty;
 }
 

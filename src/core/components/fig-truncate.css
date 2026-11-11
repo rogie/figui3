@@ -1,0 +1,67 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Fig Image */
+fig-truncate {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: bottom;
+
+  &[position="left"] {
+    display: block;
+    direction: rtl;
+    text-align: left;
+  }
+
+  &[position="middle"] {
+    display: inline-flex;
+    text-overflow: clip;
+    gap: 0;
+
+    & > .start,
+    & > .end {
+      flex: 0 1 auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    & > .end {
+      direction: rtl; /* technique #2 on right half */
+      text-align: left;
+      text-overflow: ellipsis;
+    }
+    &[tail] {
+      & > .end {
+        direction: ltr;
+        text-align: right;
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+@supports (animation-timeline: scroll(self inline)) {
+  fig-truncate[overflow="fade"] {
+    text-overflow: clip;
+
+    &[position="middle"] > :is(.start, .end) {
+      text-overflow: clip;
+    }
+
+    &[position="left"].fig-overflow-fade-left,
+    &[position="middle"] > .end.fig-overflow-fade-left {
+      --fig-overflow-fade-left: var(--fig-overflow-fade-size);
+      --fig-overflow-fade-left-opacity: 0;
+
+      animation: none;
+    }
+  }
+}

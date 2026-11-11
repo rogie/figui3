@@ -28,9 +28,11 @@ import "@rogieking/figui3/fig.js";
 |---|---|---|
 | **Core** (this skill) | `fig.css` + `fig.js` | All `fig-*` in [components.md](components.md) |
 | **Editor** | `fig-editor.css` + `fig-editor.js` | `fig-select*`, `fig-fill-picker`, `fig-palette-editor`, `fig-reorder`, `fig-interpolation-swatch` |
-| **Layer** | `fig-layer.css` + `fig-layer.js` | `fig-layer` |
 
-`fig-editor.js` also imports `fig.js`. Lab remains a separate JS/CSS bundle. `fig-layer` is **not** registered by `fig-editor.js`. Toast is core; layer is `fig-layer.js`.
+`fig.js` registers `fig-layer`; add `fig-layer.css` for its presentation.
+`fig-layer.js` remains a standalone registration entry. `fig-editor.js` also
+imports `fig.js`. Lab remains a separate JS/CSS bundle. See
+[`BUNDLES.md`](../../../BUNDLES.md) for the generated registration inventory.
 
 ## Principles
 
@@ -92,9 +94,9 @@ fig-dialog/popup    native dialog close plus FigUI3 positioning attrs
 
 ## Maintainer workflow
 
-1. Read `fig.js` + `components.css` before editing.
+1. Read the owning `src/core/components/` JS/CSS pair plus `src/core/index.*` before editing. Root `fig.js` and `components.css` are public barrels.
 2. Update `README.md` + `CHANGELOG.md` for public API changes.
-3. `bun build` for dist.
+3. `npm run build` for dist.
 4. Tests: `npm run test:components` (Playwright).
 
-Primary files: `fig.js`, `components.css`, `base.css`, `README.md`.
+Primary files: `src/core/`, `src/shared/`, `fig.js`, `components.css`, `base.css`, `README.md`.

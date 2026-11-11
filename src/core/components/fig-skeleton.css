@@ -1,0 +1,88 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-skeleton {
+  display: contents;
+  pointer-events: none;
+  user-select: none;
+  --fig-skeleton-angle: 90deg;
+  --fig-skeleton-bg-color: var(--figma-color-bg-secondary);
+  --fig-skeleton-bright-mask-color: rgba(0, 0, 0, 1);
+  --fig-skeleton-duration: 1.5s;
+  --fig-skeleton-mask-from: 100% 0%;
+  --fig-skeleton-mask-to: 0% 0%;
+  --fig-skeleton-size: 250% 100%;
+  --fig-skeleton-subtle-mask-color: rgba(0, 0, 0, 0.75);
+
+  &[direction="vertical"] {
+    --fig-skeleton-angle: 180deg;
+    --fig-skeleton-size: 100% 400%;
+    --fig-skeleton-mask-from: 0% 100%;
+  }
+  &[direction="diagonal"] {
+    --fig-skeleton-angle: 135deg;
+    --fig-skeleton-size: 250% 250%;
+  }
+
+  &:not([playing="false"]) * {
+    mask: linear-gradient(
+      var(--fig-skeleton-angle),
+      var(--fig-skeleton-subtle-mask-color) 0%,
+      var(--fig-skeleton-subtle-mask-color) 40%,
+      var(--fig-skeleton-bright-mask-color) 50%,
+      var(--fig-skeleton-subtle-mask-color) 60%,
+      var(--fig-skeleton-subtle-mask-color) 100%
+    );
+    mask-size: var(--fig-skeleton-size);
+    animation: fig-shimmer-mask var(--fig-skeleton-duration) linear infinite;
+    * {
+      color: transparent;
+    }
+  }
+  label,
+  h3,
+  h2,
+  p,
+  span {
+    background: var(--fig-skeleton-bg-color);
+    border-radius: var(--radius-medium);
+  }
+  img,video{
+    opacity: 0
+  }
+  fig-field{
+    & > label{
+      padding-top:0;
+      padding-bottom:0;
+      border-radius: 0.5rem;
+    }
+  }
+
+  *:not(fig-field, fig-header) {
+    background: var(--fig-skeleton-bg-color) !important;
+    box-shadow: none !important;
+    border-radius: var(--radius-medium);
+    color: var(--fig-skeleton-bg-color) !important;
+    pointer-events: none;
+    user-select: none;
+  }
+  *::placeholder {
+    color: transparent !important;
+  }
+  *::after,
+  *::before,
+  *::marker,
+  *::picker-icon,
+  *::-webkit-slider-thumb,
+  *::-webkit-slider-runnable-track,
+  *::-webkit-color-swatch,
+  *::-webkit-color-swatch-wrapper,
+  *::-webkit-details-marker,
+  *::-webkit-inner-spin-button,
+  *::-webkit-outer-spin-button,
+  *::-webkit-calendar-picker-indicator {
+    display: none !important;
+  }
+}

@@ -5,20 +5,17 @@
   font-display: block;
   src: url("/fonts/InterVariable-4.1.woff2") format("woff2");
 }
-
 * {
   box-sizing: border-box;
 }
-
 :root {
-  --nav-width: 180px;
+  --nav-width: 200px;
   --sidebar-width: 240px;
   --playground-width: 260px;
   --playground-min-width: 260px;
   --playground-example-width: 240px;
   --dash-inset: -3rem;
 }
-
 body {
   margin: 0;
   height: 100vh;
@@ -31,7 +28,6 @@ body {
     sans-serif;
   overflow: hidden;
 }
-
 #app {
   display: grid;
   place-items: start center;
@@ -55,7 +51,6 @@ body {
     }
   }
 }
-
 nav {
   width: var(--nav-width);
   max-height: calc(100vh - calc(var(--spacer-4) * 2));
@@ -126,9 +121,19 @@ nav {
   fig-header {
     justify-content: space-between;
     padding-right: var(--spacer-2);
+
+    > h1 {
+      font-size: var(--text-heading-small-font-size);
+      font-weight: var(--text-heading-small-font-weight);
+      line-height: var(--text-heading-small-line-height);
+      letter-spacing: var(--text-heading-small-letter-spacing);
+    }
+  }
+
+  fig-group > fig-header > h3 {
+    font-size: var(--text-body-medium-font-size);
   }
 }
-
 .attributes-sidebar {
   width: var(--sidebar-width);
   max-height: calc(100vh - calc(var(--spacer-4) * 2));
@@ -159,7 +164,6 @@ nav {
     border-radius: 0;
   }
 }
-
 .theme-switch {
   padding: 0;
   gap: var(--spacer-1);
@@ -309,14 +313,12 @@ main {
   overflow: visible;
   display: flex;
   flex-direction: column;
+}
 
-  h2 {
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 1.4;
-    color: var(--figma-color-text);
-    margin-bottom: var(--spacer-4);
-  }
+.example-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-3);
 }
 
 .example-view-container {
@@ -524,6 +526,15 @@ code {
 .propkit-code-view-actions {
   display: flex;
   gap: var(--spacer-2);
+}
+
+.propkit-run-error {
+  padding: var(--spacer-2);
+  border-radius: var(--radius-medium);
+  color: var(--figma-color-text-danger);
+  background: var(--figma-color-bg-danger-tertiary);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--font-size-small);
 }
 
 #app[data-mode="sandbox"] {
@@ -908,3 +919,26 @@ code {
   background: var(--figma-color-bg-secondary);
   overflow: hidden;
 }
+
+.mode-propskit {
+  .propskit-example-preview {
+    align-items: stretch;
+  }
+
+  .propskit-root,
+  .propskit-panel {
+    width: 100%;
+  }
+
+  .propkit-code-view pre {
+    max-height: 320px;
+    overflow: auto;
+    margin: 0;
+    padding: var(--spacer-3);
+    color: var(--figma-color-text);
+    font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    white-space: pre-wrap;
+  }
+}
+
+

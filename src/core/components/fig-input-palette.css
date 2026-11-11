@@ -1,0 +1,124 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-input-palette {
+  --fig-input-palette-padding: var(--spacer-1);
+  --fig-input-palette-height: 1.5rem;
+  display: inline-grid !important;
+  grid-template-columns: 1fr 24px;
+  grid-template-areas: "inline button";
+  gap: var(--spacer-2);
+  min-width: 0;
+  user-select: none;
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  > .palette-colors-inline {
+    grid-area: inline;
+  }
+
+  .palette-colors {
+    --width: 100%;
+    --height: 100%;
+    display: inline-grid;
+    flex: 1 1 auto;
+    grid-area: inputs;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .palette-add-btn {
+    grid-area: button;
+  }
+
+  .palette-colors-inline {
+    display: flex !important;
+    border-radius: var(--radius-medium);
+    width: 100%;
+    gap: var(--spacer-2);
+    place-items: center;
+    height: var(--fig-input-palette-height);
+    background-color: var(--figma-color-bg-secondary);
+  }
+
+  &:focus-visible {
+    outline: 0;
+  }
+
+  &:focus-visible > .palette-colors-inline,
+  > .palette-colors-inline:focus-visible,
+  &:has(> .palette-colors-inline :focus-visible) > .palette-colors-inline {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &:is([edit="false"], [edit="picker"]) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+
+    > .palette-colors-inline {
+      grid-column: 1 / -1;
+    }
+  }
+
+  &[open]:not([open="false"]):not([edit="false"]):not([edit="picker"]) {
+    grid-template-areas:
+      "inline button"
+      "expanded expanded";
+
+    .palette-colors-expanded {
+      display: grid;
+    }
+  }
+
+  &[fixed]:not([fixed="false"]) > .palette-colors-inline {
+    grid-column: 1 / -1;
+  }
+
+  .palette-colors-expanded {
+    display: none;
+    grid-area: expanded;
+    grid-template-columns: [input] 1fr [button] 1.5rem;
+    overflow: visible;
+    border-radius: 0;
+    gap: var(--spacer-2);
+    width: 100%;
+
+    > fig-input-color {
+      min-width: 0;
+      grid-column: input / -1;
+
+      &:has(+ fig-button),
+      &:has(+ fig-tooltip) {
+        grid-column: input;
+      }
+    }
+
+    > fig-button,
+    > fig-tooltip,
+    > button {
+      grid-column: button;
+    }
+
+    :is(fig-swatch, fig-chit) {
+      --border-radius: var(--radius-medium);
+      width: auto !important;
+      height: var(--size);
+      border-radius: var(--radius-medium) !important;
+    }
+  }
+
+  fig-field & {
+    grid-template-columns: 1fr calc(var(--spacer-3) + var(--spacer-1));
+
+    .palette-colors-expanded {
+      grid-template-columns:
+        [input] 1fr [button]
+        calc(var(--spacer-3) + var(--spacer-1));
+    }
+  }
+}

@@ -1,0 +1,62 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+.fig-mask-icon,
+fig-icon {
+  --size: var(--spacer-4);
+  --icon: none;
+  color: var(--icon-color, inherit);
+
+  &[size="small"] {
+    --size: var(--spacer-3);
+  }
+
+  display: inline-flex;
+  width: var(--size);
+  height: var(--size);
+  align-items: center;
+  justify-content: center;
+  background: currentColor;
+  flex-shrink: 0;
+  /* Safari still requires the prefix; other engines use the standard form. */
+  -webkit-mask-image: var(--icon);
+  -webkit-mask-size: auto;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-image: var(--icon);
+  mask-size: auto;
+  mask-repeat: no-repeat;
+  mask-position: center;
+
+  /* Slotted SVGs/character icons paint themselves, so the mask/background pipeline must be
+     fully disabled — including the inline background-color set by [color]. */
+  &:has(> *),
+  &:not([name]) {
+    background: transparent !important;
+
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  &:not([name]) {
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  & > label {
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+  }
+
+  & > svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: inherit;
+    flex-shrink: 0;
+  }
+}

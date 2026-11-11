@@ -1,0 +1,30 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+/* Vertical option-panel overflow chrome lives in fig.js (figVerticalOverflowSheet)
+   and is adopted on document + fig-menu shadow. */
+
+fig-select-options > :is(fig-separator, fig-menu-separator) {
+  /* Align labels with select option text after the checkmark column. */
+  &[label]:not([label=""]) {
+    --fig-menu-inline-padding: var(--spacer-3);
+    --fig-separator-padding-inline: var(--spacer-3,0.75rem);
+
+    &::before {
+      margin-inline: unset;
+      margin-left: calc(-1 * var(--spacer-5));
+      margin-right: calc(-1 * var(--spacer-2));
+    }
+  }
+}
+
+fig-select-options > :is(fig-separator, fig-menu-separator):has(> label):first-child,
+fig-select-options > [data-fig-select-nav="start"] + :is(fig-separator, fig-menu-separator):has(> label) {
+  --fig-separator-color: transparent;
+  --fig-separator-margin-block: 0;
+  --fig-separator-padding-inline: 0 var(--spacer-3,0.75rem);
+}

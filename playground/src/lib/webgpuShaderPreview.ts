@@ -1,3 +1,5 @@
+import { AsyncOperationOwner } from "../../../src/internal/async-operation-owner.js";
+
 const SHADER_SOURCE = `struct Uniforms {
   resolution: vec2f,
   time: f32,
@@ -60,8 +62,10 @@ function setupShaderPreview(fill: HTMLElement): () => void {
   );
   if (!canvas || !sourceInput) return () => {};
 
-  let disposed = false;
-  let animationFrame = 0;
+  const lifecycleOwner = new AsyncOperationOwner();
+  const lifecycle = lifecycleOwner.begin();
+  const compileOwner = new AsyncOperationOwner();
+  const renderOwner = new AsyncOperationOwner();
   let compileRevision = 0;
   let forwardingEvent = false;
   let device: any = null;
@@ -98,25 +102,30 @@ function setupShaderPreview(fill: HTMLElement): () => void {
   setFillValue(SHADER_SOURCE);
   sourceInput.addEventListener("input", forwardSourceEvent);
   sourceInput.addEventListener("change", forwardSourceEvent);
+  lifecycle.own(() => {
+    sourceInput.removeEventListener("input", forwardSourceEvent);
+    sourceInput.removeEventListener("change", forwardSourceEvent);
+  });
 
   const initialize = async () => {
     const gpu = (navigator as Navigator & { gpu?: any }).gpu;
     if (!gpu) {
-      drawUnavailable(canvas, "WebGPU is unavailable");
+      if (lifecycle.isCurrent()) {
+        drawUnavailable(canvas, "WebGPU is unavailable");
+      }
       return;
     }
 
     const adapter = await gpu.requestAdapter();
-    if (!adapter || disposed) {
-      if (!disposed) drawUnavailable(canvas, "WebGPU adapter unavailable");
+    if (!lifecycle.isCurrent()) return;
+    if (!adapter) {
+      drawUnavailable(canvas, "WebGPU adapter unavailable");
       return;
     }
 
     device = await adapter.requestDevice();
-    if (disposed) {
-      device.destroy?.();
-      return;
-    }
+    lifecycle.own(() => device.destroy?.());
+    if (!lifecycle.isCurrent()) return;
 
     context = canvas.getContext("webgpu") as any;
     if (!context) {
@@ -126,6 +135,7 @@ function setupShaderPreview(fill: HTMLElement): () => void {
 
     const format = gpu.getPreferredCanvasFormat();
     context.configure({ device, format, alphaMode: "premultiplied" });
+    lifecycle.own(() => context.unconfigure?.());
     const bufferUsage =
       (globalThis as typeof globalThis & {
         GPUBufferUsage?: { UNIFORM: number; COPY_DST: number };
@@ -134,46 +144,76 @@ function setupShaderPreview(fill: HTMLElement): () => void {
       size: 16,
       usage: bufferUsage.UNIFORM | bufferUsage.COPY_DST,
     });
+    lifecycle.own(() => uniformBuffer.destroy?.());
 
     compileShader = async (source: string) => {
       const revision = ++compileRevision;
-      const module = device.createShaderModule({ code: source });
-      const compilation = await module.getCompilationInfo?.();
-      const compilationError = compilation?.messages?.find(
-        (message: { type?: string }) => message.type === "error",
-      );
-      if (compilationError || revision !== compileRevision || disposed) {
-        if (compilationError) canvas.title = compilationError.message;
-        return;
-      }
+      const operation = compileOwner.begin();
+      if (!operation.isCurrent() || !lifecycle.isCurrent()) return;
+      try {
+        const module = device.createShaderModule({ code: source });
+        const compilation = await module.getCompilationInfo?.();
+        if (
+          !operation.isCurrent() ||
+          !lifecycle.isCurrent() ||
+          revision !== compileRevision
+        ) {
+          return;
+        }
+        const compilationError = compilation?.messages?.find(
+          (message: { type?: string }) => message.type === "error",
+        );
+        if (compilationError) {
+          canvas.title = compilationError.message;
+          return;
+        }
 
-      device.pushErrorScope?.("validation");
-      const nextPipeline = device.createRenderPipeline({
-        layout: "auto",
-        vertex: { module, entryPoint: "vertexMain" },
-        fragment: { module, entryPoint: "main", targets: [{ format }] },
-        primitive: { topology: "triangle-list" },
-      });
-      const validationError = await device.popErrorScope?.();
-      if (validationError || revision !== compileRevision || disposed) {
-        if (validationError) canvas.title = validationError.message;
-        return;
-      }
+        device.pushErrorScope?.("validation");
+        const nextPipeline = device.createRenderPipeline({
+          layout: "auto",
+          vertex: { module, entryPoint: "vertexMain" },
+          fragment: { module, entryPoint: "main", targets: [{ format }] },
+          primitive: { topology: "triangle-list" },
+        });
+        const validationError = await device.popErrorScope?.();
+        if (
+          !operation.isCurrent() ||
+          !lifecycle.isCurrent() ||
+          revision !== compileRevision
+        ) {
+          return;
+        }
+        if (validationError) {
+          canvas.title = validationError.message;
+          return;
+        }
 
-      pipeline = nextPipeline;
-      bindGroup = device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(0),
-        entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
-      });
-      canvas.removeAttribute("title");
-      canvas.setAttribute("data-playground-webgpu-ready", "true");
+        pipeline = nextPipeline;
+        bindGroup = device.createBindGroup({
+          layout: pipeline.getBindGroupLayout(0),
+          entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+        });
+        canvas.removeAttribute("title");
+        canvas.setAttribute("data-playground-webgpu-ready", "true");
+      } catch {
+        if (operation.isCurrent() && lifecycle.isCurrent()) {
+          canvas.title = "Shader compilation failed";
+        }
+      }
     };
 
     await compileShader(sourceInput.value || SHADER_SOURCE);
-    if (disposed) return;
+    if (!lifecycle.isCurrent()) return;
 
+    const renderOperation = renderOwner.begin();
     const render = (timestamp: number) => {
-      if (disposed || !canvas.isConnected) return;
+      if (
+        !lifecycle.isCurrent() ||
+        !renderOperation.isCurrent() ||
+        !canvas.isConnected
+      ) {
+        return;
+      }
       const ratio = Math.max(1, window.devicePixelRatio || 1);
       const bounds = canvas.getBoundingClientRect();
       const width = Math.max(1, Math.round((bounds.width || 640) * ratio));
@@ -207,35 +247,52 @@ function setupShaderPreview(fill: HTMLElement): () => void {
         device.queue.submit([encoder.finish()]);
       }
 
-      animationFrame = requestAnimationFrame(render);
+      scheduleRender();
     };
 
-    animationFrame = requestAnimationFrame(render);
+    const scheduleRender = () => {
+      if (
+        !lifecycle.isCurrent() ||
+        !renderOperation.isCurrent() ||
+        !canvas.isConnected
+      ) {
+        return;
+      }
+      const frame = requestAnimationFrame((timestamp) => {
+        frameResource.forget();
+        render(timestamp);
+      });
+      const frameResource = renderOperation.own(() =>
+        cancelAnimationFrame(frame),
+      );
+    };
+
+    scheduleRender();
   };
 
   void initialize().catch(() => {
-    if (!disposed) drawUnavailable(canvas, "Shader preview unavailable");
+    if (lifecycle.isCurrent()) {
+      drawUnavailable(canvas, "Shader preview unavailable");
+    }
   });
 
   return () => {
-    disposed = true;
+    if (!lifecycle.isCurrent()) return;
     compileRevision += 1;
-    cancelAnimationFrame(animationFrame);
-    sourceInput.removeEventListener("input", forwardSourceEvent);
-    sourceInput.removeEventListener("change", forwardSourceEvent);
-    uniformBuffer?.destroy?.();
-    device?.destroy?.();
+    compileOwner.dispose();
+    renderOwner.dispose();
+    lifecycleOwner.dispose();
   };
 }
 
 export function setupWebGpuShaderPreviews(root: HTMLElement): () => void {
-  let disposed = false;
-  let scanFrame = 0;
+  const lifecycleOwner = new AsyncOperationOwner();
+  const lifecycle = lifecycleOwner.begin();
+  const scanOwner = new AsyncOperationOwner();
   const active = new Map<HTMLCanvasElement, () => void>();
 
   const scan = () => {
-    scanFrame = 0;
-    if (disposed) return;
+    if (!lifecycle.isCurrent()) return;
 
     for (const [canvas, cleanup] of active) {
       if (canvas.isConnected) continue;
@@ -256,19 +313,25 @@ export function setupWebGpuShaderPreviews(root: HTMLElement): () => void {
   };
 
   const scheduleScan = () => {
-    if (disposed || scanFrame) return;
-    scanFrame = requestAnimationFrame(scan);
+    if (!lifecycle.isCurrent()) return;
+    const operation = scanOwner.begin();
+    const frame = requestAnimationFrame(() => {
+      frameResource.forget();
+      if (operation.isCurrent()) scan();
+    });
+    const frameResource = operation.own(() => cancelAnimationFrame(frame));
   };
 
   const observer = new MutationObserver(scheduleScan);
   observer.observe(root, { childList: true, subtree: true });
+  lifecycle.own(() => observer.disconnect());
   scan();
 
   return () => {
-    disposed = true;
-    observer.disconnect();
-    cancelAnimationFrame(scanFrame);
+    if (!lifecycle.isCurrent()) return;
+    scanOwner.dispose();
     active.forEach((cleanup) => cleanup());
     active.clear();
+    lifecycleOwner.dispose();
   };
 }

@@ -1,0 +1,59 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+fig-select-option {
+  max-width: 100%;
+  color: var(--figma-color-text-menu);
+  user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+
+  h3{
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & > fig-icon[data-fig-select-checkmark] {
+    order: -1;
+    margin: 0 var(--spacer-1);
+    visibility: hidden;
+  }
+
+  &:not(:has(> :not([slot="prepend"]):not([slot="append"]))) > [slot="append"] {
+    float: right;
+  }
+
+  & > :not([slot="prepend"]):not([slot="append"]) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  & > [slot="append"] {
+    color: var(--figma-color-text-tertiary);
+  }
+
+  fig-select[subtle]:not([subtle="false"]) &:not([subtle="false"]) {
+    &:hover,
+    &:focus-visible {
+      &::before {
+        background-color: var(--figma-color-bg-secondary);
+      }
+    }
+  }
+
+  &[selected]:not([selected="false"]) > fig-icon[data-fig-select-checkmark],
+  &[aria-selected="true"] > fig-icon[data-fig-select-checkmark] {
+    visibility: visible;
+  }
+}

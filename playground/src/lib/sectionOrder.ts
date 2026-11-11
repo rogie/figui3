@@ -39,6 +39,45 @@ const EDITOR_SECTION_ORDER = [
   "toast",
 ] as const;
 
+const GETTING_STARTED_SECTION_ORDER = [
+  "quick-start",
+  "numbers",
+  "colors",
+  "toggles",
+  "text",
+  "groups",
+  "propskit-media",
+] as const;
+
+const MEDIA_EXAMPLE_ORDER = [
+  "audio-empty",
+  "audio-url",
+  "image-empty",
+  "image",
+  "images",
+  "video-empty",
+  "video",
+  "videos",
+] as const;
+
+const gettingStartedSectionRank = new Map<string, number>(
+  GETTING_STARTED_SECTION_ORDER.map((id, index) => [id, index]),
+);
+const mediaExampleRank = new Map<string, number>(
+  MEDIA_EXAMPLE_ORDER.map((id, index) => [id, index]),
+);
+const toggleExampleRank = new Map([
+  ["on", 0],
+  ["off", 1],
+]);
+const textExampleRank = new Map([
+  ["single-line", 0],
+  ["multiline", 1],
+]);
+const colorExampleRank = new Map([
+  ["color", 0],
+  ["alpha", 1],
+]);
 const inputSectionRank = new Map<string, number>(
   INPUT_SECTION_ORDER.map((id, index) => [id, index]),
 );
@@ -55,6 +94,13 @@ function compareSections(
   a: Section,
   b: Section,
 ): number {
+  if (group === "Getting started") {
+    const aRank =
+      gettingStartedSectionRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+    const bRank =
+      gettingStartedSectionRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+    if (aRank !== bRank) return aRank - bRank;
+  }
   if (group === "Inputs") {
     const aRank = inputSectionRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
     const bRank = inputSectionRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
@@ -64,6 +110,16 @@ function compareSections(
     const aRank = editorSectionRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
     const bRank = editorSectionRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
     if (aRank !== bRank) return aRank - bRank;
+  }
+  if (group === "Load indicators") {
+    const aIsPlayButton = a.id === "button-play";
+    const bIsPlayButton = b.id === "button-play";
+    if (aIsPlayButton !== bIsPlayButton) return aIsPlayButton ? 1 : -1;
+  }
+  if (group === "Media") {
+    const aIsCarousel = a.id === "carousel";
+    const bIsCarousel = b.id === "carousel";
+    if (aIsCarousel !== bIsCarousel) return aIsCarousel ? 1 : -1;
   }
   return compareNames(a.name, b.name);
 }
@@ -79,6 +135,26 @@ function sortExamples(section: Section): Section {
   return {
     ...section,
     examples: [...section.examples].sort((a, b) => {
+      if (section.id === "colors") {
+        const aRank = colorExampleRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const bRank = colorExampleRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        if (aRank !== bRank) return aRank - bRank;
+      }
+      if (section.id === "text") {
+        const aRank = textExampleRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const bRank = textExampleRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        if (aRank !== bRank) return aRank - bRank;
+      }
+      if (section.id === "toggles") {
+        const aRank = toggleExampleRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const bRank = toggleExampleRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        if (aRank !== bRank) return aRank - bRank;
+      }
+      if (section.id === "propskit-media") {
+        const aRank = mediaExampleRank.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const bRank = mediaExampleRank.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        if (aRank !== bRank) return aRank - bRank;
+      }
       if (section.id === "file-input") {
         const aIsCustomAccepts = a.id === "accepts";
         const bIsCustomAccepts = b.id === "accepts";

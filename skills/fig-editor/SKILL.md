@@ -11,6 +11,13 @@ description: >-
 user-invocable: false
 ---
 
+<!--
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+-->
+
 # FigUI3 editor (`fig-editor.js`)
 
 Custom selects, property rows, point inputs, and full fill editing. Not in core `fig.js`.
@@ -88,7 +95,7 @@ Do not use `picker` or `picker-anchor` on `fig-input-color`. Forward picker chro
 
 ## Maintainer notes
 
-- Implementation: `fig-editor.js` / `fig-editor.css`; property row: `fig-property.js` / `fig-property.css` (imported by the editor bundle)
+- Implementation: one `src/editor/components/fig-*.js` / `fig-*.css` pair per tag; aggregate `fig-editor.*` stays at the root and standalone source barrels live in `src/editor/entrypoints/`
 - Do not move fill-picker or select into `fig.js`
 - Nested overlay positioning: keep `popover="manual"` on the select popup
 - Tests: `tests/figui/component-contracts.spec.ts` (ghost variant, sticky separator vs overflow-start)

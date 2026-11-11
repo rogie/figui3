@@ -1,0 +1,493 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Ordered shared selectors and cascade overrides. */
+@layer figui.defaults {
+:root,
+:host {
+  color-scheme: light dark;
+
+  /* Background Colors */
+  --figma-color-bg: light-dark(#ffffff, #2c2c2c);
+  --figma-color-bg-brand: light-dark(#0d99ff, #0c8ce9);
+  --figma-color-bg-menu: light-dark(#ffffff, #1e1e1e);
+  --figma-color-bg-menu-hover: #0c8ce9;
+  --figma-color-bg-brand-hover: light-dark(#007be5, #0a6dc2);
+  --figma-color-bg-brand-pressed: light-dark(#0768cf, #105cad);
+  --figma-color-bg-brand-secondary: light-dark(#0768cf, #105cad);
+  --figma-color-bg-brand-tertiary: light-dark(#e5f4ff, #394360);
+  --figma-color-bg-component: light-dark(#9747ff, #8a38f5);
+  --figma-color-bg-component-hover: light-dark(#8638e5, #7a2ed6);
+  --figma-color-bg-component-pressed: light-dark(#7c2bda, #652ca8);
+  --figma-color-bg-component-secondary: light-dark(#7c2bda, #652ca8);
+  --figma-color-bg-component-tertiary: light-dark(#f1e5ff, #473956);
+  --figma-color-bg-danger: light-dark(#f24822, #e03e1a);
+  --figma-color-bg-danger-hover: light-dark(#dc3412, #c4381c);
+  --figma-color-bg-danger-pressed: light-dark(#dc3412, #c4381c);
+  --figma-color-bg-danger-secondary: light-dark(#bd2915, #963323);
+  --figma-color-bg-danger-tertiary: light-dark(#ffe2e0, #60332a);
+  --figma-color-bg-disabled: light-dark(#d9d9d9, #757575);
+  --figma-color-bg-disabled-secondary: #b3b3b3;
+  --figma-color-bg-hover: light-dark(#f5f5f5, #383838);
+  --figma-color-bg-active: var(--figma-color-bg-pressed);
+  --figma-color-bg-inverse: light-dark(#2c2c2c, #ffffff);
+  --figma-color-bg-onselected: light-dark(#bde3ff, #4a5878);
+  --figma-color-bg-onselected-hover: light-dark(#bde3ff, #4a5878);
+  --figma-color-bg-onselected-pressed: light-dark(#bde3ff, #4a5878);
+  --figma-color-bg-pressed: light-dark(#f5f5f5, #383838);
+  --figma-color-bg-secondary: light-dark(#f5f5f5, #383838);
+  --figma-color-bg-selected: light-dark(#e5f4ff, #394360);
+  --figma-color-bg-selected-hover: light-dark(#bde3ff, #4a5878);
+  --figma-color-bg-selected-pressed: light-dark(#80caff, #394360);
+  --figma-color-bg-selected-secondary: light-dark(#f2f9ff, #32394d);
+  --figma-color-bg-selected-strong: light-dark(#0d99ff, #0c8ce9);
+  --figma-color-bg-selected-tertiary: light-dark(#f2f9ff, #32394d);
+  --figma-color-bg-success: light-dark(#14ae5c, #198f51);
+  --figma-color-bg-success-hover: light-dark(#009951, #078348);
+  --figma-color-bg-success-pressed: light-dark(#008043, #0a5c35);
+  --figma-color-bg-success-secondary: light-dark(#008043, #0a5c35);
+  --figma-color-bg-success-tertiary: light-dark(#e0f6e5, #2f483c);
+  --figma-color-bg-tertiary: light-dark(#e6e6e6, #444444);
+  --figma-color-bg-warning: light-dark(#ffcd29, #f3c11b);
+  --figma-color-bg-warning-hover: light-dark(#ffc21a, #f2b50d);
+  --figma-color-bg-warning-pressed: light-dark(#fab815, #e4a711);
+  --figma-color-bg-warning-secondary: light-dark(#fab815, #e4a711);
+  --figma-color-bg-warning-tertiary: light-dark(#fff1c2, #5c4100);
+  --figma-color-bg-switch: light-dark(#e6e6e6, #444444);
+  --figma-color-bg-slot: light-dark(
+    rgba(255, 36, 189, 0.25),
+    rgba(243, 22, 176, 0.25)
+  );
+
+  /* Border Colors */
+  --figma-color-border: light-dark(#e6e6e6, #444444);
+  --figma-color-border-brand: light-dark(#bde3ff, #105cad);
+  --figma-color-border-brand-strong: light-dark(#007be5, #7cc4f8);
+  --figma-color-border-component: light-dark(#e4ccff, #604d75);
+  --figma-color-border-component-hover: light-dark(#9747ff, #8a38f5);
+  --figma-color-border-component-strong: light-dark(#8638e5, #d6b6fb);
+  --figma-color-border-danger: light-dark(#ffc7c2, #963323);
+  --figma-color-border-danger-strong: light-dark(#dc3412, #fca397);
+  --figma-color-border-disabled: light-dark(#e6e6e6, #444444);
+  --figma-color-border-disabled-strong: light-dark(#0000004d, #ffffff66);
+  --figma-color-border-menu: #383838;
+  --figma-color-border-onbrand: light-dark(#007be5, #0a6dc2);
+  --figma-color-border-onbrand-strong: #ffffff;
+  --figma-color-border-oncomponent: light-dark(#8638e5, #7a2ed6);
+  --figma-color-border-oncomponent-strong: #ffffff;
+  --figma-color-border-ondanger: light-dark(#dc3412, #c4381c);
+  --figma-color-border-ondanger-strong: #ffffff;
+  --figma-color-border-onselected: light-dark(#bde3ff, #667799);
+  --figma-color-border-onselected-strong: light-dark(#000000e5, #ffffffe5);
+  --figma-color-border-onsuccess: light-dark(#009951, #078348);
+  --figma-color-border-onsuccess-strong: #ffffff;
+  --figma-color-border-onwarning: light-dark(#fab815, #e4a711);
+  --figma-color-border-onwarning-strong: #000000e5;
+  --figma-color-border-selected: light-dark(#0d99ff, #0c8ce9);
+  --figma-color-border-selected-strong: light-dark(#007be5, #7cc4f8);
+  --figma-color-border-strong: light-dark(#2c2c2c, #ffffffe5);
+  --figma-color-border-success: light-dark(#b9ebc6, #517361);
+  --figma-color-border-success-strong: light-dark(#009951, #7cd797);
+  --figma-color-border-warning: light-dark(#f5dfa8, #7a5800);
+  --figma-color-border-warning-strong: light-dark(#b86200, #f7d15f);
+  --figma-color-border-slot: light-dark(#ff24bd, #f316b0);
+
+  /* Focus */
+  --figma-focus-outline-width: 1px;
+  --figma-focus-outline-color: var(--figma-color-border-selected);
+  --figma-focus-outline: var(--figma-focus-outline-width) solid var(--figma-focus-outline-color);
+  --figma-focus-outline-offset: var(--figma-focus-outline-width);
+  --figma-focus-outline-radius: inherit;
+
+  /* Icon Colors */
+  --figma-color-icon: light-dark(#000000e5, #ffffff);
+  --figma-color-icon-brand: light-dark(#007be5, #7cc4f8);
+  --figma-color-icon-brand-pressed: light-dark(#0768cf, #0c8ce9);
+  --figma-color-icon-brand-secondary: light-dark(#80caff, #0a6dc2);
+  --figma-color-icon-brand-tertiary: light-dark(#bde3ff, #394360);
+  --figma-color-icon-component: light-dark(#8638e5, #d1a8ff);
+  --figma-color-icon-component-pressed: light-dark(#7c2bda, #d6b6fb);
+  --figma-color-icon-component-secondary: light-dark(#a38cc0, #7f699b);
+  --figma-color-icon-component-tertiary: light-dark(#c5b2dc, #7f699b);
+  --figma-color-icon-danger: light-dark(#f24822, #e03e1a);
+  --figma-color-icon-danger-hover: light-dark(#bd2915, #fbbcb6);
+  --figma-color-icon-danger-pressed: light-dark(#bd2915, #fbbcb6);
+  --figma-color-icon-danger-secondary: light-dark(#f24822, #e03e1a);
+  --figma-color-icon-danger-secondary-hover: light-dark(#f24822, #e03e1a);
+  --figma-color-icon-danger-tertiary: light-dark(#f24822, #e03e1a);
+  --figma-color-icon-disabled: light-dark(#0000004d, #ffffff66);
+  --figma-color-icon-hover: light-dark(#000000e5, #ffffff);
+  --figma-color-icon-onbrand: #ffffff;
+  --figma-color-icon-onbrand-secondary: #ffffffcc;
+  --figma-color-icon-onbrand-tertiary: #ffffff66;
+  --figma-color-icon-oncomponent: #ffffff;
+  --figma-color-icon-oncomponent-secondary: #ffffffcc;
+  --figma-color-icon-oncomponent-tertiary: #ffffff66;
+  --figma-color-icon-ondanger: #ffffff;
+  --figma-color-icon-ondanger-secondary: #ffffffcc;
+  --figma-color-icon-ondanger-tertiary: #ffffff66;
+  --figma-color-icon-ondisabled: light-dark(#ffffff, #2c2c2c);
+  --figma-color-icon-oninverse: light-dark(#ffffffe5, #000000e5);
+  --figma-color-icon-onselected: light-dark(#000000e5, #ffffff);
+  --figma-color-icon-onselected-secondary: light-dark(#00000080, #ffffffb2);
+  --figma-color-icon-onselected-strong: #ffffff;
+  --figma-color-icon-onselected-tertiary: light-dark(#0000004d, #ffffff66);
+  --figma-color-icon-onsuccess: #ffffff;
+  --figma-color-icon-onsuccess-secondary: #ffffffcc;
+  --figma-color-icon-onsuccess-tertiary: #ffffff66;
+  --figma-color-icon-onwarning: #000000e5;
+  --figma-color-icon-onwarning-secondary: #00000080;
+  --figma-color-icon-onwarning-tertiary: #0000004d;
+  --figma-color-icon-pressed: light-dark(#007be5, #0a6dc2);
+  --figma-color-icon-secondary: light-dark(#00000080, #ffffffb2);
+  --figma-color-icon-secondary-hover: light-dark(#000000e5, #ffffff);
+  --figma-color-icon-selected: light-dark(#007be5, #7cc4f8);
+  --figma-color-icon-selected-secondary: light-dark(#0d99ff, #0c8ce9);
+  --figma-color-icon-selected-tertiary: light-dark(#80caff, #0a6dc2);
+  --figma-color-icon-success: light-dark(#009951, #7cd797);
+  --figma-color-icon-success-pressed: light-dark(#008043, #a5e5b7);
+  --figma-color-icon-success-secondary: light-dark(#009951, #7cd797);
+  --figma-color-icon-success-tertiary: light-dark(#009951, #7cd797);
+  --figma-color-icon-tertiary: light-dark(#0000004d, #fff6);
+  --figma-color-icon-tertiary-hover: light-dark(#000000e5, #ffffff);
+  --figma-color-icon-warning: light-dark(#b86200, #f7d15f);
+  --figma-color-icon-warning-pressed: light-dark(#b86200, #f7d15f);
+  --figma-color-icon-warning-secondary: light-dark(#b86200, #f7d15f);
+  --figma-color-icon-warning-tertiary: light-dark(#b86200, #f7d15f);
+
+  /* Text Colors */
+  --figma-color-text: light-dark(#000000e5, #ffffff);
+  --figma-color-text-brand: light-dark(#007be5, #7cc4f8);
+  --figma-color-text-brand-secondary: light-dark(#007be5, #7cc4f8);
+  --figma-color-text-brand-tertiary: light-dark(#007be5, #7cc4f8);
+  --figma-color-text-component: light-dark(#8638e5, #d1a8ff);
+  --figma-color-text-component-pressed: light-dark(#7c2bda, #d6b6fb);
+  --figma-color-text-component-secondary: light-dark(#a38cc0, #a38cc0);
+  --figma-color-text-component-tertiary: light-dark(#c5b2dc, #7f699b);
+  --figma-color-text-danger: light-dark(#dc3412, #fca397);
+  --figma-color-text-danger-secondary: light-dark(#dc3412, #fca397);
+  --figma-color-text-danger-tertiary: light-dark(#dc3412, #fca397);
+  --figma-color-text-disabled: light-dark(#0000004d, #ffffff66);
+  --figma-color-text-hover: light-dark(#000000e5, #ffffff);
+  --figma-color-text-onbrand: #ffffff;
+  --figma-color-text-onbrand-secondary: #ffffffcc;
+  --figma-color-text-onbrand-tertiary: #ffffff66;
+  --figma-color-text-oncomponent: #ffffff;
+  --figma-color-text-oncomponent-secondary: #ffffffcc;
+  --figma-color-text-oncomponent-tertiary: #ffffff66;
+  --figma-color-text-ondanger: #ffffff;
+  --figma-color-text-ondanger-secondary: #ffffffcc;
+  --figma-color-text-ondanger-tertiary: #ffffff66;
+  --figma-color-text-ondisabled: light-dark(#ffffff, #2c2c2c);
+  --figma-color-text-oninverse: light-dark(#ffffffe5, #000000e5);
+  --figma-color-text-onselected: light-dark(#000000e5, #ffffffe5);
+  --figma-color-text-onselected-secondary: light-dark(#00000080, #ffffffb2);
+  --figma-color-text-onselected-strong: #ffffff;
+  --figma-color-text-onselected-tertiary: light-dark(#0000004d, #ffffff66);
+  --figma-color-text-onsuccess: #ffffff;
+  --figma-color-text-onsuccess-secondary: #ffffffcc;
+  --figma-color-text-onsuccess-tertiary: #ffffff66;
+  --figma-color-text-onwarning: #000000e5;
+  --figma-color-text-onwarning-secondary: #00000080;
+  --figma-color-text-onwarning-tertiary: #0000004d;
+  --figma-color-text-secondary: light-dark(#00000099, #ffffffb2);
+  --figma-color-text-secondary-hover: light-dark(#000000e5, #ffffff);
+  --figma-color-text-selection: rgba(13, 153, 255, 0.4);
+  --figma-color-text-selected: light-dark(#007be5, #7cc4f8);
+  --figma-color-text-selected-secondary: light-dark(#007be5, #7cc4f8);
+  --figma-color-text-selected-tertiary: light-dark(#007be5, #7cc4f8);
+  --figma-color-text-success: light-dark(#009951, #7cd797);
+  --figma-color-text-success-secondary: light-dark(#009951, #7cd797);
+  --figma-color-text-success-tertiary: light-dark(#009951, #7cd797);
+  --figma-color-text-tertiary: light-dark(#0000004d, #ffffff66);
+  --figma-color-text-tertiary-hover: light-dark(#000000e5, #ffffff);
+  --figma-color-text-warning: light-dark(#b86200, #f7d15f);
+  --figma-color-text-warning-secondary: light-dark(#b86200, #f7d15f);
+  --figma-color-text-warning-tertiary: light-dark(#b86200, #f7d15f);
+  --figma-color-text-menu: #ffffff;
+  --figma-color-text-menu-secondary: rgba(255, 255, 255, 0.7);
+  --figma-color-text-menu-tertiary: rgba(255, 255, 255, 0.7);
+}
+}
+
+:root,
+:host {
+  /* Typography & Sizing */
+  --font-size: 16px;
+  --font-family:
+    Inter, AppleSystemUIFont, BlinkMacSystemFont, avenir next, avenir, segoe ui,
+    helvetica neue, helvetica, Cantarell, Ubuntu, roboto, noto, arial, sans-serif;
+  --font-variant-numeric: lining-nums tabular-nums slashed-zero;
+  --text-body-medium-font-size: 0.6875rem;
+  --text-body-small-font-size: 0.5625rem;
+  --text-body-large-font-size: 0.8125rem;
+  --text-body-medium-font-weight: 450;
+  --text-body-medium-line-height: 1rem;
+  --text-body-medium-letter-spacing: 0.055px;
+  --text-body-strong-font-weight: 550;
+  --text-heading-small-font-size: 0.8125rem;
+  --text-heading-small-font-weight: 550;
+  --text-heading-small-line-height: 1.375rem;
+  --text-heading-small-letter-spacing: -0.0025em;
+  --text-heading-medium-font-size: 0.9375rem;
+  --text-heading-medium-font-weight: 550;
+  --text-heading-medium-line-height: 1.5625rem;
+  --text-heading-medium-letter-spacing: -0.005em;
+  --text-heading-large-font-size: 1.5rem;
+  --text-heading-large-font-weight: 550;
+  --text-heading-large-line-height: 2rem;
+  --text-heading-large-letter-spacing: -0.017em;
+
+  --body-medium-fontSize: var(--text-body-medium-font-size);
+  --font-size-small: var(--text-body-small-font-size);
+  --body-small-fontSize: var(--text-body-small-font-size);
+  --body-large-fontSize: var(--text-body-large-font-size);
+  --body-letter-spacing: 0.055px;
+  --body-medium-strong-fontWeight: var(--text-body-strong-font-weight);
+  --body-large-strong-fontWeight: var(--text-body-strong-font-weight);
+  --body-medium-fontWeight: var(--text-body-medium-font-weight);
+
+  --line-height: 1rem;
+
+  /* Spacing */
+  --spacer-0: 0;
+  --spacer-1: 0.25rem;
+  --spacer-2: 0.5rem;
+  --spacer-2-5: 0.75rem;
+  --spacer-3: 1rem;
+  --spacer-4: 1.5rem;
+  --spacer-5: 2rem;
+  --spacer-6: 2.5rem;
+  --spacer-half: 0.125rem;
+
+  /* Radii */
+  --radius-none: 0;
+  --radius-small: 0.125rem;
+  --radius-medium: 0.3125rem;
+  --radius-medium-large: 0.5625rem;
+  --radius-large: 0.8125rem;
+  --radius-xlarge: 1.3125rem;
+  --radius-xxlarge: 1.8125rem;
+  --radius-xxxlarge: 2.3125rem;
+  --radius-full: 9999px;
+  --figma-radius-none: var(--radius-none);
+  --figma-radius-small: var(--radius-small);
+  --figma-radius-medium: var(--radius-medium);
+  --figma-radius-medium-large: var(--radius-medium-large);
+  --figma-radius-large: var(--radius-large);
+  --figma-radius-xlarge: var(--radius-xlarge);
+  --figma-radius-xxlarge: var(--radius-xxlarge);
+  --figma-radius-xxxlarge: var(--radius-xxxlarge);
+  --figma-radius-full: var(--radius-full);
+
+  /* Transitions */
+  --input-transition: all 0.08s ease-out;
+  --transition-duration: 0.08s;
+  --transition-timing-function: ease-out;
+
+  /* Misc UI */
+  --popover-min-width: 15rem;
+  --control-height: var(--spacer-4);
+  --handle-color: #fff;
+  --bg-selected: #f5f5f5;
+  --bg-selected-active: #e5f4ff;
+  --bg-tooltip: var(--figma-color-bg-menu);
+  --color-tooltip: var(--figma-color-text);
+  --input-opacity-width: calc(3.25rem - 2px);
+
+  /* Transparent Backgrounds - use light-dark() */
+  --figma-color-bordertranslucent: light-dark(
+    rgba(0, 0, 0, 0.1),
+    rgba(255, 255, 255, 0.1)
+  );
+  --figma-color-bordertranslucentstrong: light-dark(
+    rgba(0, 0, 0, 0.2),
+    rgba(255, 255, 255, 0.2)
+  );
+  --figma-color-bordertranslucentstronger: light-dark(
+    rgba(0, 0, 0, 0.3),
+    rgba(255, 255, 255, 0.3)
+  );
+  --figma-color-bg-transparent: light-dark(
+    rgba(0, 0, 0, 0.05),
+    rgba(255, 255, 255, 0.05)
+  );
+  --figma-color-bg-transparent-hover: light-dark(
+    rgba(0, 0, 0, 0.05),
+    rgba(255, 255, 255, 0.05)
+  );
+  --figma-color-bg-transparent-pressed: light-dark(
+    rgba(0, 0, 0, 0.1),
+    rgba(255, 255, 255, 0.1)
+  );
+  --figma-color-bg-transparent-secondary: light-dark(
+    rgba(0, 0, 0, 0.1),
+    rgba(255, 255, 255, 0.1)
+  );
+
+  /* Gradients */
+  --eased-fade-stops:
+    var(--figma-color-bg) 0%,
+    color-mix(in oklch, var(--figma-color-bg) 99.9%, transparent) 10%,
+    color-mix(in oklch, var(--figma-color-bg) 99.2%, transparent) 20%,
+    color-mix(in oklch, var(--figma-color-bg) 97.3%, transparent) 30%,
+    color-mix(in oklch, var(--figma-color-bg) 93.6%, transparent) 40%,
+    color-mix(in oklch, var(--figma-color-bg) 87.5%, transparent) 50%,
+    color-mix(in oklch, var(--figma-color-bg) 78.4%, transparent) 60%,
+    color-mix(in oklch, var(--figma-color-bg) 65.7%, transparent) 70%,
+    color-mix(in oklch, var(--figma-color-bg) 48.8%, transparent) 80%,
+    color-mix(in oklch, var(--figma-color-bg) 27.1%, transparent) 90%,
+    transparent 100%;
+
+  --checkerboard: repeating-conic-gradient(
+      rgba(0, 0, 0, 0.1) 0% 25%,
+      rgba(255, 255, 255, 0.1) 0% 50%
+    )
+    0 0 / 0.66666rem 0.66666rem;
+  --checkerboard-small: repeating-conic-gradient(
+      rgba(0, 0, 0, 0.2) 0% 25%,
+      rgba(255, 255, 255, 0.2) 0% 50%
+    )
+    0 0 / 0.5rem 0.5rem;
+  --checkerboard-swatch: repeating-conic-gradient(
+      rgba(0, 0, 0, 0.2) 0% 25%,
+      rgba(255, 255, 255, 0.2) 0% 50%
+    )
+    0 0 / 0.4375rem 0.4375rem;
+    --checkerboard-slider: repeating-conic-gradient(
+      rgba(0, 0, 0, 0.2) 0% 25%,
+      rgba(255, 255, 255, 0.2) 0% 50%
+    )
+    0 0 / 0.375rem 0.375rem;
+  --checkerboard-handle: repeating-conic-gradient(
+      rgba(0, 0, 0, 0.2) 0% 25%,
+      rgba(255, 255, 255, 0.2) 0% 50%
+    )
+    0 0 / 0.375rem 0.375rem;
+  --bg-hue: linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 1),
+    rgba(255, 48, 0, 1),
+    rgba(255, 96, 0, 1),
+    rgba(255, 143, 0, 1),
+    rgba(255, 191, 0, 1),
+    rgba(255, 239, 0, 1),
+    rgba(223, 255, 0, 1),
+    rgba(175, 255, 0, 1),
+    rgba(128, 255, 0, 1),
+    rgba(80, 255, 0, 1),
+    rgba(32, 255, 0, 1),
+    rgba(0, 255, 16, 1),
+    rgba(0, 255, 64, 1),
+    rgba(0, 255, 112, 1),
+    rgba(0, 255, 159, 1),
+    rgba(0, 255, 207, 1),
+    rgba(0, 255, 255, 1),
+    rgba(0, 207, 255, 1),
+    rgba(0, 159, 255, 1),
+    rgba(0, 112, 255, 1),
+    rgba(0, 64, 255, 1),
+    rgba(0, 16, 255, 1),
+    rgba(32, 0, 255, 1),
+    rgba(80, 0, 255, 1),
+    rgba(127, 0, 255, 1),
+    rgba(175, 0, 255, 1),
+    rgba(223, 0, 255, 1),
+    rgba(255, 0, 239, 1),
+    rgba(255, 0, 191, 1),
+    rgba(255, 0, 143, 1),
+    rgba(255, 0, 96, 1),
+    rgba(255, 0, 48, 1)
+  );
+
+  --tip-pointer: path("M8 6L2 0H14L8 6Z");
+
+  /* Elevations — light-dark() handles theme switching inline */
+  --figma-elevation-100:
+    0px 0px 0.5px 0px light-dark(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
+    inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1)),
+    0px 1px 3px 0px light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4));
+
+  --figma-elevation-200:
+    0px 0px 0.5px 0px light-dark(rgba(0, 0, 0, 0.18), transparent),
+    0px 3px 8px 0px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.35)),
+    0px 1px 3px 0px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5)),
+    inset 0px 0.5px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.08)),
+    inset 0px 0px 0.5px 0px light-dark(transparent, rgba(255, 255, 255, 0.3));
+
+  --figma-elevation-100-canvas:
+    0 0 0.5px 0 light-dark(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
+    0 0.5px 0 0 light-dark(transparent, rgba(255, 255, 255, 0.1)) inset,
+    0 0 0.5px 0 light-dark(transparent, rgba(255, 255, 255, 0.3)) inset,
+    0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4));
+
+
+  --figma-elevation-200-canvas:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.10), transparent),
+    0 0.5px 0 0 light-dark(transparent, rgba(255, 255, 255, 0.08)) inset,
+    0 3px 8px 0 light-dark(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.35)),
+    0 0 0.5px 0 light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.30)) inset,
+    0 1px 3px 0 light-dark(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.50));
+
+  --figma-elevation-400-menu-panel:
+    0px 0px 0.5px 0px light-dark(rgba(0, 0, 0, 0.12), transparent),
+    0px 10px 16px 0px light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.35)),
+    0px 2px 5px 0px light-dark(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.35)),
+    inset 0px 0.5px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.08)),
+    inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
+
+  --fig-popover-shadow:
+    drop-shadow(0px 1px 1.5px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)))
+    drop-shadow(0px 2.5px 6px light-dark(rgba(0, 0, 0, 0.13), rgba(0, 0, 0, 0.5)))
+    drop-shadow(0px 0px 0.5px light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15)));
+
+  --figma-elevation-500-modal-window:
+    0px 0px 0.5px 0px light-dark(rgba(0, 0, 0, 0.08), transparent),
+    0px 10px 24px 0px light-dark(rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.45)),
+    0px 2px 5px 0px light-dark(rgba(0, 0, 0, 0.15), transparent),
+    0px 3px 5px 0px light-dark(transparent, rgba(0, 0, 0, 0.35)),
+    inset 0px 0.75px 0px 0px light-dark(transparent, rgba(255, 255, 255, 0.1));
+
+  --figma-handle-shadow:
+    0px 0px 0px 1px rgba(0, 0, 0, 0.1),
+    0px 0px 0.5px 0px light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.1)),
+    0px 1px 3px 0px light-dark(rgba(0, 0, 0, 0.15), transparent);
+
+
+  &.figma-light{
+    color-scheme: light;
+    background-color: var(--figma-color-bg);
+  }
+  &.figma-dark{
+    color-scheme: dark;
+    background-color: var(--figma-color-bg);
+  }
+}
+
+[selected]:not([selected="false"]):not(:is(fig-tabs, fig-tab, fig-segmented-control, fig-segment, fig-select-option, fig-menu-item)) {
+  --figma-color-bg: var(--figma-color-bg-selected);
+  --figma-color-bg-hover: var(--figma-color-bg-selected-hover);
+  --figma-color-bg-active: var(--figma-color-bg-selected-pressed);
+  --figma-color-bg-pressed: var(--figma-color-bg-selected-pressed);
+  --figma-color-bg-secondary: var(--figma-color-bg-selected-secondary);
+  --figma-color-bg-tertiary: var(--figma-color-bg-selected-tertiary);
+  --figma-color-border: var(--figma-color-border-onselected);
+  --figma-color-border-strong: var(--figma-color-border-onselected-strong);
+  --figma-color-icon: var(--figma-color-icon-onselected);
+  --figma-color-icon-hover: var(--figma-color-icon-onselected);
+  --figma-color-icon-pressed: var(--figma-color-icon-onselected);
+  --figma-color-icon-secondary: var(--figma-color-icon-onselected-secondary);
+  --figma-color-icon-secondary-hover: var(--figma-color-icon-onselected);
+  --figma-color-icon-tertiary: var(--figma-color-icon-onselected-tertiary);
+  --figma-color-icon-tertiary-hover: var(--figma-color-icon-onselected);
+  --figma-color-text: var(--figma-color-text-onselected);
+  --figma-color-text-hover: var(--figma-color-text-onselected);
+  --figma-color-text-secondary: var(--figma-color-text-onselected-secondary);
+  --figma-color-text-secondary-hover: var(--figma-color-text-onselected);
+  --figma-color-text-tertiary: var(--figma-color-text-onselected-tertiary);
+  --figma-color-text-tertiary-hover: var(--figma-color-text-onselected);
+
+  color: var(--figma-color-text-selected);
+}

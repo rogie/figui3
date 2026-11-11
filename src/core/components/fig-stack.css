@@ -1,0 +1,115 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-stack,
+hstack,
+.hstack,
+vstack,
+.vstack,
+[vstack] {
+  display: flex;
+  flex-direction: row;
+  gap: var(--fig-stack-gap, var(--hstack-gap, var(--spacer-2)));
+  align-items: var(--fig-stack-align, var(--hstack-align, center));
+  justify-content: var(--fig-stack-justify, var(--hstack-justify, flex-start));
+  flex-wrap: var(--fig-stack-wrap, var(--hstack-wrap, nowrap));
+  min-width: 0;
+
+  &:where(fig-stack[direction="vertical"], vstack, .vstack, [vstack]) {
+    flex-direction: column;
+    --fig-stack-align: flex-start;
+  }
+
+  &:where(vstack, .vstack, [vstack]) {
+    --fig-stack-wrap: wrap;
+  }
+
+  &:where([direction="grid"]) {
+    display: grid;
+    grid-template-columns: var(
+      --fig-stack-columns,
+      repeat(
+        auto-fill,
+        minmax(min(var(--fig-stack-min-width, 5rem), 100%), 1fr)
+      )
+    );
+    --fig-stack-align: stretch;
+    justify-items: var(--fig-stack-justify-items, stretch);
+  }
+
+  &[align="start"] {
+    --fig-stack-align: flex-start;
+  }
+
+  &[align="center"] {
+    --fig-stack-align: center;
+  }
+
+  &[align="end"] {
+    --fig-stack-align: flex-end;
+  }
+
+  &[align="stretch"] {
+    --fig-stack-align: stretch;
+  }
+
+  &[align="baseline"] {
+    --fig-stack-align: baseline;
+  }
+
+  &[justify="start"] {
+    --fig-stack-justify: flex-start;
+    --fig-stack-justify-items: start;
+  }
+
+  &[justify="center"] {
+    --fig-stack-justify: center;
+    --fig-stack-justify-items: center;
+  }
+
+  &[justify="end"] {
+    --fig-stack-justify: flex-end;
+    --fig-stack-justify-items: end;
+  }
+
+  &[justify="between"] {
+    --fig-stack-justify: space-between;
+  }
+
+  &[justify="around"] {
+    --fig-stack-justify: space-around;
+  }
+
+  &[justify="stretch"] {
+    --fig-stack-justify-items: stretch;
+  }
+
+  &[wrap]:not([wrap="false"]) {
+    --fig-stack-wrap: wrap;
+  }
+
+  &[wrap="false"] {
+    --fig-stack-wrap: nowrap;
+  }
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &:is(
+      fig-stack:not([direction]),
+      fig-stack[direction="horizontal"],
+      hstack,
+      .hstack
+    ) {
+    & > fig-field:has(+ fig-field) {
+      --fig-field-right-padding: var(--spacer-1);
+    }
+
+    & > fig-field + fig-field {
+      --fig-field-left-padding: var(--spacer-1);
+    }
+  }
+}

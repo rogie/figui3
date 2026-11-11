@@ -1,0 +1,44 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+fig-input-slider-opacity.fig-input-slider {
+  --fig-input-slider-opacity-color: #808080;
+  --fig-input-slider-opacity-checkerboard:
+    repeating-conic-gradient(#0001 0 25%, #fff1 0 50%) 0 / 0.5rem 0.5rem;
+
+  & .fig-input-slider-fill {
+    background:
+      linear-gradient(
+        to right,
+        color-mix(
+          in srgb,
+          var(
+              --fig-input-slider-color,
+              var(
+                --fig-input-slider-opacity-color,
+                var(--figma-color-bg-brand)
+              )
+            )
+            0%,
+          transparent
+        ),
+        var(
+          --fig-input-slider-color,
+          var(
+            --fig-input-slider-opacity-color,
+            var(--figma-color-bg-brand)
+          )
+        )
+      ),
+      var(
+        --fig-input-slider-opacity-checkerboard,
+        repeating-conic-gradient(#0001 0 25%, #fff1 0 50%) 0 / 0.5rem
+          0.5rem
+      );
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+  }
+}

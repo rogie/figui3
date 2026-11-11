@@ -1,0 +1,74 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+fig-ai-prompt {
+  --fig-ai-prompt-margin-inline: var(--spacer-3);
+
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: calc(
+    100% - var(--fig-ai-prompt-margin-inline) -
+      var(--fig-ai-prompt-margin-inline)
+  );
+  min-height: 8rem;
+  margin-inline: var(--fig-ai-prompt-margin-inline);
+  border: 1px solid var(--figma-color-border);
+  border-radius: var(--radius-large);
+  background: var(--figma-color-bg);
+  color: var(--figma-color-text);
+
+  &:has(> fig-input-text:focus-within) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  & > fig-input-text {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    font-size: var(--body-large-fontSize);
+
+    &:hover,
+    &:has(textarea:focus) {
+      outline: 0;
+      box-shadow: none;
+    }
+
+    &[disabled]:not([disabled="false"]) {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    & > textarea {
+      box-sizing: border-box;
+      width: 100%;
+      height: auto;
+      align-self: stretch;
+      min-height: var(--spacer-6);
+      padding: var(--spacer-3);
+      padding-bottom: 0;
+      resize: none;
+      font-size: inherit;
+    }
+  }
+
+  & > fig-attachments {
+    box-sizing: border-box;
+    width: auto;
+    margin: var(--spacer-2) var(--spacer-3) 0;
+  }
+
+  & > fig-footer {
+    justify-content: space-between;
+    border: none;
+    box-shadow: none;
+  }
+}

@@ -1,0 +1,120 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-input-file {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-2);
+  min-width: 0;
+  max-width: 100%;
+
+  &[data-previewing] {
+    width: 100%;
+  }
+
+  &[full]:not([full="false"]) {
+    flex: 1 1 auto;
+    width: 100%;
+
+    & > fig-tooltip,
+    & > fig-button {
+      flex: 1;
+      min-width: 0;
+    }
+
+    & > fig-tooltip > fig-button {
+      width: 100%;
+    }
+  }
+
+  .fig-input-file-filename {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .fig-input-file-filename:has(> .fig-input-file-audio-waveform) {
+    overflow: hidden;
+
+    &:is(:focus, :focus-within) {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+  }
+
+  .fig-input-file-audio-control,
+  .fig-input-file-audio-waveform {
+    display: none;
+  }
+
+  .fig-input-file-audio-waveform {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    pointer-events: none;
+
+    .fig-audio-waveform-surface {
+      width: 100%;
+    }
+  }
+
+  &:is(:hover, :focus-within, [data-audio-playing])
+    .fig-input-file-filename {
+    > .fig-input-file-audio-icon,
+    > .fig-input-file-audio-label {
+      display: none;
+    }
+
+    > .fig-input-file-audio-control {
+      display: inline-flex;
+    }
+
+    > .fig-input-file-audio-waveform {
+      display: block;
+    }
+  }
+
+  .fig-input-file-filename[selected]:not([selected="false"])
+    > .fig-input-file-audio-waveform {
+    --fig-audio-waveform-stroke-color: var(
+      --figma-color-bordertranslucentstrong
+    );
+    --fig-audio-waveform-progress-color: var(--figma-color-icon-selected);
+  }
+
+  .fig-input-file-clear {
+    display: none;
+    flex-shrink: 0;
+  }
+
+  &:is(:hover, :focus-within) .fig-input-file-clear {
+    display: flex;
+  }
+
+  &[upload="icon"] .fig-input-file-clear {
+    display: flex;
+  }
+
+  fig-button:has(> input[type="file"]:focus-visible) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  fig-button > input[type="file"] {
+    &:focus,
+    &:focus-visible {
+      outline: 0;
+      box-shadow: none;
+    }
+  }
+
+  :is(fig-swatch, fig-chit) {
+    background-color: transparent;
+  }
+
+  &[dragover] fig-button {
+    outline: 1px dashed var(--figma-color-border-brand);
+    outline-offset: -1px;
+  }
+}

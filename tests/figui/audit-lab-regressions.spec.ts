@@ -85,6 +85,82 @@ test.describe("fig-lab audit regressions", () => {
     });
   });
 
+  test("canvas color tooltip observers are replaced and disconnected", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const NativeMutationObserver = window.MutationObserver;
+      const active = new Set<object>();
+      const observers = new WeakMap<
+        object,
+        { observer: MutationObserver; tracked: boolean }
+      >();
+
+      class TrackingMutationObserver implements MutationObserver {
+        constructor(callback: MutationCallback) {
+          observers.set(this, {
+            observer: new NativeMutationObserver(callback),
+            tracked: false,
+          });
+        }
+
+        observe(target: Node, options?: MutationObserverInit) {
+          const state = observers.get(this)!;
+          state.observer.observe(target, options);
+          state.tracked =
+            target instanceof Element &&
+            target.matches("fig-handle") &&
+            Boolean(target.closest("fig-canvas-control"));
+          if (state.tracked) active.add(this);
+        }
+
+        disconnect() {
+          const state = observers.get(this)!;
+          state.observer.disconnect();
+          if (state.tracked) active.delete(this);
+          state.tracked = false;
+        }
+
+        takeRecords() {
+          return observers.get(this)!.observer.takeRecords();
+        }
+      }
+
+      window.MutationObserver =
+        TrackingMutationObserver as unknown as typeof MutationObserver;
+      (window as any).__figCanvasObserverCount = () => active.size;
+    });
+    await bootLab(page);
+
+    const counts = await page.evaluate(() => {
+      const count = () => (window as any).__figCanvasObserverCount();
+      const surface = document.createElement("div");
+      surface.style.cssText = "position:relative;width:200px;height:100px";
+      surface.innerHTML =
+        '<fig-canvas-control type="color"></fig-canvas-control>';
+      document.body.append(surface);
+      const canvas = surface.firstElementChild as HTMLElement;
+      const result = [count()];
+
+      canvas.setAttribute("tooltips", "false");
+      result.push(count());
+      canvas.setAttribute("tooltips", "true");
+      result.push(count());
+      canvas.setAttribute("disabled", "");
+      result.push(count());
+      canvas.setAttribute("type", "point");
+      result.push(count());
+      canvas.setAttribute("type", "color");
+      result.push(count());
+      canvas.remove();
+      result.push(count());
+
+      return result;
+    });
+
+    expect(counts).toEqual([1, 0, 1, 1, 0, 1, 0]);
+  });
+
   test("reorder handles support keyboard moves and polite announcements", async ({
     page,
   }) => {

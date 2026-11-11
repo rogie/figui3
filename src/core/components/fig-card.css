@@ -1,0 +1,193 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-card {
+  --fig-card-label-line-clamp: 1;
+  --fig-card-media-radius: var(--radius-medium);
+  --fig-card-padding: var(--spacer-1);
+  --fig-card-thumbnail-width: 2.5rem;
+  --fig-card-thumbnail-height: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-1);
+  width: 100%;
+  min-width: 0;
+  padding: var(--fig-card-padding);
+  border-radius: 0.5625rem;
+  box-sizing: border-box;
+
+  &:focus-visible {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  &[full]:not([full="false"]) {
+    width: 100%;
+  }
+
+  &[size="large"] {
+    --fig-card-padding: var(--spacer-2);
+    --fig-card-thumbnail-width: 3.5rem;
+
+    > fig-footer {
+      margin-top: var(--spacer-1);
+    }
+
+    .fig-card-label,
+    .fig-card-sublabel {
+      padding-inline: 0;
+    }
+  }
+
+  &[direction="horizontal"] {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacer-2);
+
+    > :is(fig-image, fig-media, fig-preview) {
+      flex: 0 0 var(--fig-card-thumbnail-width);
+      width: var(--fig-card-thumbnail-width);
+      max-width: var(--fig-card-thumbnail-width);
+      height: var(--fig-card-thumbnail-height);
+    }
+
+    > :is(fig-image, fig-media) > fig-preview,
+    > fig-preview {
+      height: var(--fig-card-thumbnail-height);
+    }
+
+    > fig-footer {
+      flex: 1 1 0;
+      width: auto;
+      margin-top: 0;
+    }
+
+    .fig-card-label,
+    .fig-card-sublabel {
+      padding-inline: 0;
+    }
+  }
+
+  &[direction="horizontal"]:not([size]),
+  &[direction="horizontal"][size=""] {
+    padding-right: var(--spacer-2);
+  }
+
+  > fig-image,
+  > fig-media,
+  > fig-preview {
+    width: 100%;
+    max-width: none;
+    gap: 0;
+    border-radius: var(--fig-card-media-radius);
+  }
+
+  > fig-preview {
+    display: grid;
+  }
+
+  > fig-image > fig-preview,
+  > fig-media > fig-preview,
+  > fig-preview {
+    width: 100%;
+    max-width: none;
+    border-radius: var(--fig-card-media-radius);
+    min-height: auto;
+
+    &::after {
+      visibility: hidden;
+    }
+  }
+
+  > fig-footer {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    width: auto;
+    padding: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  > fig-footer[hidden] {
+    display: none;
+  }
+
+  .fig-card-label {
+    line-height: var(--line-height);
+    color: var(--figma-color-text);
+    min-width: 0;
+    min-height: 0;
+    padding-inline: var(--spacer-1);
+    justify-content: flex-start;
+    text-align: start;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--fig-card-label-line-clamp);
+    overflow: hidden;
+    word-break: break-word;
+  }
+
+  .fig-card-label[hidden] {
+    display: none;
+  }
+
+  .fig-card-sublabel {
+    box-sizing: border-box;
+    display: block;
+    line-height: var(--line-height);
+    color: var(--figma-color-text-secondary);
+    padding-inline: var(--spacer-1);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 0;
+    justify-content: flex-start;
+    text-align: start;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fig-card-sublabel[hidden] {
+    display: none;
+  }
+
+  :is(.fig-card-label, .fig-card-sublabel).fig-overflow-fade-horizontal {
+    display: block;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    text-overflow: clip;
+    word-break: normal;
+  }
+
+  &:hover:not(
+      [selected]:not([selected="false"])
+    ):not([disabled]:not([disabled="false"])):not([aria-disabled="true"]) {
+    background: var(--figma-color-bg-secondary);
+  }
+
+  &[selected]:not([selected="false"]) {
+    background: var(--figma-color-bg-selected);
+  }
+
+  &[selected]:not([selected="false"]) > :is(fig-image, fig-media, fig-preview) {
+    outline: 1px solid var(--figma-focus-outline-color);
+    outline-offset: 0;
+  }
+
+  &[disabled]:not([disabled="false"]),
+  &[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}

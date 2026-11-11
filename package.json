@@ -1,22 +1,66 @@
 {
   "name": "@rogieking/figui3",
-  "version": "11.8.5",
+  "version": "11.11.5",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
+  "engines": {
+    "bun": ">=1.3.0",
+    "node": ">=22"
+  },
   "main": "dist/fig.js",
   "module": "dist/fig.js",
+  "types": "types/index.d.ts",
   "exports": {
-    ".": "./dist/fig.js",
-    "./fig.js": "./dist/fig.js",
-    "./fig-color.js": "./dist/fig-color.js",
-    "./fig-layer.js": "./dist/fig-layer.js",
-    "./fig-input-rotate.js": "./dist/fig-input-rotate.js",
-    "./fig-input-slider.js": "./dist/fig-input-slider.js",
-    "./fig-property.js": "./dist/fig-property.js",
-    "./fig-editor.js": "./dist/fig-editor.js",
-    "./fig-lab.js": "./dist/fig-lab.js",
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./dist/fig.js"
+    },
+    "./fig.js": {
+      "types": "./types/index.d.ts",
+      "default": "./dist/fig.js"
+    },
+    "./fig-color.js": {
+      "types": "./types/fig-color.d.ts",
+      "default": "./dist/fig-color.js"
+    },
+    "./fig-layer.js": {
+      "types": "./types/index.d.ts",
+      "default": "./dist/fig-layer.js"
+    },
+    "./fig-input-rotate.js": {
+      "types": "./types/fig-input-rotate.d.ts",
+      "default": "./dist/fig-input-rotate.js"
+    },
+    "./fig-input-slider.js": {
+      "types": "./types/fig-input-slider.d.ts",
+      "default": "./dist/fig-input-slider.js"
+    },
+    "./fig-property.js": {
+      "types": "./types/fig-property.d.ts",
+      "default": "./dist/fig-property.js"
+    },
+    "./fig-editor.js": {
+      "types": "./types/index.d.ts",
+      "default": "./dist/fig-editor.js"
+    },
+    "./fig-lab.js": {
+      "types": "./types/index.d.ts",
+      "default": "./dist/fig-lab.js"
+    },
+    "./register.js": {
+      "types": "./types/register.d.ts",
+      "default": "./dist/register.js"
+    },
+    "./propskit.js": {
+      "types": "./types/propskit.d.ts",
+      "default": "./dist/propskit.js"
+    },
+    "./react": {
+      "types": "./types/react.d.ts",
+      "default": "./types/react.js"
+    },
     "./fig.css": "./dist/fig.css",
     "./fig-layer.css": "./dist/fig-layer.css",
     "./fig-input-rotate.css": "./dist/fig-input-rotate.css",
@@ -26,55 +70,49 @@
     "./fig-lab.css": "./dist/fig-lab.css",
     "./base.css": "./dist/base.css",
     "./components.css": "./dist/components.css",
+    "./icons.css": "./dist/icons.css",
     "./src/fig.js": "./fig.js",
     "./src/fig-color.js": "./fig-color.js",
-    "./src/fig-layer.js": "./fig-layer.js",
-    "./src/fig-input-rotate.js": "./fig-input-rotate.js",
-    "./src/fig-input-slider.js": "./fig-input-slider.js",
-    "./src/fig-property.js": "./fig-property.js",
+    "./src/fig-layer.js": "./src/core/entrypoints/fig-layer.js",
+    "./src/fig-input-rotate.js": "./src/editor/entrypoints/fig-input-rotate.js",
+    "./src/fig-input-slider.js": "./src/lab/entrypoints/fig-input-slider.js",
+    "./src/fig-property.js": "./src/core/entrypoints/fig-property.js",
     "./src/fig-editor.js": "./fig-editor.js",
     "./src/fig-lab.js": "./fig-lab.js",
+    "./src/register.js": "./register.js",
+    "./src/propskit.js": "./propskit.js",
     "./src/fig.css": "./fig.css",
-    "./src/fig-layer.css": "./fig-layer.css",
-    "./src/fig-input-rotate.css": "./fig-input-rotate.css",
-    "./src/fig-input-slider.css": "./fig-input-slider.css",
-    "./src/fig-property.css": "./fig-property.css",
+    "./src/fig-layer.css": "./src/core/entrypoints/fig-layer.css",
+    "./src/fig-input-rotate.css": "./src/editor/entrypoints/fig-input-rotate.css",
+    "./src/fig-input-slider.css": "./src/lab/entrypoints/fig-input-slider.css",
+    "./src/fig-property.css": "./src/core/entrypoints/fig-property.css",
     "./src/fig-editor.css": "./fig-editor.css",
     "./src/fig-lab.css": "./fig-lab.css",
     "./src/base.css": "./base.css",
-    "./src/components.css": "./components.css"
+    "./src/components.css": "./components.css",
+    "./src/icons.css": "./icons.css"
   },
   "files": [
     "fig.js",
     "fig-color.js",
-    "fig-layer.js",
-    "fig-input-rotate.js",
-    "fig-input-slider.js",
-    "fig-property.js",
-    "fig-gradient-editor.js",
-    "fig-palette-editor.js",
-    "fig-popup-easing.js",
-    "fig-popup-gradient.js",
-    "fig-popup-palette.js",
     "fig-editor.js",
     "fig-lab.js",
+    "register.js",
+    "propskit.js",
     "fig.css",
-    "fig-layer.css",
-    "fig-input-rotate.css",
-    "fig-input-slider.css",
-    "fig-property.css",
-    "fig-gradient-editor.css",
-    "fig-palette-editor.css",
-    "fig-popup-easing.css",
-    "fig-popup-gradient.css",
-    "fig-popup-palette.css",
     "fig-editor.css",
     "fig-lab.css",
     "base.css",
     "components.css",
+    "icons.css",
+    "icons/manifest.js",
+    "icons/manifest.d.ts",
+    "src/",
     "polyfills/",
+    "types/",
     "dist/",
     ".cursor/skills/",
+    "BUNDLES.md",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
@@ -85,14 +123,25 @@
   ],
   "scripts": {
     "dev": "bun --hot server.ts",
-    "build": "bun build fig-color.js --minify --outdir dist && bun build fig.js --minify --outdir dist --external ./fig-color.js && bun build fig-layer.js --minify --outdir dist && bun build fig-input-rotate.js --minify --outdir dist --external ./fig.js && bun build fig-input-slider.js --minify --outdir dist --external ./fig.js && bun build fig-property.js --minify --outdir dist --external ./fig.js && bun build fig-editor.js --minify --outdir dist --external ./fig.js --external ./fig-color.js --external ./fig-input-rotate.js --external ./fig-property.js --external ./fig-lab.js && bun build fig-lab.js --minify --outdir dist --external ./fig.js --external ./fig-editor.js --external ./fig-input-slider.js && npm run build:css",
+    "build": "npm run build:icons && npm run build:bundle-docs && npm run build:js && npm run build:css && npm run check:artifacts && npm run check:licenses",
+    "prepack": "npm run build",
+    "build:icons": "node scripts/build-icons.mjs",
+    "build:bundle-docs": "node scripts/build-bundle-docs.mjs",
+    "build:js": "bun scripts/build-js.mjs",
     "build:css": "node scripts/build-css.mjs",
+    "check:icons": "node scripts/build-icons.mjs --check",
+    "check:artifacts": "node scripts/check-artifacts.mjs",
+    "check:licenses": "node scripts/check-licenses.mjs",
     "dev:playground": "node playground/dev.mjs",
     "build:playground": "cd playground && npm run build",
-    "test": "npm run test:components",
+    "test": "npm run test:checks && npm run test:unit && npm run test:import && npm run test:components",
+    "test:checks": "npm run check:icons && npm run check:bundle-docs && npm run test:types",
+    "test:unit": "bun test tests/unit",
+    "check:bundle-docs": "node scripts/build-bundle-docs.mjs --check",
+    "test:types": "tsc -p tests/types/tsconfig.json",
     "test:components": "playwright test",
-    "test:unit": "playwright test --config=playwright.unit.config.ts",
-    "test:perf": "playwright test --config=playwright.perf.config.ts",
+    "test:import": "playwright test --config=playwright.unit.config.ts",
+    "test:perf": "npm run build && playwright test --config=playwright.perf.config.ts",
     "test:all": "npm run test:components && npm run test:perf"
   },
   "repository": {
@@ -134,10 +183,9 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.60.0",
-    "@types/bun": "latest",
-    "clean-css-cli": "^5.6.3",
+    "@types/bun": "1.3.10",
+    "@types/react": "^19.3.0",
     "lightningcss": "^1.32.0",
-    "lightningcss-cli": "^1.32.0",
-    "playwright": "^1.58.2"
+    "typescript": "^5.9.3"
   }
 }

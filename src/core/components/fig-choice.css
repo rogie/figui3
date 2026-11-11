@@ -1,0 +1,60 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-choice {
+  --fig-choice-padding: 0px;
+  --fig-choice-text-padding-inline: var(--spacer-2);
+  --fig-choice-border-radius: var(--radius-medium);
+  --fig-choice-min-height: 1.5rem;
+  --fig-choice-min-width: 1.5rem;
+  --fig-choice-selection-ring-width: var(--figma-focus-outline-width);
+
+  min-height: var(--fig-choice-min-height);
+  min-width: var(--fig-choice-min-width);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-radius: var(--fig-choice-border-radius);
+  gap: var(--spacer-2);
+  outline: none;
+  cursor: default;
+  padding: var(--fig-choice-padding);
+
+  &:not(:has(> *)) {
+    padding-inline: var(--fig-choice-text-padding-inline);
+  }
+
+  &:hover:not([selected]:not([selected="false"])):not([disabled]:not([disabled="false"])):not([aria-disabled="true"]) {
+    background-color: var(--figma-color-bg-secondary);
+  }
+
+  &[padding]:not([padding="false"]) {
+    --fig-choice-padding: var(--spacer-1);
+    --fig-choice-border-radius: var(--radius-medium-large);
+  }
+
+  &:focus-visible,
+  &[selected]:not([selected="false"]){
+    outline: var(--fig-choice-selection-ring-width) solid
+        var(--figma-color-border-selected);
+    outline-offset: var(--fig-choice-selection-ring-width);
+  }
+
+  &[selected]:not([selected="false"]) {
+    background-color: var(--figma-color-bg-selected);
+    &>*,
+    &:hover{
+      background-color: transparent;
+    }
+  }
+
+  &[disabled]:not([disabled="false"]),
+  &[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.4;
+    cursor: default;
+  }
+}

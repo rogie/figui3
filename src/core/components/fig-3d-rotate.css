@@ -1,0 +1,212 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-3d-rotate {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  width: 100%;
+  --aspect-ratio: 1 / 1;
+  --perspective: 20rem;
+  --perspective-origin: 50% 50%;
+  --transform-origin: 50% 50% -50cqi;
+  --gradient-start-color: light-dark(
+    rgba(0, 0, 0, 0.05),
+    rgba(255, 255, 255, 0.05)
+  );
+  --border-width: 1px;
+  --border-start-color: light-dark(
+    rgba(0, 0, 0, 0.1),
+    rgba(255, 255, 255, 0.1)
+  );
+  --border-end-color: transparent;
+  --gradient-end-color: transparent;
+  --figma-3d-rotate-handle-size: 6px;
+  --front-face-bg: light-dark(var(--figma-color-bg), #555);
+
+  fig-field:not([direction="vertical"]) & {
+    flex: 1;
+    min-width: 0;
+  }
+
+  > fig-input-number {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+
+  .fig-3d-rotate-container {
+    flex: 1 1 100%;
+    border-radius: var(--radius-medium);
+    background: var(--figma-color-bg-secondary);
+    padding: 0 2.5rem;
+    width: 100%;
+    aspect-ratio: var(--aspect-ratio);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    user-select: none;
+    overflow: hidden;
+
+    &.dragging,
+    &:active {
+      cursor: grabbing;
+    }
+
+    &:focus {
+      outline: 0;
+    }
+
+    &:focus-visible {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+  }
+
+  .fig-3d-rotate-scene {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: max(3.5rem, 50%);
+    max-width: max(3.5rem, 50%);
+    perspective: var(--perspective, 20rem);
+    perspective-origin: var(--perspective-origin, 50% 50%);
+    container-type: inline-size;
+  }
+
+  .fig-3d-rotate-cube {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    aspect-ratio: 1 / 1;
+    transform-style: preserve-3d;
+    transform-origin: var(--transform-origin, 50% 50% -50cqi);
+  }
+
+  .fig-3d-rotate-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: visible;
+    background: linear-gradient(
+      to bottom,
+      var(--gradient-start-color),
+      var(--gradient-end-color)
+    );
+
+    &.selected {
+      background: var(--figma-color-border-strong) !important;
+      inset: -1px;
+      border-radius: var(--radius-medium);
+      border: 1px solid var(--figma-color-border);
+    }
+
+    &.front {
+      background: var(--front-face-bg);
+      border-radius: var(--radius-medium);
+      transform-style: preserve-3d;
+      border: 1px solid var(--figma-color-bordertranslucent);
+      inset: -1px;
+
+      &::after {
+        content: "";
+        position: absolute;
+        width: var(--figma-3d-rotate-handle-size);
+        height: var(--figma-3d-rotate-handle-size);
+        border-radius: 50%;
+        background: var(--figma-color-icon-brand);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        backface-visibility: hidden;
+      }
+    }
+
+    &.back {
+      transform-origin: 100% 50%;
+      transform: translateX(-100%) rotateY(-0.25turn) translateX(-100%)
+        rotateY(-0.25turn);
+      background: linear-gradient(
+        to bottom,
+        var(--border-start-color),
+        var(--border-end-color)
+      );
+      border-radius: var(--radius-medium);
+    }
+
+    &.right {
+      transform-origin: 0% 50%;
+      transform: translateX(100%) rotateY(0.25turn);
+      background: linear-gradient(
+        to right,
+        var(--gradient-start-color),
+        var(--gradient-end-color)
+      );
+      border-width: var(--border-width) 0;
+      border-style: solid;
+      border-image: linear-gradient(
+          to right,
+          var(--border-start-color),
+          var(--border-end-color)
+        )
+        1;
+    }
+
+    &.left {
+      transform-origin: 100% 50%;
+      transform: translateX(-100%) rotateY(-0.25turn);
+      background: linear-gradient(
+        to left,
+        var(--gradient-start-color),
+        var(--gradient-end-color)
+      );
+      border-width: var(--border-width) 0;
+      border-style: solid;
+      border-image: linear-gradient(
+          to left,
+          var(--border-start-color),
+          var(--border-end-color)
+        )
+        1;
+    }
+
+    &.top {
+      translate: 0 -100%;
+      transform-origin: 50% 100%;
+      transform: rotateX(0.25turn);
+      background: linear-gradient(
+        to top,
+        var(--gradient-start-color),
+        var(--gradient-end-color)
+      );
+      border-width: 0 var(--border-width);
+      border-style: solid;
+      border-image: linear-gradient(
+          to top,
+          var(--border-start-color),
+          var(--border-end-color)
+        )
+        1;
+    }
+
+    &.bottom {
+      top: 100%;
+      bottom: auto;
+      transform-origin: 50% 0%;
+      transform: rotateX(-0.25turn);
+      background: linear-gradient(
+        to bottom,
+        var(--gradient-start-color),
+        var(--gradient-end-color)
+      );
+      border-width: 0 var(--border-width);
+      border-style: solid;
+      border-image: linear-gradient(
+          to bottom,
+          var(--border-start-color),
+          var(--border-end-color)
+        )
+        1;
+    }
+  }
+}

@@ -1,0 +1,47 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+/* Menu */
+fig-menu {
+  display: contents;
+}
+
+/*
+ * Internal menu is a fig-popup inside fig-menu's shadow, so document
+ * dialog[is="fig-popup"] rules don't apply. Expose part=listbox and mirror
+ * the menu-theme popup chrome (same tokens as fig-select::part(listbox)).
+ */
+fig-menu::part(listbox) {
+  --z-index: 999999;
+  --fig-popup-radius: var(--radius-large);
+  --fig-popup-bg-color: var(--figma-color-bg-menu);
+
+  z-index: var(--z-index);
+  position: fixed;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--fig-popup-radius);
+  background-color: var(--fig-popup-bg-color);
+  color: var(--figma-color-text-menu);
+  color-scheme: dark;
+  box-shadow: var(--figma-elevation-400-menu-panel);
+  min-width: 6rem;
+  max-height: calc(100vh - 1rem);
+  height: max-content;
+}
+
+fig-menu > :is(fig-separator, fig-menu-separator) {
+  --fig-separator-padding-inline: var(--spacer-3,0.75rem) var(--spacer-4,1rem);
+}
+
+fig-menu > [slot="trigger"] + :is(fig-separator, fig-menu-separator):has(> label) {
+  --fig-separator-padding-block: 0;
+  --fig-separator-stuck-padding-block: 0;
+  --fig-separator-color: transparent;
+  --fig-separator-margin-block: 0;
+}

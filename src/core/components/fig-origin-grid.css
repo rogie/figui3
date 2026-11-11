@@ -1,0 +1,197 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-origin-grid {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: var(--spacer-2);
+  --aspect-ratio: 1 / 1;
+  --origin-grid-dot-size: 0.125rem;
+  --origin-grid-handle-size: 0.75rem;
+  --origin-grid-height: var(--spacer-4);
+
+  fig-field:not([direction="vertical"]) & {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .fig-origin-grid-surface {
+    width: 100%;
+    aspect-ratio: var(--aspect-ratio);
+    min-height: calc(var(--origin-grid-height) * 3);
+  }
+
+  .origin-grid {
+    position: relative;
+    container-type: size;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-medium);
+    background: var(--figma-color-bg-secondary);
+    user-select: none;
+    cursor: default;
+
+    &.is-dragging {
+      cursor: grabbing !important;
+
+      fig-handle {
+        cursor: grabbing !important;
+      }
+    }
+
+    &.drag-disabled {
+      fig-handle {
+        cursor: default;
+      }
+    }
+  }
+
+  .origin-grid-cells {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .origin-grid-cell {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    min-height: var(--origin-grid-height);
+    color: var(--figma-color-icon-tertiary);
+    pointer-events: none;
+
+    .origin-grid-dot {
+      width: var(--origin-grid-dot-size);
+      height: var(--origin-grid-dot-size);
+      border-radius: var(--radius-small);
+      background: currentColor;
+    }
+
+    &.is-hovered {
+      color: var(--figma-color-bg-onselected);
+
+      .origin-grid-dot {
+        width: var(--origin-grid-handle-size);
+        height: var(--origin-grid-handle-size);
+      }
+    }
+  }
+
+  fig-handle {
+    --origin-overflow-rotation: 0deg;
+    --origin-overflow-nudge-base: var(--spacer-2-5);
+    --origin-overflow-nudge-x: 0px;
+    --origin-overflow-nudge-y: 0px;
+    --origin-overflow-nudge-x-scale: calc((100cqb / 100cqi) * -1);
+    --origin-overflow-nudge-y-scale: calc((100cqb / 100cqi) * -1);
+    --width: var(--origin-grid-handle-size);
+    --height: var(--origin-grid-handle-size);
+    --border-radius: var(--radius-small);
+    --fig-handle-padding: 2.5px;
+    --fig-handle-inner-radius: 0;
+
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(
+        calc(-50% + var(--origin-overflow-nudge-x)),
+        calc(-50% + var(--origin-overflow-nudge-y))
+      )
+      rotate(var(--origin-overflow-rotation));
+    cursor: default;
+    touch-action: none;
+
+    &:focus-visible {
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+    }
+
+    &.beyond-bounds-x,
+    &.beyond-bounds-y {
+      -webkit-mask-image: var(--icon-24-arrow-left);
+      mask-image: var(--icon-24-arrow-left);
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+      -webkit-mask-size: 24px 24px;
+      mask-size: 24px 24px;
+      background-color: var(--figma-color-icon-brand);
+      --fig-handle-inner-bg: transparent !important;
+      --fig-handle-outline-color: transparent !important;
+      --fig-handle-inner-outline: none;
+      --border-radius: 0;
+      --box-shadow: none;
+    }
+
+    &.beyond-bounds-x.overflow-right {
+      --origin-overflow-rotation: 180deg;
+    }
+
+    &.beyond-bounds-y:not(.beyond-bounds-x) {
+      --origin-overflow-rotation: 90deg;
+    }
+
+    &.beyond-bounds-y.overflow-down:not(.beyond-bounds-x) {
+      --origin-overflow-rotation: -90deg;
+    }
+
+    &.beyond-bounds-x.beyond-bounds-y.overflow-left.overflow-up {
+      --origin-overflow-rotation: 45deg;
+    }
+
+    &.beyond-bounds-x.beyond-bounds-y.overflow-left.overflow-down {
+      --origin-overflow-rotation: -45deg;
+    }
+
+    &.beyond-bounds-x.beyond-bounds-y.overflow-right.overflow-up {
+      --origin-overflow-rotation: 135deg;
+    }
+
+    &.beyond-bounds-x.beyond-bounds-y.overflow-right.overflow-down {
+      --origin-overflow-rotation: -135deg;
+    }
+
+    &.overflow-left {
+      --origin-overflow-nudge-x: calc(
+        var(--origin-overflow-nudge-base) * var(--origin-overflow-nudge-x-scale)
+      );
+    }
+
+    &.overflow-right {
+      --origin-overflow-nudge-x: calc(
+        var(--origin-overflow-nudge-base) *
+          var(--origin-overflow-nudge-x-scale) * -1
+      );
+    }
+
+    &.overflow-up {
+      --origin-overflow-nudge-y: calc(
+        var(--origin-overflow-nudge-base) * var(--origin-overflow-nudge-y-scale)
+      );
+    }
+
+    &.overflow-down {
+      --origin-overflow-nudge-y: calc(
+        var(--origin-overflow-nudge-base) *
+          var(--origin-overflow-nudge-y-scale) * -1
+      );
+    }
+  }
+
+  .origin-values {
+    display: flex;
+    gap: var(--spacer-2);
+
+    > fig-input-number {
+      flex: 1 1 0;
+      min-width: 0;
+      width: 0;
+    }
+  }
+}

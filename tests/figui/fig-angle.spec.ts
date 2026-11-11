@@ -128,6 +128,18 @@ test.describe("fig-angle", () => {
     });
   });
 
+  test("hides internal number input steppers", async ({ page }) => {
+    await page.evaluate(() => {
+      const angle = document.createElement("fig-angle");
+      angle.id = "angle-steppers";
+      document.body.append(angle);
+    });
+
+    const input = page.locator("#angle-steppers fig-input-number");
+    await expect(input).toHaveAttribute("steppers", "false");
+    await expect(input.locator(".fig-steppers")).toHaveCount(0);
+  });
+
   test("sizes the centered number input to its value", async ({ page }) => {
     const widths = await page.evaluate(() => {
       const angle = document.createElement("fig-angle") as HTMLElement & {

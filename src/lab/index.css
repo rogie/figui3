@@ -1,0 +1,17 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+/**
+ * FigUI3 Lab implementation styles.
+ */
+
+@import url("./components/fig-ai-prompt.css");
+@import url("./components/fig-ai-context.css");
+@import url("./components/fig-attachments.css");
+@import url("./components/fig-attachment.css");
+@import url("./components/fig-chat-message.css");
+@import url("./components/fig-input-wheel.css");
+@import url("./components/fig-canvas-control.css");

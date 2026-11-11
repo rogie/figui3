@@ -630,6 +630,16 @@ export default function AttributesView({
             boolMode: "presence",
           };
         }
+        if (
+          target.controlTag === "fig-truncate" &&
+          target.controlAttributes.overflow === "fade" &&
+          mergedControlRules.position?.type === "enum"
+        ) {
+          mergedControlRules.position = {
+            ...mergedControlRules.position,
+            options: ["right", "left"],
+          };
+        }
 
         const fieldDirection = (
           target.fieldAttributes.direction ?? "horizontal"
@@ -1665,6 +1675,27 @@ export default function AttributesView({
                   const match = options.find(
                     (o) => toSentenceCaseLabel(o) === nextLabel,
                   );
+                  if (
+                    target.controlTag === "fig-truncate" &&
+                    name === "overflow" &&
+                    match === "fade" &&
+                    target.controlAttributes.position === "middle"
+                  ) {
+                    let updated = applyAttributeMutation(markup, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "overflow",
+                      value: "fade",
+                    });
+                    updated = applyAttributeMutation(updated, {
+                      fieldIndex: target.fieldIndex,
+                      target: "control",
+                      name: "position",
+                      value: "right",
+                    });
+                    onMarkupChange(updated);
+                    return;
+                  }
                   applyChange(
                     target.fieldIndex,
                     scope,
@@ -2569,6 +2600,60 @@ export default function AttributesView({
                       const maxSizeAfterLayout =
                         target.controlTag === "fig-chooser" &&
                         entry.name === "layout";
+
+                      if (
+                        target.controlTag === "fig-carousel" &&
+                        entry.name === "progress"
+                      ) {
+                        const variableName = "--fig-carousel-page-duration";
+                        const styleValue =
+                          target.controlAttributes.style ?? "";
+                        const durationMatch = styleValue.match(
+                          /--fig-carousel-(?:page|indicator)-duration:\s*([\d.]+)ms/i,
+                        );
+                        const duration = durationMatch
+                          ? Number(durationMatch[1])
+                          : 300;
+                        const durationField = (
+                          <fig-field
+                            columns="2/5"
+                            key={`control-carousel-transition-duration-${target.fieldIndex}`}
+                          >
+                            <label>Transition duration</label>
+                            <fig-slider
+                              full
+                              text="true"
+                              value={String(duration)}
+                              min="0"
+                              max="1000"
+                              step="10"
+                              units="ms"
+                              onInput={(e: any) => {
+                                const nextDuration = Number(
+                                  e.currentTarget?.value ??
+                                    (e as CustomEvent).detail?.value,
+                                );
+                                if (!Number.isFinite(nextDuration)) return;
+                                const cleaned = styleValue
+                                  .replace(
+                                    /--fig-carousel-(?:page|indicator)-duration:\s*[^;]+;?/gi,
+                                    "",
+                                  )
+                                  .trim()
+                                  .replace(/;$/, "");
+                                applyChange(
+                                  target.fieldIndex,
+                                  "control",
+                                  "style",
+                                  `${cleaned ? `${cleaned}; ` : ""}${variableName}: ${nextDuration}ms`,
+                                );
+                              }}
+                            ></fig-slider>
+                          </fig-field>
+                        );
+                        return [field, durationField];
+                      }
+
                       if (maxSizeAfterLayout) {
                         const currentLayout =
                           target.controlAttributes.layout ?? "vertical";

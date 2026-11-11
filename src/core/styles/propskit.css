@@ -1,0 +1,50 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+
+.propskit-root,
+.propskit-panel {
+  width: 100%;
+  min-width: 0;
+}
+
+.propskit-media-control {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: var(--spacer-2);
+}
+
+.propskit-media-item {
+  display: grid;
+  min-width: 0;
+  gap: var(--spacer-1);
+}
+
+.propskit-media-item > :is(fig-image, fig-video) {
+  width: 100%;
+}
+
+.propskit-media-chooser {
+  max-height: 12rem;
+  max-width: 100%;
+  width: 100%;
+}
+
+.propskit-media-chooser > :is(fig-image, fig-video) {
+  min-width: 0;
+  border-radius: var(--radius-medium);
+  width: 100%;
+}
+
+.propskit-media-chooser
+  > :is(fig-image, fig-video):is(
+    :focus-visible,
+    [selected]:not([selected="false"])
+  ) {
+  outline: var(--figma-focus-outline-width) solid
+    var(--figma-color-border-selected);
+  outline-offset: var(--figma-focus-outline-width);
+}

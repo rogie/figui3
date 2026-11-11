@@ -66,6 +66,7 @@ test.describe("fig-audio-waveform", () => {
     await expect(host.locator("path")).toHaveCount(2);
     await expect(host.locator("fig-button, input, audio, label")).toHaveCount(0);
     await expect(host).toHaveCSS("height", "24px");
+    expect(await host.evaluate((element: any) => element.variant)).toBe("bars");
   });
 
   test("decodes its URL into responsive rounded waveform paths", async ({
@@ -134,6 +135,102 @@ test.describe("fig-audio-waveform", () => {
       .not.toBe(firstPath);
   });
 
+  test("renders a responsive smooth ribbon with normalized variant reflection", async ({
+    page,
+  }) => {
+    await mountWaveform(
+      page,
+      `variant="ribbon" progress="0.25" style="width:288px" url="${wavDataUrl()}"`,
+    );
+    const host = page.locator("#waveform");
+    await expect(host).toHaveAttribute("data-waveform-state", "ready");
+
+    const readGeometry = () =>
+      host.evaluate((element: any) => {
+        const svg = element.querySelector("svg")!;
+        const path = svg.querySelector(".fig-audio-waveform-path")!;
+        const progress = svg.querySelector(".fig-audio-waveform-progress")!;
+        const pathData = path.getAttribute("d") || "";
+        const colorProbe = document.createElement("div");
+        colorProbe.style.color = "var(--figma-color-icon-selected-tertiary)";
+        document.body.append(colorProbe);
+        const geometry = {
+          attribute: element.getAttribute("variant"),
+          property: element.variant,
+          path: pathData,
+          moveCount: (pathData.match(/(?:^| )M /g) || []).length,
+          curveCount: (pathData.match(/(?:^| )Q /g) || []).length,
+          closed: pathData.endsWith(" Z"),
+          sameProgressPath: progress.getAttribute("d") === pathData,
+          clipWidth: Number(
+            svg.querySelector("clipPath rect")?.getAttribute("width"),
+          ),
+          width: Number(svg.getAttribute("viewBox")?.split(" ")[2]),
+          progressFill: getComputedStyle(progress).fill,
+          expectedProgressFill: getComputedStyle(colorProbe).color,
+        };
+        colorProbe.remove();
+        return geometry;
+      });
+
+    const initial = await readGeometry();
+    expect(initial).toMatchObject({
+      attribute: "ribbon",
+      property: "ribbon",
+      moveCount: 1,
+      closed: true,
+      sameProgressPath: true,
+    });
+    expect(initial.progressFill).toBe(initial.expectedProgressFill);
+    expect(initial.curveCount).toBeGreaterThan(1);
+    expect(initial.clipWidth).toBeCloseTo(initial.width * 0.25, 5);
+
+    await host.evaluate((element) => {
+      element.style.width = "160px";
+    });
+    await expect.poll(() => readGeometry().then((value) => value.path)).not.toBe(
+      initial.path,
+    );
+
+    await host.evaluate((element: any) => {
+      element.setAttribute("variant", "invalid");
+    });
+    await expect
+      .poll(() => readGeometry().then((value) => value.moveCount))
+      .toBeGreaterThan(1);
+    expect(await readGeometry()).toMatchObject({
+      attribute: "invalid",
+      property: "bars",
+    });
+
+    await host.evaluate((element: any) => {
+      element.variant = "RIBBON";
+    });
+    await expect.poll(() => readGeometry().then((value) => value.moveCount)).toBe(
+      1,
+    );
+    expect(await readGeometry()).toMatchObject({
+      attribute: "ribbon",
+      property: "ribbon",
+    });
+
+    await host.evaluate((element: any) => {
+      element.variant = "unknown";
+    });
+    expect(await readGeometry()).toMatchObject({
+      attribute: "bars",
+      property: "bars",
+    });
+
+    await host.evaluate((element: any) => {
+      element.variant = null;
+    });
+    expect(await readGeometry()).toMatchObject({
+      attribute: null,
+      property: "bars",
+    });
+  });
+
   test("uses RMS energy so isolated peaks do not flatten the waveform", async ({
     page,
   }) => {
@@ -178,6 +275,13 @@ test.describe("fig-audio-waveform", () => {
       "data-waveform-state",
       "ready",
     );
+    await expect
+      .poll(() =>
+        page
+          .locator("#waveform .fig-audio-waveform-path")
+          .getAttribute("d"),
+      )
+      .not.toBeFalsy();
     const uniqueBarTops = await page.locator("#waveform").evaluate((host) => {
       const path =
         host.querySelector(".fig-audio-waveform-path")?.getAttribute("d") || "";

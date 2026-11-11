@@ -1,0 +1,28 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-audio {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacer-2);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  > audio {
+    display: none;
+  }
+
+  > fig-audio-waveform,
+  > fig-media-controls {
+    width: 100%;
+    min-width: 0;
+  }
+
+  > fig-audio-waveform {
+    padding: 0 var(--spacer-2);
+  }
+}

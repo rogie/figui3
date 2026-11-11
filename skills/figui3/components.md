@@ -2,7 +2,11 @@
 
 React contract: [react.md](react.md). Attrs: [reference.md](reference.md).
 
-Handlers below assume `onInput` / `onChange` / `onClick` from [react.md](react.md).
+Handlers below follow [react.md](react.md). JSX `onChange` examples target React
+19; React 18 consumers must attach `change` through `addEventListener`.
+
+Public events that bubble are composed, so they cross ancestor shadow roots.
+Cancelability is event-specific; check `event.cancelable` before preventing one.
 
 ## Buttons and inputs
 
@@ -71,6 +75,7 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 
 - Attrs: `type` (`text` | `number`, default `text`), `value`, `options`, `placeholder`, `disabled`, `full`
 - Uses `fig-select` when the editor bundle is registered; otherwise uses core `fig-dropdown`.
+- Exact typed option matches are selected and checked; unmatched values clear the option selection.
 - Legacy alias: `fig-combo-input`
 
 ### `fig-input-text`
@@ -96,14 +101,13 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
   max="100"
   step="1"
   units="%"
-  steppers="true"
   full
   onInput={onInput}
   onChange={onChange}
 />
 ```
 
-- Attrs: `value`, `default`, `size` (`large`), `variant` (`ghost`), `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers`, `tabular`, `disabled`, `full`
+- Attrs: `value`, `default`, `size` (`large`), `variant` (`ghost`), `min`, `max`, `step`, `precision`, `units`, `units-disallow`, `steppers` (defaults to `true`; set `"false"` to hide), `tabular`, `disabled`, `full`
 
 ### `fig-angle`
 
@@ -141,8 +145,9 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 <fig-audio src="track.mp3" controls loop />
 ```
 
-- Attrs: `src`, `autoplay`, `controls`, `muted`, `loop`
+- Attrs: `src`, `variant="bars|ribbon"`, `autoplay`, `controls`, `muted`, `loop`
 - Composes a synchronized `fig-audio-waveform` and `fig-media-controls`.
+- `variant` is forwarded to the generated or authored waveform and defaults to `bars`.
 - Authored direct waveform and controls children are preserved.
 - Methods: `play()`, `pause()`, `toggle()`; `audioEl` exposes the native audio element.
 
@@ -153,6 +158,7 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 ```
 
 - Responsive waveform generated from the `url` attribute.
+- `variant="bars|ribbon"` selects rounded bars or a smooth mirrored ribbon; defaults to `bars`.
 - `progress` is a clamped `0`–`1` fraction; the completed waveform uses the selected icon color.
 - `polarization` controls waveform contrast around half-height; default `1.5`, `1` is neutral.
 - `full` fills the available width.
@@ -518,6 +524,8 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 ```
 
 - Attrs: `name`, `size` (`medium` | `small`), `color` (token)
+- `fig.css` includes all generated icon tokens. Use `@rogieking/figui3/icons.css` only when consuming the `--icon-*` variables without the full component stylesheet.
+- Add icons through `icons/<size>/<name>.svg` and `icons/manifest.js`; `npm run build:icons` generates `icons.css`.
 
 ### `fig-avatar`
 
@@ -530,12 +538,12 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 ### `fig-truncate`
 
 ```tsx
-<fig-truncate position="middle" tooltip tail="…">
+<fig-truncate position="middle" overflow="fade" tooltip tail="…">
   A very long layer name
 </fig-truncate>
 ```
 
-- Attrs: `position` (`right` | `left` | `middle`), `tooltip`, `tail`
+- Attrs: `position` (`right` | `left` | `middle`), `overflow` (`ellipsis` | `fade`), `tooltip`, `tail`
 
 ### `.fig-overflow-fade`
 
@@ -644,8 +652,10 @@ toastRef.current?.showToast();
 />
 ```
 
-- Attrs: `type`, `src`, read-only `loaded` (image mode), `caption`, `aspect-ratio`, `fit`, `upload`, `loading-indicator`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `poster`
-- Events: `loaded` (`detail.src`), `input` / `change`
+- Attrs: `type`, `src`, read-only `loaded` (image mode), read-only `animated` (decoded GIF), `caption`, `aspect-ratio`, `fit`, `upload`, `multiple`, `loading-indicator`, `checkerboard`, `controls`, `autoplay`, `loop`, `muted`, `poster`
+- Use `upload="icon"` for an Add icon while empty and only Remove when populated; `label` supplies the Add tooltip and accessible name.
+- With `upload multiple`, the generated file input accepts multiple files and displays the first selection.
+- Events: `loaded` (`detail.src`, first `detail.file`, and all `detail.files`), `input` / `change`
 
 ### `fig-image`
 
@@ -654,7 +664,8 @@ toastRef.current?.showToast();
 ```
 
 - Attrs: same media surface attrs. The read-only `loaded` attribute supports CSS loaded-state selectors.
-- Events: `load`, `error`, and `loaded` (`detail.src`)
+- Animated GIFs use video-like `controls`, `autoplay`, `loop`, duration, seeking, and playback methods when WebCodecs `ImageDecoder` is available.
+- Events: `load`, `error`, and `loaded` (same upload detail as `fig-media`)
 
 ### `fig-video`
 
@@ -663,6 +674,25 @@ toastRef.current?.showToast();
 ```
 
 - Controls render **below** the preview, not as an overlay.
+
+### `fig-carousel`
+
+```tsx
+<fig-carousel duration="4" loop>
+  <fig-image src={cover} aspect-ratio="16/9" full />
+  <fig-video src={video} muted aspect-ratio="16/9" full />
+  <fig-image src={detail} carousel-duration="8" aspect-ratio="16/9" full />
+</fig-carousel>
+```
+
+- Direct children: `fig-media`, `fig-image`, `fig-video`
+- Attrs: `index`, `playing`, `autoplay` (defaults true), `duration` (seconds; default `5`), `loop`, `navigation="buttons|dots"`, `progress`
+- Child `carousel-duration` overrides the host duration or intrinsic video/animated GIF duration.
+- Generated bottom controls: previous, next, then `fig-button-play`.
+- Page navigation replaces the controls with centered `.fig-carousel-pages`; each `progress.fig-carousel-page` persists, and the active page stretches to show progress unless `progress="false"`.
+- Methods: `previous()`, `next()`, `goTo(index)`, `first()`, `last()`, `restart()`, `play()`, `pause()`, `toggle()`
+- Read-only: `items`, `currentItem`, `canGoPrevious`, `canGoNext`
+- Event: `change` with `detail.index`, `detail.previousIndex`, and `detail.item`
 
 ### `fig-card`
 
@@ -768,9 +798,10 @@ dropdown fallback.
 
 - Attrs: `duration`, `direction`, `playing`
 
-## `fig-layer` (separate bundle)
+## `fig-layer` (core registration, standalone styles)
 
-Not registered by `fig.js`. Import `fig-layer.css` + `fig-layer.js`.
+Registered by `fig.js`. Import `fig-layer.css` for layer-list styling.
+`fig-layer.js` remains available as a standalone registration entry.
 
 ```tsx
 <fig-layer data-section="button" open>

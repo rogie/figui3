@@ -1,0 +1,16 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+[data-figui-overlay-root] {
+  position: fixed;
+  inset: 0;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}

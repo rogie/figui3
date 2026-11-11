@@ -1,0 +1,127 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-input-gradient {
+  --fig-input-gradient-height: 1.5rem;
+  --fig-input-gradient-padding: var(--spacer-1);
+  --fig-input-gradient-handle-size: 14px;
+  --fig-input-gradient-swatch-border-radius: var(--radius-large);
+  position: relative;
+  height: var(--fig-input-gradient-height);
+  width: 100%;
+  min-width: var(--spacer-4);
+  display: inline-flex;
+  gap: var(--spacer-2);
+  user-select: none;
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+
+  &:hover {
+    outline: 1px solid var(--figma-color-border);
+    outline-offset: -1px !important;
+  }
+
+  fig-handle[type="color"] {
+    --height: var(--fig-input-gradient-handle-size);
+    --width: var(--fig-input-gradient-handle-size);
+    --fig-handle-padding: 0.125rem;
+  }
+
+  &:focus-visible,
+  &[edit="picker"]:focus,
+  &.has-popup-open {
+    outline: var(--figma-focus-outline) !important;
+    outline-offset: var(--figma-focus-outline-offset) !important;
+  }
+
+  &[mode="tip"] {
+    fig-handle[type="color"] {
+      --fig-handle-bg: transparent;
+      --fig-handle-inner-bg: transparent;
+      --fig-handle-outline: none;
+      --fig-handle-outline-color: transparent;
+      --fig-handle-shadow: none;
+      --fig-handle-inner-outline: none;
+
+      fig-color-tip {
+        bottom: 100%;
+      }
+    }
+
+    .fig-input-gradient-track {
+      inset: 0 calc(var(--fig-input-gradient-padding) + 2px);
+
+      fig-handle:focus-visible {
+        outline: none !important;
+        border: none !important;
+      }
+    }
+
+    --fig-input-gradient-swatch-border-radius: var(--radius-medium);
+  }
+
+  &[edit="false"] {
+    pointer-events: none;
+    --fig-input-gradient-swatch-border-radius: var(--radius-medium);
+  }
+
+  &[edit="picker"] {
+    --fig-input-gradient-swatch-border-radius: var(--radius-medium);
+
+    & > fig-fill-picker {
+      display: contents;
+    }
+  }
+
+  & > :is(fig-swatch, fig-chit),
+  & > fig-fill-picker > :is(fig-swatch, fig-chit) {
+    --width: 100%;
+    width: var(--width);
+    --border-radius: var(--fig-input-gradient-swatch-border-radius);
+  }
+
+  &[size="large"] {
+    --fig-input-gradient-height: 2rem;
+    --fig-input-gradient-swatch-border-radius: var(--radius-medium);
+    height: var(--fig-input-gradient-height) !important;
+
+    .fig-input-gradient-track {
+      inset: 0;
+    }
+
+    > :is(fig-swatch, fig-chit) {
+      --size: var(--fig-input-gradient-height);
+    }
+  }
+
+  .fig-input-gradient-track {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    inset: 0
+      calc(
+        var(--fig-input-gradient-padding) +
+          var(--fig-input-gradient-handle-size) / 2
+      );
+    pointer-events: auto;
+    z-index: 1;
+
+    fig-handle {
+      pointer-events: auto;
+      cursor: default;
+
+      &:hover {
+        z-index: 5;
+      }
+    }
+
+    fig-handle.fig-input-gradient-ghost {
+      z-index: 10;
+    }
+  }
+}

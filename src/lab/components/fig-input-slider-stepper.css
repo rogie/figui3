@@ -1,0 +1,54 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+fig-input-slider-stepper.fig-input-slider {
+  --fig-input-slider-tick-active-stroke-color: var(
+    --fig-input-slider-tick-stroke-color
+  );
+  --fig-input-slider-tick-active-opacity: var(
+    --fig-input-slider-tick-opacity
+  );
+
+  & .fig-input-slider-fill {
+    inline-size: calc(
+      2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
+        var(--fig-input-slider-handle-width, 0.25rem) +
+        var(--fig-input-slider-fill-end, 0) *
+        (
+          100% -
+            2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) -
+            var(--fig-input-slider-handle-width, 0.25rem)
+        )
+    );
+  }
+
+  & :is(.fig-input-slider-handle, .fig-input-slider-ghost-handle) {
+    inset-inline-start: calc(
+      var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
+        var(--fig-input-slider-handle-progress, 0) *
+        (
+          100% -
+            2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) -
+            var(--_fig-input-slider-rendered-handle-width, 0.25rem)
+        )
+    );
+    transform-origin: 50% 50%;
+  }
+
+  & .fig-input-slider-tick {
+    inset-inline-start: calc(
+      var(--fig-input-slider-handle-track-inset-inline, 0.5rem) +
+        0.5 * var(--fig-input-slider-handle-width, 0.25rem) +
+        var(--fig-input-slider-tick-progress, 0) *
+        (
+          100% -
+            2 * var(--fig-input-slider-handle-track-inset-inline, 0.5rem) -
+            var(--fig-input-slider-handle-width, 0.25rem)
+        )
+    );
+  }
+}

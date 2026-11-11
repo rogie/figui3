@@ -7,7 +7,148 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added a playground About popup with package/git build metadata, author credit, and GitHub/npm/playground links.
-- Added `npm run test:unit` for Playwright specs that do not need the bun fixture server.
+- Added `npm run test:import` for Playwright specs that do not need the bun fixture server.
+
+## [11.11.5]
+
+### Changed
+
+- Simplified carousel page navigation with persistent progress elements and renamed page classes and CSS tokens.
+- Changed the default `fig-button-play` variant to `ghost`.
+
+## [11.11.4]
+
+### Added
+
+- Added WebCodecs-powered animated GIF playback to `fig-image` and `fig-media`, including controls, seeking, duration, autoplay, looping, carousel timing, and playground examples.
+- Added a preferred `text` attribute to `fig-truncate` while retaining child-text support.
+
+### Changed
+
+- Moved the truncate overflow control first and limited fade positioning to left or right in the playground.
+
+### Fixed
+
+- Allowed tooltip content and long unbroken strings to wrap without line-clamp truncation.
+
+## [11.11.3]
+
+### Added
+
+- Added `overflow="fade"` to `fig-truncate` with edge-aware right, left, and middle truncation, playground controls, documentation, and browser coverage.
+
+## [11.11.2]
+
+### Added
+
+- Added truncating authored labels for `fig-button` via `slot="label"` or direct `<label>` children, with documentation, playground guidance, and browser coverage.
+
+### Changed
+
+- Reworked fill-picker media rows with equal-width `fig-property` columns and content-sized media and camera selects.
+- Simplified the button playground examples around the new overflow and truncation guidance.
+
+### Fixed
+
+- Hid steppers on fill-picker alpha and gradient-stop position inputs.
+- Preserved the selected color treatment for property-button leading icons.
+
+## [11.11.1]
+
+### Fixed
+
+- Removed unintended gaps from buttons and audio file controls.
+
+## [11.11.0]
+
+### Added
+
+- Added `fig-carousel` with timed image and video playback, button or dot navigation, looping, progress indicators, and public navigation methods.
+- Added `fig-button-play` with internal or controlled progress, play/pause events, and timer controls.
+- Added pill-shaped buttons, UI3 heading typography tokens, and broader native HTML styling and playground examples.
+
+### Changed
+
+- Reworked `fig-button` as an accessible light-DOM control with native keyboard activation, improved disabled behavior, and stable select/upload wrappers.
+- Consolidated core variables, native controls, disclosures, dialogs, popovers, tables, progress, and meter styling into focused shared utilities.
+- Expanded playground attribute controls, component manifests, documentation, skills, and type declarations for the new components and native elements.
+- Switched carousel dot playback indicators from native meters to progress elements while preserving animated pagination transitions.
+
+### Fixed
+
+- Preserved icon-only playground buttons across button type changes and kept native control typography and layout consistent across component surfaces.
+
+## [11.10.3]
+
+### Changed
+
+- Adjusted padding in the alternate plugin character chooser.
+- Made chooser and tab strips stretch to their available width.
+
+### Fixed
+
+- Loaded bundled distribution assets in standalone playground iframe examples.
+
+## [11.10.2]
+
+### Changed
+
+- Added compact upload actions to populated PropsKit image and video choices.
+
+### Fixed
+
+- Removed cleared image and video choices from PropsKit choosers.
+
+## [11.10.1]
+
+### Changed
+
+- Renamed the PropsKit Lab playground heading for clarity.
+
+### Fixed
+
+- Bundled color utilities into the core and Editor aggregate JavaScript outputs so they no longer depend on an adjacent `fig-color.js` file.
+- Added an artifact contract preventing aggregate bundles from reintroducing the external color dependency.
+
+## [11.10.0]
+
+### Added
+
+- Added PropsKit, a declarative property-panel API with configuration normalization, reactive storage, rendering, TypeScript declarations, documentation, and playground examples.
+- Added selectable image and video options to PropsKit, plus `upload="icon"` controls for compact `fig-image` and `fig-video` upload actions.
+- Added shared lifecycle, state-machine, invariant, and pointer-session infrastructure with browser and unit regression coverage.
+
+### Changed
+
+- Promoted `fig-property` to the core bundle and reorganized shared component styling into reusable utilities.
+- Made `fig-input-number` steppers visible by default; use `steppers="false"` to hide them. PropsKit slider controls now use `stepper: true`, while exact number inputs use `stepper: false` to hide steppers.
+- Replaced PropsKit image and video `multiple` arrays with selectable `options`; audio continues to use `multiple` and `maxItems`.
+- Renamed the packaged `propkit` skill to `propskit` and clarified how npm-installed Cursor skills are consumed from `node_modules`.
+
+### Fixed
+
+- Hardened async resource cleanup, overlay ownership, nested popups, gesture sessions, reconnect behavior, and custom-element registration.
+- Improved WebGPU shader preview cleanup and expanded source, package, component, and runtime contract coverage.
+
+## [11.9.0]
+
+### Added
+
+- Added generated icon sources, a shared icon manifest, and standalone `icons.css`.
+- Added SSR-safe explicit registration, complete DOM and React declarations, and React runtime guidance.
+- Added generated bundle inventories, browser-support CI, and Chromium, Firefox, and WebKit contract coverage.
+
+### Changed
+
+- Split all core, Editor, and Lab custom elements into per-tag JavaScript and CSS source pairs under `src/` while retaining the existing aggregate package and `dist/` entrypoints.
+- Bundled complete Editor and Lab aggregates while preserving standalone component imports.
+- Reorganized playground navigation, package builds, licensing checks, and source packaging around the new component structure.
+
+### Fixed
+
+- Hardened component lifecycle, reconnect, event propagation, and registration behavior across core, Editor, and Lab controls.
+- Removed unsafe HTML parsing paths and improved WebKit customized built-in support.
+- Expanded regression coverage for audio waveforms, property controls, disabled states, and source/package contracts.
 
 ## [11.8.5]
 
@@ -4617,7 +4758,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Elevation shadow variables (`--figma-elevation-*`, `--handle-shadow`) now use `light-dark()` inline for theme switching, removing the need for separate `.figma-dark` and `@media (prefers-color-scheme: dark)` override blocks.
+- Elevation shadow variables (`--figma-elevation-*`, `--figma-handle-shadow`) now use `light-dark()` inline for theme switching, removing the need for separate `.figma-dark` and `@media (prefers-color-scheme: dark)` override blocks.
 
 ### Fixed
 

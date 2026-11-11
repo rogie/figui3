@@ -9,6 +9,7 @@ import type { Section } from "../data/sections";
 import ThemeToggle from "./ThemeToggle";
 import InfoPopup from "./InfoPopup";
 import { copyText } from "../lib/prompt";
+import { INSTALL_COMMAND, INSTALL_PROMPT } from "../lib/installPrompt";
 import { useCopyTooltip } from "../hooks/useCopyTooltip";
 import ClipboardIcon from "../icons/icon.24.clipboard.svg?react";
 import ChatIcon from "../icons/icon.24.cursor-chat.svg?react";
@@ -26,9 +27,6 @@ interface Props {
   groupOrder?: string[];
 }
 
-const INSTALL_COMMAND = "npm i @rogieking/figui3";
-const INSTALL_PROMPT =
-  "Install the npm package @rogieking/figui3. Then use the included .cursor/skills files (figui3 and playground) for implementation guidance.";
 const COLLAPSED_GROUPS = new Set([
   "Utilities",
   "Native elements",

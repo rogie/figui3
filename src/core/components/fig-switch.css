@@ -1,0 +1,110 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-switch {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--spacer-2);
+  user-select: none;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+
+  &[full]:not([full="false"]) {
+    display: flex;
+    width: 100%;
+  }
+}
+
+input[type="checkbox"].switch {
+  --knob-width: 0.75rem;
+  --knob-height: 0.5rem;
+  --width: 2rem;
+  --height: 1rem;
+  --figma-focus-outline-offset: 1px;
+  display: inline-flex;
+  flex-shrink: 0;
+  margin: 0;
+  vertical-align: middle;
+  padding: 0;
+  width: var(--width);
+  height: var(--height);
+  left: 0;
+  top: 0;
+  background: transparent;
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  border: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background-color: var(--figma-color-bg-secondary);
+  box-sizing: border-box;
+  box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+
+  &::after {
+    content: "";
+    background-color: var(--handle-color);
+    width: var(--knob-width);
+    height: var(--knob-height);
+    border-radius: 0.5rem;
+    margin: 0.25rem;
+    transform: translate(
+      calc(
+        (var(--width) - var(--knob-width)) * -0.5 +
+          (var(--height) - var(--knob-height)) * 0.5
+      )
+    );
+    transition: var(--input-transition);
+    box-shadow: var(--figma-handle-shadow);
+  }
+
+  &[indeterminate="true"]::after {
+    width: 0.625rem;
+    height: 0.125rem;
+    transform: none;
+  }
+
+  &[indeterminate="true"],
+  &:checked {
+    background-color: var(--figma-color-bg-brand);
+  }
+
+  &:checked::after {
+    transform: translate(
+      calc(
+        (var(--width) - var(--knob-width)) * 0.5 +
+          (var(--height) - var(--knob-height)) * -0.5
+      )
+    );
+  }
+
+  &:disabled {
+    background-color: transparent;
+    cursor: not-allowed;
+
+    &::after {
+      background-color: var(--figma-color-icon-disabled);
+      box-shadow: none;
+    }
+
+    &:checked,
+    &[indeterminate="true"] {
+      background-color: var(--figma-color-bg-disabled);
+      box-shadow: none;
+
+      &::after {
+        background-color: var(--figma-color-bg);
+      }
+    }
+  }
+
+  &[data-fig-property-focus]:focus,
+  &:focus-visible {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+}

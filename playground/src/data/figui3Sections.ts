@@ -516,7 +516,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-button data-playground-ignore-controls="true" onclick="const d=this.nextElementSibling; d.hasAttribute('modal') ? d.showModal() : d.show();">Open Dialog</fig-button>
   <dialog is="fig-dialog" title="A long time ago..." handle="fig-header" position="center center">
-    <fig-content padding>
+    <fig-content>
       <p>"I find your lack of faith disturbing." Vader's gloved hand tightened around the Admiral's throat from across the room, the Force crushing his windpipe as the bridge officers studiously avoided looking at the dying man.</p>
       <p>"The Force is strong with this one," Vader murmured, watching the X-wing skim along the trench. The targeting computer chirped uselessly. He had felt the boy's presence before, on Tatooine, in dreams that smelled of sand and engine grease. The past had a long reach.</p>
       <p>"You don't know the power of the Dark Side. I must obey my master." The Emperor's lightning arced between his fingers, and Luke convulsed on the metal grating. Somewhere beneath the black mask, beneath thirty years of regret, a father remembered a son.</p>
@@ -1464,7 +1464,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Audio</label>
-    <fig-input-file accepts="audio/*" preview url="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" filename="t-rex-roar.mp3" full></fig-input-file>
+    <fig-input-file accepts="audio/*" preview url="/audio/skrillex-ft-elliphant.mp3" filename="skrillex-ft-elliphant.mp3" full></fig-input-file>
   </fig-field>
 </div>`,
       },
@@ -2145,10 +2145,17 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         })(),
       },
       {
+        id: "animated-gif",
+        name: "Animated GIF",
+        markup: `<div class="prop-panel">
+  <fig-image src="/images/gifs/favorite-facts.gif" alt="Calculating equations" controls aspect-ratio="4/3" fit="cover" full></fig-image>
+</div>`,
+      },
+      {
         id: "upload",
         name: "Upload",
         markup: `<div class="prop-panel">
-  <fig-image upload="true" label="Upload" size="auto" full checkerboard="true"></fig-image>
+  <fig-image upload="icon" label="Add image" size="auto" full checkerboard="true"></fig-image>
 </div>`,
       },
     ],
@@ -2340,7 +2347,70 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "upload",
         name: "Upload",
         markup: `<div class="prop-panel">
-  <fig-video upload="true" controls="true" muted size="auto" full checkerboard="true"></fig-video>
+  <fig-video upload="icon" label="Add video" controls="true" muted size="auto" full checkerboard="true"></fig-video>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "carousel",
+    name: "Carousel",
+    group: MEDIA_GROUP_NAME,
+    description:
+      "Timed image and video slides with generated previous, next, and play controls.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-carousel duration="3" loop>
+    <fig-image src="https://picsum.photos/id/106/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-video ${videoExampleAttrs('muted aspect-ratio="16/9" fit="cover" full')}></fig-video>
+    <fig-media type="image" src="https://picsum.photos/id/1084/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-media>
+  </fig-carousel>
+</div>`,
+      },
+      {
+        id: "timing",
+        name: "Item timing",
+        markup: `<div class="prop-panel">
+  <fig-carousel duration="5" autoplay="false">
+    <fig-image src="https://picsum.photos/id/1025/640/360.webp" carousel-duration="2" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="https://picsum.photos/id/1035/640/360.webp" carousel-duration="8" aspect-ratio="16/9" fit="cover" full></fig-image>
+  </fig-carousel>
+</div>`,
+      },
+      {
+        id: "progress-pagination",
+        name: "Progress pagination",
+        markup: `<div class="prop-panel">
+  <fig-carousel navigation="dots" duration="3" loop>
+    <fig-image src="https://picsum.photos/id/237/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="https://picsum.photos/id/1025/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="https://picsum.photos/id/1084/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+  </fig-carousel>
+</div>`,
+      },
+      {
+        id: "animated-gif",
+        name: "Animated GIF",
+        markup: `<div class="prop-panel">
+  <fig-carousel navigation="dots" loop>
+    <fig-image src="/images/gifs/kid-unamused.gif" alt="Unamused kid" aspect-ratio="4/3" fit="cover" full></fig-image>
+    <fig-image src="/images/gifs/favorite-facts.gif" alt="Calculating equations" aspect-ratio="4/3" fit="cover" full></fig-image>
+    <fig-image src="/images/gifs/its-been-84-years.gif" alt="It's been 84 years" aspect-ratio="4/3" fit="cover" full></fig-image>
+  </fig-carousel>
+</div>`,
+      },
+      {
+        id: "static-pagination",
+        name: "Static pagination",
+        markup: `<div class="prop-panel">
+  <fig-carousel navigation="dots" progress="false" duration="3" loop>
+    <fig-image src="https://picsum.photos/id/106/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="https://picsum.photos/id/1035/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="https://picsum.photos/id/1084/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+  </fig-carousel>
 </div>`,
       },
     ],
@@ -2524,6 +2594,29 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-spinner></fig-spinner>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "button-play",
+    name: "Play button",
+    group: "Load indicators",
+    description:
+      "Play/pause button with a circular progress ring. It runs its own timer unless a controlled progress value is provided.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <fig-button-play duration="5"></fig-button-play>
+</div>`,
+      },
+      {
+        id: "controlled",
+        name: "Controlled",
+        markup: `<div class="prop-panel">
+  <fig-button-play progress="0.65" playing></fig-button-play>
 </div>`,
       },
     ],
@@ -2755,27 +2848,27 @@ ${versionHistoryGroup("August 11", [
     name: "Truncate",
     group: "Utilities",
     description:
-      "A text truncation utility supporting right, left, and middle ellipsis with optional tooltip on overflow.",
+      "A text truncation utility supporting ellipsis and fade overflow with an optional tooltip.",
     examples: [
       {
         id: "right",
         name: "Right",
         markup: `<div class="prop-panel">
-  <fig-truncate tooltip style="max-width: 50%;">This is a very long piece of text that should be truncated on the right side</fig-truncate>
+  <fig-truncate text="This is a very long piece of text that should be truncated on the right side" tooltip style="max-width: 50%;"></fig-truncate>
 </div>`,
       },
       {
         id: "left",
         name: "Left",
         markup: `<div class="prop-panel">
-  <fig-truncate position="left" tooltip style="max-width: 50%;">/Users/rogie/Documents/Projects/design-system/components</fig-truncate>
+  <fig-truncate text="/Users/rogie/Documents/Projects/design-system/components" position="left" tooltip style="max-width: 50%;"></fig-truncate>
 </div>`,
       },
       {
         id: "middle",
         name: "Middle",
         markup: `<div class="prop-panel">
-  <fig-truncate position="middle" tail=".mp3" tooltip style="max-width: 50%;">Stateside_feat_Bladee_and_Mechatok.mp3</fig-truncate>
+  <fig-truncate text="Stateside_feat_Bladee_and_Mechatok.mp3" position="middle" tail=".mp3" tooltip style="max-width: 50%;"></fig-truncate>
 </div>`,
       },
     ],
@@ -2791,7 +2884,14 @@ ${versionHistoryGroup("August 11", [
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-audio-waveform url="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" progress="0.35" full></fig-audio-waveform>
+  <fig-audio-waveform url="/audio/skrillex-ft-elliphant.mp3" progress="0.35" full></fig-audio-waveform>
+</div>`,
+      },
+      {
+        id: "ribbon",
+        name: "Ribbon",
+        markup: `<div class="prop-panel">
+  <fig-audio-waveform variant="ribbon" url="/audio/skrillex-ft-elliphant.mp3" progress="0.35" full></fig-audio-waveform>
 </div>`,
       },
     ],
@@ -2974,31 +3074,100 @@ ${versionHistoryGroup("August 11", [
     ],
   },
   {
-    id: "native-text-input",
-    name: "<input type=\"text\">",
+    id: "native-input",
+    name: "<input>",
     group: "Native elements",
-    description: "Native text input with background, radius, and focus ring.",
+    description:
+      "Native input elements with FigUI styling for text, numeric, choice, color, and list controls.",
     examples: [
       {
-        id: "default",
-        name: "Default",
+        id: "text",
+        name: "text",
         markup: `<div class="prop-panel">
   <input type="text" placeholder="Enter text..." value="Hello world">
 </div>`,
       },
-    ],
-  },
-  {
-    id: "native-number-input",
-    name: "<input type=\"number\">",
-    group: "Native elements",
-    description: "Native number input with textfield appearance and hidden spinners.",
-    examples: [
       {
-        id: "default",
-        name: "Default",
+        id: "number",
+        name: "number",
         markup: `<div class="prop-panel">
   <input type="number" value="16" min="0" max="100" step="1">
+</div>`,
+      },
+      {
+        id: "password",
+        name: "password",
+        markup: `<div class="prop-panel">
+  <input type="password" value="password" aria-label="Password">
+</div>`,
+      },
+      {
+        id: "email",
+        name: "email",
+        markup: `<div class="prop-panel">
+  <input type="email" value="hello@example.com" aria-label="Email">
+</div>`,
+      },
+      {
+        id: "url",
+        name: "url",
+        markup: `<div class="prop-panel">
+  <input type="url" value="https://figma.com" aria-label="URL">
+</div>`,
+      },
+      {
+        id: "search",
+        name: "search",
+        markup: `<div class="prop-panel">
+  <input type="search" placeholder="Search..." aria-label="Search">
+</div>`,
+      },
+      {
+        id: "tel",
+        name: "tel",
+        markup: `<div class="prop-panel">
+  <input type="tel" value="+1 555 0100" aria-label="Telephone">
+</div>`,
+      },
+      {
+        id: "datalist",
+        name: "list",
+        markup: `<div class="prop-panel">
+  <input type="text" list="native-input-options" placeholder="Choose an option">
+  <datalist id="native-input-options">
+    <option value="Option one"></option>
+    <option value="Option two"></option>
+    <option value="Option three"></option>
+  </datalist>
+</div>`,
+      },
+      {
+        id: "checkbox",
+        name: "checkbox",
+        markup: `<div class="prop-panel">
+  <input type="checkbox" checked>
+</div>`,
+      },
+      {
+        id: "switch",
+        name: "switch",
+        markup: `<div class="prop-panel">
+  <input type="checkbox" class="switch" checked>
+</div>`,
+      },
+      {
+        id: "radio",
+        name: "radio",
+        markup: `<div class="prop-panel">
+  <label class="radio"><input type="radio" name="native-demo" value="a" checked> Option A</label>
+  <label class="radio"><input type="radio" name="native-demo" value="b"> Option B</label>
+</div>`,
+      },
+      {
+        id: "color",
+        name: "color",
+        markup: `<div class="prop-panel">
+  <input type="color" value="#0D99FF">
 </div>`,
       },
     ],
@@ -3014,68 +3183,6 @@ ${versionHistoryGroup("August 11", [
         name: "Default",
         markup: `<div class="prop-panel">
   <textarea rows="3" placeholder="Write something...">Some multiline content here</textarea>
-</div>`,
-      },
-    ],
-  },
-  {
-    id: "native-checkbox",
-    name: "<input type=\"checkbox\">",
-    group: "Native elements",
-    description: "Native checkbox with custom appearance and brand color when checked.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <input type="checkbox" checked>
-</div>`,
-      },
-    ],
-  },
-  {
-    id: "native-switch",
-    name: "<input class=\"switch\">",
-    group: "Native elements",
-    description:
-      "Native checkbox with .switch class for toggle pill appearance.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <input type="checkbox" class="switch" checked>
-</div>`,
-      },
-    ],
-  },
-  {
-    id: "native-radio",
-    name: "<input type=\"radio\">",
-    group: "Native elements",
-    description: "Native radio input with custom dot and brand background.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <label class="radio"><input type="radio" name="native-demo" value="a" checked> Option A</label>
-  <label class="radio"><input type="radio" name="native-demo" value="b"> Option B</label>
-</div>`,
-      },
-    ],
-  },
-  {
-    id: "native-color-input",
-    name: "<input type=\"color\">",
-    group: "Native elements",
-    description: "Native color input with compact swatch and rounded corners.",
-    examples: [
-      {
-        id: "default",
-        name: "Default",
-        markup: `<div class="prop-panel">
-  <input type="color" value="#0D99FF">
 </div>`,
       },
     ],
@@ -3122,7 +3229,7 @@ ${versionHistoryGroup("August 11", [
         markup: `<div class="prop-panel">
   <fig-field>
     <label for="storage-meter">Storage</label>
-    <meter id="storage-meter" min="0" max="100" low="30" high="80" optimum="50" value="64">64%</meter>
+    <meter id="storage-meter" min="0" max="100" low="30" high="80" optimum="0" value="64">64%</meter>
   </fig-field>
 </div>`,
       },
@@ -3168,23 +3275,156 @@ ${versionHistoryGroup("August 11", [
     ],
   },
   {
+    id: "native-headings",
+    name: "Headings",
+    group: "Native elements",
+    description: "Native heading levels using FigUI typography.",
+    examples: [
+      {
+        id: "h1",
+        name: "h1",
+        markup: `<div class="prop-panel">
+  <h1>Heading 1</h1>
+</div>`,
+      },
+      {
+        id: "h2",
+        name: "h2",
+        markup: `<div class="prop-panel">
+  <h2>Heading 2</h2>
+</div>`,
+      },
+      {
+        id: "h3",
+        name: "h3",
+        markup: `<div class="prop-panel">
+  <h3>Heading 3</h3>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-table",
+    name: "<table>",
+    group: "Native elements",
+    description: "Native table markup for structured tabular data.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <table>
+    <caption>Layer properties</caption>
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Value</th>
+        <th scope="col">Unit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">Width</th>
+        <td>320</td>
+        <td>px</td>
+      </tr>
+      <tr>
+        <th scope="row">Height</th>
+        <td>240</td>
+        <td>px</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <th scope="row">Properties</th>
+        <td>2</td>
+        <td>total</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-dialog",
+    name: "<dialog>",
+    group: "Native elements",
+    description: "Native dialog surface using FigUI radius, color, and elevation.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <dialog open>
+    <h3>Dialog title</h3>
+    <p>Native dialog content.</p>
+  </dialog>
+</div>`,
+      },
+    ],
+  },
+  {
+    id: "native-popover",
+    name: "[popover]",
+    group: "Native elements",
+    description: "Native popover surface opened by a declarative trigger.",
+    examples: [
+      {
+        id: "default",
+        name: "Default",
+        markup: `<div class="prop-panel">
+  <button popovertarget="native-popover-example">Show popover</button>
+  <div id="native-popover-example" popover>
+    <p>Native popover content.</p>
+  </div>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "native-hr",
     name: "<hr>",
     group: "Native elements",
     description: "Native horizontal rule styled as a 1px border divider.",
     examples: [
       {
-        id: "default",
-        name: "Default",
+        id: "horizontal",
+        name: "Horizontal",
         markup: `<div class="prop-panel">
   <p>Content above</p>
   <hr>
   <p>Content below</p>
 </div>`,
       },
+      {
+        id: "vertical",
+        name: "Vertical",
+        markup: `<div class="prop-panel" style="display: flex; align-items: stretch; height: 4rem;">
+  <span>Left</span>
+  <hr vertical>
+  <span>Right</span>
+</div>`,
+      },
     ],
   },
 ]);
+
+const buttonOverflowTruncationExample: Example = {
+  id: "overflow-truncation",
+  name: "Overflow / truncation",
+  description:
+    'Wrap button text in an authored <code>&lt;label&gt;</code> or an element with <code>slot="label"</code> to allow long labels to truncate with an ellipsis.',
+  markup: `<div class="prop-panel">
+  <fig-field>
+    <label>Effect</label>
+    <fig-button variant="property" full>
+      <fig-icon name="settings" slot="prepend"></fig-icon>
+      <span slot="label">Drop shadow with a deliberately long name that truncates</span>
+    </fig-button>
+  </fig-field>
+</div>`,
+};
 
 const groupNoChildrenExample: Example = {
   id: "no-children",
@@ -3256,7 +3496,12 @@ function insertExampleAfter(
 
 export const figui3Sections: Section[] = insertExampleAfter(
   insertExampleAfter(
-    mergePropsKitSections(figui3BaseSections),
+    insertExampleAfter(
+      mergePropsKitSections(figui3BaseSections),
+      "button",
+      "default",
+      buttonOverflowTruncationExample,
+    ),
     "group",
     "default",
     groupNoChildrenExample,

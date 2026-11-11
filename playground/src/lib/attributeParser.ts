@@ -1,5 +1,11 @@
+import {
+  FIG_ICON_SET_16,
+  FIG_ICON_SET_24,
+} from "../../../icons/manifest.js";
 import { getExampleSourceMarkup } from "./exampleMarkup";
 import { landscapeUrl } from "./images";
+
+export { FIG_ICON_SET_16, FIG_ICON_SET_24 };
 
 export interface ParsedAttributeTarget {
   fieldIndex: number;
@@ -115,6 +121,33 @@ function createButtonIcon(doc: Document): HTMLElement {
   const icon = doc.createElement("fig-icon");
   icon.setAttribute("name", "visible");
   return icon;
+}
+
+function makeButtonIconOnly(button: Element, doc: Document) {
+  const label = Array.from(button.childNodes)
+    .filter((node) => {
+      if (node.nodeType === Node.TEXT_NODE) return true;
+      if (node.nodeType !== Node.ELEMENT_NODE) return false;
+      const tag = (node as Element).tagName.toLowerCase();
+      return tag !== "fig-dropdown" && tag !== "input";
+    })
+    .map((node) => node.textContent?.trim() ?? "")
+    .filter(Boolean)
+    .join(" ");
+  if (!button.hasAttribute("aria-label") && label) {
+    button.setAttribute("aria-label", label);
+  }
+
+  Array.from(button.childNodes).forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      node.remove();
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const tag = (node as Element).tagName.toLowerCase();
+    if (tag !== "fig-dropdown" && tag !== "input") node.remove();
+  });
+  button.prepend(createButtonIcon(doc));
 }
 
 function createDefaultFieldControl(
@@ -342,6 +375,7 @@ function isSupportedControl(element: Element): boolean {
   return (
     isFigTag(element) ||
     element.tagName.toLowerCase() === "progress" ||
+    element.tagName.toLowerCase() === "meter" ||
     Boolean(element.getAttribute("data-playground-control"))
   );
 }
@@ -699,7 +733,7 @@ export function applyButtonTypeMutation(
   });
 
   const ensureText = (text: string) => {
-    ensureButtonText(element, text);
+    if (!element.hasAttribute("icon")) ensureButtonText(element, text);
   };
 
   if (nextType === "select") {
@@ -723,6 +757,9 @@ export function applyButtonTypeMutation(
     } else {
       ensureText("Primary");
     }
+  }
+  if (element.hasAttribute("icon")) {
+    makeButtonIconOnly(element, root.ownerDocument);
   }
 
   return getExampleSourceMarkup(serializeSourceMarkup(root));
@@ -763,17 +800,7 @@ export function applyButtonIconMutation(
 
   if (enabled) {
     element.setAttribute("icon", "");
-    Array.from(element.childNodes).forEach((node) => {
-      if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim())
-        node.remove();
-      if (
-        node.nodeType === Node.ELEMENT_NODE &&
-        ["svg", "fig-icon"].includes((node as Element).tagName.toLowerCase())
-      ) {
-        node.remove();
-      }
-    });
-    element.prepend(createButtonIcon(root.ownerDocument));
+    makeButtonIconOnly(element, root.ownerDocument);
   } else {
     element.removeAttribute("icon");
     Array.from(element.children).forEach((child) => {
@@ -1414,69 +1441,6 @@ export function applyHandleHitAreaMutation(
   }
   return serializeSourceMarkup(root);
 }
-
-export const FIG_ICON_SET_24 = [
-  "add",
-  "angle",
-  "send",
-  "chevron",
-  "checkmark",
-  "adjust",
-  "minus",
-  "close",
-  "back",
-  "forward",
-  "rotate",
-  "rotate3d",
-  "swap",
-  "play",
-  "pause",
-  "search",
-  "download",
-  "upload",
-  "image",
-  "video",
-  "audio",
-  "sound",
-  "sound-off",
-  "sun",
-  "moon",
-  "visible",
-  "hidden",
-  "edit",
-  "settings",
-  "more",
-  "steppers",
-  "eyedropper",
-  "reset",
-  "globe",
-  "warning",
-  "copy",
-  "trash",
-] as const;
-
-export const FIG_ICON_SET_16 = [
-  "send",
-  "chevron",
-  "checkmark",
-  "reset",
-  "arrow-left",
-  "adjust",
-  "close",
-  "visible",
-  "hidden",
-  "edit",
-  "settings",
-  "more",
-  "video",
-  "sound",
-  "sound-off",
-  "globe",
-  "warning",
-  "copy",
-  "trash",
-  "drag-handle",
-] as const;
 
 export type FigIconPlaygroundSet = "16" | "24";
 

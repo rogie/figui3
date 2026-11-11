@@ -7,6 +7,33 @@ test.describe("fig.js audit core regressions", () => {
     await bootFigFixture(page);
   });
 
+  test("fig-button pill attribute applies the full radius token", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <fig-button id="default-button">Default</fig-button>
+        <fig-button id="pill-button" pill>Pill</fig-button>
+        <fig-button id="false-button" pill="false">False</fig-button>
+      `;
+      await new Promise(requestAnimationFrame);
+      const radius = (selector: string) =>
+        getComputedStyle(root.querySelector(selector)!).borderRadius;
+      return {
+        defaultRadius: radius("#default-button"),
+        pillRadius: radius("#pill-button"),
+        falseRadius: radius("#false-button"),
+        fullRadiusToken: getComputedStyle(document.documentElement)
+          .getPropertyValue("--radius-full")
+          .trim(),
+      };
+    });
+
+    expect(state.pillRadius).toBe(state.fullRadiusToken);
+    expect(state.falseRadius).toBe(state.defaultRadius);
+  });
+
   test("fig-button synchronizes disabled to select and upload controls", async ({
     page,
   }) => {
@@ -74,15 +101,27 @@ test.describe("fig.js audit core regressions", () => {
       authored.remove();
       await new Promise(requestAnimationFrame);
       const afterAuthoredRemoved = read();
+      button
+        .querySelector('[data-generated="select-chevron"]')
+        ?.remove();
+      await new Promise(requestAnimationFrame);
+      const afterChevronRemoved = read();
+      const extra = document.createElement("fig-icon");
+      extra.setAttribute("slot", "append");
+      extra.setAttribute("data-generated", "select-chevron");
+      extra.setAttribute("name", "chevron");
+      button.append(extra);
+      await new Promise(requestAnimationFrame);
+      const afterDuplicate = read();
       return {
         initial,
         afterButton,
         afterSelect,
         withAuthoredAppend,
         afterAuthoredRemoved,
-        appendSlot: Boolean(
-          button.shadowRoot?.querySelector('slot[name="append"]'),
-        ),
+        afterChevronRemoved,
+        afterDuplicate,
+        shadowRoot: button.shadowRoot,
       };
     });
 
@@ -92,7 +131,9 @@ test.describe("fig.js audit core regressions", () => {
       afterSelect: { count: 1, name: "chevron", size: "small" },
       withAuthoredAppend: { count: 0, name: null, size: null },
       afterAuthoredRemoved: { count: 1, name: "chevron", size: "small" },
-      appendSlot: true,
+      afterChevronRemoved: { count: 1, name: "chevron", size: "small" },
+      afterDuplicate: { count: 1, name: "chevron", size: "small" },
+      shadowRoot: null,
     });
   });
 
@@ -377,6 +418,152 @@ test.describe("fig.js audit core regressions", () => {
       closedOnDisable: true,
       open: false,
       popupOpen: false,
+    });
+  });
+
+  test("menus close and cancel scheduled showAt work when disconnected", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const keydownListeners = new Set<EventListenerOrEventListenerObject>();
+      const originalAdd = document.addEventListener.bind(document);
+      const originalRemove = document.removeEventListener.bind(document);
+      (document as any).addEventListener = (
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: AddEventListenerOptions | boolean,
+      ) => {
+        if (type === "keydown") keydownListeners.add(listener);
+        return originalAdd(type as any, listener as any, options as any);
+      };
+      (document as any).removeEventListener = (
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: EventListenerOptions | boolean,
+      ) => {
+        if (type === "keydown") keydownListeners.delete(listener);
+        return originalRemove(type as any, listener as any, options as any);
+      };
+
+      try {
+        const openMenu = document.createElement("fig-menu") as HTMLElement & {
+          open: boolean;
+        };
+        openMenu.innerHTML = `
+          <button fig-menu-trigger>Actions</button>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+        `;
+        document.body.append(openMenu);
+        openMenu.open = true;
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+        const openPopup = openMenu.shadowRoot?.querySelector(
+          'dialog[is="fig-popup"]',
+        ) as HTMLDialogElement;
+        const opened = openPopup.open && keydownListeners.size > 0;
+        openMenu.remove();
+
+        const scheduledMenu = document.createElement("fig-menu") as HTMLElement & {
+          showAt(x: number, y: number): void;
+        };
+        scheduledMenu.innerHTML =
+          '<fig-menu-item value="copy">Copy</fig-menu-item>';
+        document.body.append(scheduledMenu);
+        const scheduledPopup = scheduledMenu.shadowRoot?.querySelector(
+          'dialog[is="fig-popup"]',
+        ) as HTMLDialogElement;
+        scheduledMenu.showAt(20, 20);
+        scheduledMenu.remove();
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+
+        return {
+          opened,
+          openPopupAfterDisconnect: openPopup.open,
+          scheduledHostOpen: scheduledMenu.hasAttribute("open"),
+          scheduledPopupOpen: scheduledPopup.open,
+          documentKeydownListeners: keydownListeners.size,
+        };
+      } finally {
+        (document as any).addEventListener = originalAdd;
+        (document as any).removeEventListener = originalRemove;
+      }
+    });
+
+    expect(state).toEqual({
+      opened: true,
+      openPopupAfterDisconnect: false,
+      scheduledHostOpen: false,
+      scheduledPopupOpen: false,
+      documentKeydownListeners: 0,
+    });
+  });
+
+  test("context menus cancel pointer-release waits when disconnected", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const keydownListeners = new Set<EventListenerOrEventListenerObject>();
+      const originalAdd = document.addEventListener.bind(document);
+      const originalRemove = document.removeEventListener.bind(document);
+      (document as any).addEventListener = (
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: AddEventListenerOptions | boolean,
+      ) => {
+        if (type === "keydown") keydownListeners.add(listener);
+        return originalAdd(type as any, listener as any, options as any);
+      };
+      (document as any).removeEventListener = (
+        type: string,
+        listener: EventListenerOrEventListenerObject,
+        options?: EventListenerOptions | boolean,
+      ) => {
+        if (type === "keydown") keydownListeners.delete(listener);
+        return originalRemove(type as any, listener as any, options as any);
+      };
+
+      try {
+        const menu = document.createElement("fig-menu");
+        menu.setAttribute("trigger", "contextmenu");
+        menu.innerHTML = `
+          <button fig-menu-trigger>Actions</button>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+        `;
+        document.body.append(menu);
+        const trigger = menu.querySelector("[fig-menu-trigger]") as HTMLElement;
+        const popup = menu.shadowRoot?.querySelector(
+          'dialog[is="fig-popup"]',
+        ) as HTMLDialogElement;
+        trigger.dispatchEvent(
+          new MouseEvent("contextmenu", {
+            bubbles: true,
+            cancelable: true,
+            clientX: 30,
+            clientY: 40,
+          }),
+        );
+        menu.remove();
+        window.dispatchEvent(new PointerEvent("pointerup", { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 220));
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+
+        return {
+          hostOpen: menu.hasAttribute("open"),
+          popupOpen: popup.open,
+          documentKeydownListeners: keydownListeners.size,
+        };
+      } finally {
+        (document as any).addEventListener = originalAdd;
+        (document as any).removeEventListener = originalRemove;
+      }
+    });
+
+    expect(state).toEqual({
+      hostOpen: false,
+      popupOpen: false,
+      documentKeydownListeners: 0,
     });
   });
 
@@ -722,5 +909,892 @@ test.describe("fig.js audit core regressions", () => {
     });
     expect(state.afterTail).toEqual({ start: "edited", end: "-.png" });
     expect(state.shown).toEqual(["edited-.png"]);
+  });
+
+  test("fig-truncate maps fade overflow to its truncation edge", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <fig-truncate id="trunc" overflow="fade">
+          a-very-long-file-name.png
+        </fig-truncate>
+      `;
+      await new Promise(requestAnimationFrame);
+      await new Promise(requestAnimationFrame);
+      const el = root.querySelector("#trunc") as HTMLElement;
+      const classes = (target: Element) => [...target.classList].sort();
+      const leftFade = (target: Element) => {
+        const style = getComputedStyle(target);
+        return {
+          size: style.getPropertyValue("--fig-overflow-fade-left").trim(),
+          opacity: style
+            .getPropertyValue("--fig-overflow-fade-left-opacity")
+            .trim(),
+        };
+      };
+
+      const right = classes(el);
+      el.setAttribute("position", "left");
+      const left = classes(el);
+      const leftFadeState = leftFade(el);
+      el.setAttribute("position", "middle");
+      const middle = {
+        host: classes(el),
+        start: classes(el.querySelector(".start")!),
+        end: classes(el.querySelector(".end")!),
+        endFade: leftFade(el.querySelector(".end")!),
+      };
+      el.setAttribute("overflow", "ellipsis");
+      const ellipsis = {
+        host: classes(el),
+        start: classes(el.querySelector(".start")!),
+        end: classes(el.querySelector(".end")!),
+      };
+
+      return { right, left, leftFadeState, middle, ellipsis };
+    });
+
+    expect(state.right).toEqual([
+      "fig-overflow-fade",
+      "fig-overflow-fade-right",
+    ]);
+    expect(state.left).toEqual([
+      "fig-overflow-fade",
+      "fig-overflow-fade-left",
+    ]);
+    expect(state.leftFadeState).toEqual({ size: "32px", opacity: "0" });
+    expect(state.middle).toEqual({
+      host: [],
+      start: ["fig-overflow-fade", "fig-overflow-fade-right", "start"],
+      end: ["end", "fig-overflow-fade", "fig-overflow-fade-left"],
+      endFade: { size: "32px", opacity: "0" },
+    });
+    expect(state.ellipsis).toEqual({
+      host: [],
+      start: ["start"],
+      end: ["end"],
+    });
+  });
+
+  test("tooltip wraps long unbroken text without truncating it", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `<button id="anchor">Anchor</button>`;
+      const anchor = root.querySelector("#anchor") as HTMLElement;
+      const Tooltip = customElements.get("fig-tooltip") as any;
+      Tooltip.show(anchor, "a".repeat(200), { delay: 0 });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise(requestAnimationFrame);
+
+      const content = document.querySelector(
+        'dialog[variant="tooltip"][data-tooltip-managed] > span',
+      ) as HTMLElement;
+      const style = getComputedStyle(content);
+      const result = {
+        whiteSpace: style.whiteSpace,
+        overflowWrap: style.overflowWrap,
+        lineClamp: style.webkitLineClamp,
+        maxHeight: style.maxHeight,
+        fitsWidth: content.scrollWidth <= content.clientWidth,
+        fitsHeight: content.scrollHeight <= content.clientHeight,
+      };
+      Tooltip.hide(anchor);
+      return result;
+    });
+
+    expect(state).toEqual({
+      whiteSpace: "normal",
+      overflowWrap: "anywhere",
+      lineClamp: "none",
+      maxHeight: "none",
+      fitsWidth: true,
+      fitsHeight: true,
+    });
+  });
+
+  test("fig-easing-curve cleans up canceled and disconnected drags", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <fig-easing-curve
+          id="curve"
+          value="0.25, 0.25, 0.75, 0.75"
+        ></fig-easing-curve>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const curve = root.querySelector("#curve") as HTMLElement;
+      const handle = curve.querySelector(
+        '[data-handle="1"] fig-handle',
+      ) as HTMLElement;
+      const rect = handle.getBoundingClientRect();
+      const point = {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      };
+      let inputs = 0;
+      let changes = 0;
+      curve.addEventListener("input", () => inputs++);
+      curve.addEventListener("change", () => changes++);
+
+      const dispatch = (
+        target: EventTarget,
+        type: string,
+        x = point.x,
+        y = point.y,
+      ) =>
+        target.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            pointerId: 42,
+            clientX: x,
+            clientY: y,
+          }),
+        );
+
+      dispatch(handle, "pointerdown");
+      dispatch(document, "pointermove", point.x + 20, point.y + 10);
+      const inputsBeforeCancel = inputs;
+      dispatch(document, "pointercancel");
+      dispatch(document, "pointermove", point.x + 40, point.y + 20);
+      const afterCancel = {
+        inputs,
+        changes,
+        armActive: curve
+          .querySelector('[data-arm="1"]')
+          ?.classList.contains("is-active"),
+        tooltipOpen: curve
+          .querySelector('[data-handle="1"] fig-tooltip')
+          ?.hasAttribute("show"),
+      };
+
+      dispatch(handle, "pointerdown");
+      dispatch(document, "pointerup");
+      const afterComplete = { inputs, changes };
+
+      dispatch(handle, "pointerdown");
+      window.dispatchEvent(new Event("blur"));
+      dispatch(document, "pointermove", point.x + 60, point.y + 30);
+      const afterBlur = { inputs, changes };
+
+      dispatch(handle, "pointerdown");
+      curve.remove();
+      dispatch(document, "pointermove", point.x + 80, point.y + 40);
+
+      return {
+        inputsBeforeCancel,
+        afterCancel,
+        afterComplete,
+        afterBlur,
+        afterDisconnect: { inputs, changes },
+      };
+    });
+
+    expect(state).toEqual({
+      inputsBeforeCancel: 1,
+      afterCancel: {
+        inputs: 1,
+        changes: 0,
+        armActive: false,
+        tooltipOpen: false,
+      },
+      afterComplete: { inputs: 1, changes: 1 },
+      afterBlur: { inputs: 1, changes: 1 },
+      afterDisconnect: { inputs: 1, changes: 1 },
+    });
+  });
+
+  test("public events cross ancestor shadow roots with stable event flags", async ({
+    page,
+  }) => {
+    const events = await page.evaluate(async () => {
+      await import("/fig-editor.js");
+      await Promise.all([
+        customElements.whenDefined("fig-input-color"),
+        customElements.whenDefined("fig-palette-editor"),
+        customElements.whenDefined("fig-input-rotate"),
+      ]);
+
+      const boundary = document.createElement("div");
+      const shadow = boundary.attachShadow({ mode: "open" });
+      shadow.innerHTML = `
+        <fig-input-color
+          id="color"
+          value="#000000"
+          default="#FFFFFF"
+        ></fig-input-color>
+        <fig-palette-editor
+          id="palette"
+          value='["#111111"]'
+        ></fig-palette-editor>
+        <fig-input-rotate id="rotate"></fig-input-rotate>
+      `;
+      document.body.append(boundary);
+      await new Promise(requestAnimationFrame);
+
+      const captured: Array<{
+        source: string;
+        type: string;
+        bubbles: boolean;
+        composed: boolean;
+        cancelable: boolean;
+      }> = [];
+      const capture = (event: Event) => {
+        const source = event
+          .composedPath()
+          .find((node) => node instanceof HTMLElement && node.id);
+        captured.push({
+          source: source instanceof HTMLElement ? source.id : "",
+          type: event.type,
+          bubbles: event.bubbles,
+          composed: event.composed,
+          cancelable: event.cancelable,
+        });
+      };
+      document.addEventListener("input", capture);
+      document.addEventListener("change", capture);
+      document.addEventListener("openchange", capture);
+
+      try {
+        const color = shadow.querySelector("#color") as HTMLElement & {
+          resetToDefault(): void;
+        };
+        const palette = shadow.querySelector("#palette") as HTMLElement;
+        const rotate = shadow.querySelector("#rotate") as HTMLElement & {
+          open: boolean;
+        };
+        color.resetToDefault();
+        (
+          palette.querySelector(".fig-palette-editor-add") as HTMLElement
+        ).click();
+        rotate.open = true;
+        return captured;
+      } finally {
+        document.removeEventListener("input", capture);
+        document.removeEventListener("change", capture);
+        document.removeEventListener("openchange", capture);
+        boundary.remove();
+      }
+    });
+
+    expect(events).toEqual([
+      {
+        source: "color",
+        type: "input",
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      },
+      {
+        source: "color",
+        type: "change",
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      },
+      {
+        source: "palette",
+        type: "input",
+        bubbles: true,
+        composed: true,
+        cancelable: false,
+      },
+      {
+        source: "palette",
+        type: "change",
+        bubbles: true,
+        composed: true,
+        cancelable: false,
+      },
+      {
+        source: "rotate",
+        type: "openchange",
+        bubbles: true,
+        composed: true,
+        cancelable: false,
+      },
+    ]);
+  });
+
+  test("fig-layer reconnects its chevron and emits each state change once", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <fig-layer id="layer" open="false">
+          <div class="fig-layer-row">Layer</div>
+        </fig-layer>
+      `;
+      const frame = () => new Promise(requestAnimationFrame);
+      await frame();
+
+      const layer = root.querySelector("#layer") as HTMLElement & {
+        open: boolean;
+        visible: boolean;
+      };
+      const openEvents: boolean[] = [];
+      const visibilityEvents: boolean[] = [];
+      layer.addEventListener("openchange", (event) => {
+        openEvents.push((event as CustomEvent<{ open: boolean }>).detail.open);
+      });
+      layer.addEventListener("visibilitychange", (event) => {
+        visibilityEvents.push(
+          (event as CustomEvent<{ visible: boolean }>).detail.visible,
+        );
+      });
+
+      layer.open = true;
+      layer.open = true;
+      layer.setAttribute("open", "false");
+      layer.visible = false;
+      layer.visible = false;
+
+      for (let index = 0; index < 2; index++) {
+        layer.remove();
+        root.append(layer);
+        await frame();
+      }
+
+      const chevron = layer.querySelector(
+        ".fig-layer-chevron",
+      ) as HTMLElement;
+      chevron.click();
+
+      return {
+        open: layer.open,
+        visible: layer.visible,
+        openEvents,
+        visibilityEvents,
+        chevrons: layer.querySelectorAll(".fig-layer-chevron").length,
+        chevronExpanded: chevron.getAttribute("aria-expanded"),
+      };
+    });
+
+    expect(state).toEqual({
+      open: true,
+      visible: false,
+      openEvents: [true, false, true],
+      visibilityEvents: [false],
+      chevrons: 1,
+      chevronExpanded: "true",
+    });
+  });
+
+  test("native form reset restores host state and authored control baselines", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <form id="form">
+          <fig-input-text id="text" name="text" value="Authored"></fig-input-text>
+          <fig-input-number id="number" name="amount" value="12" transform="2" units="%"></fig-input-number>
+          <fig-checkbox id="checkbox" name="check" value="yes" checked></fig-checkbox>
+          <fig-radio id="radio-a" name="choice" value="a" checked></fig-radio>
+          <fig-radio id="radio-b" name="choice" value="b"></fig-radio>
+          <fig-switch id="switch" name="toggle" value="on"></fig-switch>
+        </form>
+      `;
+      await new Promise(requestAnimationFrame);
+
+      const form = root.querySelector("#form") as HTMLFormElement;
+      const text = root.querySelector("#text") as HTMLElement & {
+        value: string;
+        input: HTMLInputElement;
+      };
+      const number = root.querySelector("#number") as HTMLElement & {
+        value: number | string;
+        input: HTMLInputElement;
+      };
+      const checkbox = root.querySelector("#checkbox") as HTMLElement & {
+        checked: boolean;
+        input: HTMLInputElement;
+      };
+      const radioA = root.querySelector("#radio-a") as HTMLElement & {
+        checked: boolean;
+        input: HTMLInputElement;
+      };
+      const radioB = root.querySelector("#radio-b") as HTMLElement & {
+        checked: boolean;
+        input: HTMLInputElement;
+      };
+      const toggle = root.querySelector("#switch") as HTMLElement & {
+        checked: boolean;
+        input: HTMLInputElement;
+      };
+
+      let inputs = 0;
+      let changes = 0;
+      form.addEventListener("input", () => inputs++);
+      form.addEventListener("change", () => changes++);
+
+      text.input.value = "Edited";
+      text.input.dispatchEvent(new Event("input", { bubbles: true }));
+      number.input.value = "40%";
+      number.input.dispatchEvent(new Event("input", { bubbles: true }));
+      checkbox.input.click();
+      radioB.input.click();
+      toggle.input.click();
+
+      const beforeFirstReset = { inputs, changes };
+      form.reset();
+      await Promise.resolve();
+      const afterFirstResetEvents = { inputs, changes };
+
+      const read = () => ({
+        text: {
+          property: text.value,
+          attribute: text.getAttribute("value"),
+          native: text.input.value,
+          nativeDefault: text.input.defaultValue,
+        },
+        number: {
+          property: number.value,
+          attribute: number.getAttribute("value"),
+          native: number.input.value,
+          nativeDefault: number.input.defaultValue,
+        },
+        checkbox: {
+          property: checkbox.checked,
+          attribute: checkbox.hasAttribute("checked"),
+          native: checkbox.input.checked,
+          nativeDefault: checkbox.input.defaultChecked,
+        },
+        radios: [
+          {
+            property: radioA.checked,
+            attribute: radioA.hasAttribute("checked"),
+            native: radioA.input.checked,
+          },
+          {
+            property: radioB.checked,
+            attribute: radioB.hasAttribute("checked"),
+            native: radioB.input.checked,
+          },
+        ],
+        toggle: {
+          property: toggle.checked,
+          attribute: toggle.hasAttribute("checked"),
+          native: toggle.input.checked,
+          nativeDefault: toggle.input.defaultChecked,
+        },
+        formData: Object.fromEntries(new FormData(form)),
+      });
+
+      const initialReset = read();
+
+      text.setAttribute("value", "Revised");
+      number.setAttribute("value", "7");
+      checkbox.removeAttribute("checked");
+      toggle.setAttribute("checked", "");
+
+      text.value = "Temporary";
+      number.input.value = "18%";
+      number.input.dispatchEvent(new Event("input", { bubbles: true }));
+      checkbox.checked = true;
+      toggle.checked = false;
+
+      const beforeSecondReset = { inputs, changes };
+      form.reset();
+      await Promise.resolve();
+
+      return {
+        beforeFirstReset,
+        afterFirstResetEvents,
+        initialReset,
+        beforeSecondReset,
+        afterSecondResetEvents: { inputs, changes },
+        updatedReset: read(),
+      };
+    });
+
+    expect(state.afterFirstResetEvents).toEqual(state.beforeFirstReset);
+    expect(state.initialReset).toEqual({
+      text: {
+        property: "Authored",
+        attribute: "Authored",
+        native: "Authored",
+        nativeDefault: "Authored",
+      },
+      number: {
+        property: 12,
+        attribute: "12",
+        native: "24%",
+        nativeDefault: "24%",
+      },
+      checkbox: {
+        property: true,
+        attribute: true,
+        native: true,
+        nativeDefault: true,
+      },
+      radios: [
+        { property: true, attribute: true, native: true },
+        { property: false, attribute: false, native: false },
+      ],
+      toggle: {
+        property: false,
+        attribute: false,
+        native: false,
+        nativeDefault: false,
+      },
+      formData: {
+        text: "Authored",
+        amount: "24%",
+        check: "yes",
+        choice: "a",
+      },
+    });
+    expect(state.afterSecondResetEvents).toEqual(state.beforeSecondReset);
+    expect(state.updatedReset.text).toEqual({
+      property: "Revised",
+      attribute: "Revised",
+      native: "Revised",
+      nativeDefault: "Revised",
+    });
+    expect(state.updatedReset.number).toEqual({
+      property: 7,
+      attribute: "7",
+      native: "14%",
+      nativeDefault: "14%",
+    });
+    expect(state.updatedReset.checkbox).toEqual({
+      property: false,
+      attribute: false,
+      native: false,
+      nativeDefault: false,
+    });
+    expect(state.updatedReset.toggle).toEqual({
+      property: true,
+      attribute: true,
+      native: true,
+      nativeDefault: true,
+    });
+  });
+
+  test("popup transitions keep the latest open state and synchronize native closes", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root")!;
+      root.innerHTML = `
+        <button id="rapid-anchor">Rapid anchor</button>
+        <dialog id="rapid-popup" is="fig-popup" anchor="#rapid-anchor">
+          <button id="rapid-inside">Inside</button>
+        </dialog>
+        <button id="native-anchor">Native anchor</button>
+        <dialog id="native-popup" is="fig-popup" anchor="#native-anchor">
+          <button id="native-inside">Inside</button>
+        </dialog>
+      `;
+      const frame = () => new Promise(requestAnimationFrame);
+      const task = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+      const rapidAnchor = root.querySelector("#rapid-anchor") as HTMLElement;
+      const rapidPopup = root.querySelector("#rapid-popup") as HTMLDialogElement & {
+        open: boolean;
+      };
+      const rapidInside = root.querySelector("#rapid-inside") as HTMLElement;
+      rapidAnchor.focus();
+      rapidPopup.open = true;
+      rapidInside.focus();
+      rapidPopup.open = false;
+      rapidPopup.open = true;
+      rapidInside.focus();
+      await task();
+      await frame();
+      await frame();
+      const rapid = {
+        attributeOpen: rapidPopup.getAttribute("open"),
+        nativeOpen: rapidPopup.matches(":open"),
+        focusInside: rapidPopup.contains(document.activeElement),
+      };
+
+      const nativeAnchor = root.querySelector("#native-anchor") as HTMLElement;
+      const nativePopup = root.querySelector("#native-popup") as HTMLDialogElement & {
+        open: boolean;
+        requestClose?: () => void;
+      };
+      const nativeInside = root.querySelector("#native-inside") as HTMLElement;
+      let closes = 0;
+      let cancels = 0;
+      nativePopup.addEventListener("close", () => closes++);
+      nativePopup.addEventListener("cancel", () => cancels++);
+
+      nativeAnchor.focus();
+      nativePopup.open = true;
+      nativeInside.focus();
+      nativePopup.close();
+      await task();
+      await frame();
+      const afterClose = {
+        attributeOpen: nativePopup.hasAttribute("open"),
+        nativeOpen: nativePopup.matches(":open"),
+        focusRestored: document.activeElement === nativeAnchor,
+        closes,
+      };
+
+      nativeAnchor.focus();
+      nativePopup.open = true;
+      nativeInside.focus();
+      const supportsRequestClose =
+        typeof nativePopup.requestClose === "function";
+      nativePopup.requestClose?.();
+      await task();
+      await frame();
+      return {
+        rapid,
+        afterClose,
+        afterRequestClose: {
+          supportsRequestClose,
+          attributeOpen: nativePopup.hasAttribute("open"),
+          nativeOpen: nativePopup.matches(":open"),
+          focusRestored: document.activeElement === nativeAnchor,
+          closes,
+          cancels,
+        },
+      };
+    });
+
+    expect(state).toEqual({
+      rapid: {
+        attributeOpen: "true",
+        nativeOpen: true,
+        focusInside: true,
+      },
+      afterClose: {
+        attributeOpen: false,
+        nativeOpen: false,
+        focusRestored: true,
+        closes: 1,
+      },
+      afterRequestClose: {
+        supportsRequestClose: true,
+        attributeOpen: false,
+        nativeOpen: false,
+        focusRestored: true,
+        closes: 2,
+        cancels: 1,
+      },
+    });
+  });
+
+  test("menu transition races honor the latest close or disabled state", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const createMenu = (id: string) => {
+        const menu = document.createElement("fig-menu") as HTMLElement & {
+          open: boolean;
+          showAt(x: number, y: number): void;
+        };
+        menu.id = id;
+        menu.innerHTML = `
+          <button fig-menu-trigger>Actions</button>
+          <fig-menu-item value="copy">Copy</fig-menu-item>
+        `;
+        document.body.append(menu);
+        return menu;
+      };
+      const settle = async () => {
+        await new Promise(requestAnimationFrame);
+        await new Promise(requestAnimationFrame);
+      };
+      const read = (menu: HTMLElement & { open: boolean }) => {
+        const popup = menu.shadowRoot?.querySelector(
+          'dialog[is="fig-popup"]',
+        ) as HTMLDialogElement;
+        const trigger = menu.querySelector(
+          "[fig-menu-trigger]",
+        ) as HTMLElement;
+        return {
+          hostOpen: menu.open,
+          popupOpen: popup.matches(":open"),
+          expanded: trigger.getAttribute("aria-expanded"),
+        };
+      };
+
+      const closed = createMenu("scheduled-close");
+      closed.showAt(20, 20);
+      closed.open = false;
+      await settle();
+
+      const disabled = createMenu("scheduled-disabled");
+      disabled.showAt(30, 30);
+      disabled.setAttribute("disabled", "");
+      await settle();
+
+      const rapid = createMenu("rapid-menu");
+      rapid.open = true;
+      rapid.open = false;
+      rapid.open = true;
+      await settle();
+
+      return {
+        closed: read(closed),
+        disabled: read(disabled),
+        rapid: read(rapid),
+      };
+    });
+
+    expect(state).toEqual({
+      closed: { hostOpen: false, popupOpen: false, expanded: "false" },
+      disabled: { hostOpen: false, popupOpen: false, expanded: "false" },
+      rapid: { hostOpen: true, popupOpen: true, expanded: "true" },
+    });
+  });
+
+  test("handle pointer cancellation aborts and a completed drag commits once", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const surface = document.createElement("div");
+      surface.style.cssText =
+        "position:relative;width:200px;height:120px;margin:20px";
+      const handle = document.createElement("fig-handle");
+      handle.setAttribute("drag", "true");
+      handle.setAttribute("value", "25% 25%");
+      surface.append(handle);
+      document.body.append(surface);
+      await new Promise(requestAnimationFrame);
+
+      let inputs = 0;
+      let changes = 0;
+      handle.addEventListener("input", () => inputs++);
+      handle.addEventListener("change", () => changes++);
+      const rect = handle.getBoundingClientRect();
+      const dispatch = (
+        target: EventTarget,
+        type: string,
+        pointerId: number,
+        x: number,
+        y: number,
+      ) =>
+        target.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            buttons: type === "pointerup" || type === "pointercancel" ? 0 : 1,
+            pointerId,
+            clientX: x,
+            clientY: y,
+          }),
+        );
+
+      dispatch(handle, "pointerdown", 41, rect.left, rect.top);
+      dispatch(window, "pointermove", 41, rect.left + 30, rect.top + 20);
+      const beforeCancel = { inputs, changes };
+      dispatch(window, "pointercancel", 41, rect.left + 30, rect.top + 20);
+      dispatch(window, "pointermove", 41, rect.left + 60, rect.top + 40);
+      dispatch(window, "pointerup", 41, rect.left + 60, rect.top + 40);
+      const afterCancel = {
+        inputs,
+        changes,
+        dragging: handle.classList.contains("dragging"),
+      };
+
+      inputs = 0;
+      changes = 0;
+      const next = handle.getBoundingClientRect();
+      dispatch(handle, "pointerdown", 42, next.left, next.top);
+      dispatch(window, "pointermove", 42, next.left + 25, next.top + 15);
+      dispatch(window, "pointerup", 42, next.left + 25, next.top + 15);
+      dispatch(window, "pointerup", 42, next.left + 25, next.top + 15);
+
+      return {
+        beforeCancel,
+        afterCancel,
+        completed: { inputs, changes },
+      };
+    });
+
+    expect(state.beforeCancel.inputs).toBeGreaterThan(0);
+    expect(state.beforeCancel.changes).toBe(0);
+    expect.soft(state.afterCancel).toEqual({
+      ...state.beforeCancel,
+      dragging: false,
+    });
+    expect(state.completed.inputs).toBeGreaterThan(0);
+    expect(state.completed.changes).toBe(1);
+  });
+
+  test("disabling or disconnecting a handle aborts its active gesture", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(async () => {
+      const run = async (transition: "disable" | "disconnect") => {
+        const surface = document.createElement("div");
+        surface.style.cssText =
+          "position:relative;width:200px;height:120px;margin:20px";
+        const handle = document.createElement("fig-handle");
+        handle.setAttribute("drag", "true");
+        handle.setAttribute("value", "25% 25%");
+        surface.append(handle);
+        document.body.append(surface);
+        await new Promise(requestAnimationFrame);
+
+        let inputs = 0;
+        let changes = 0;
+        handle.addEventListener("input", () => inputs++);
+        handle.addEventListener("change", () => changes++);
+        const rect = handle.getBoundingClientRect();
+        const event = (type: string, x: number, y: number) =>
+          new PointerEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            buttons: type === "pointerup" ? 0 : 1,
+            pointerId: transition === "disable" ? 51 : 52,
+            clientX: x,
+            clientY: y,
+          });
+        handle.dispatchEvent(event("pointerdown", rect.left, rect.top));
+        window.dispatchEvent(
+          event("pointermove", rect.left + 25, rect.top + 15),
+        );
+        const beforeTransition = { inputs, changes };
+
+        if (transition === "disable") handle.setAttribute("disabled", "");
+        else handle.remove();
+
+        window.dispatchEvent(
+          event("pointermove", rect.left + 50, rect.top + 30),
+        );
+        window.dispatchEvent(
+          event("pointerup", rect.left + 50, rect.top + 30),
+        );
+        return {
+          beforeTransition,
+          afterTransition: {
+            inputs,
+            changes,
+            dragging: handle.classList.contains("dragging"),
+          },
+        };
+      };
+
+      return {
+        disabled: await run("disable"),
+        disconnected: await run("disconnect"),
+      };
+    });
+
+    for (const result of [state.disabled, state.disconnected]) {
+      expect(result.beforeTransition.inputs).toBeGreaterThan(0);
+      expect(result.beforeTransition.changes).toBe(0);
+      expect.soft(result.afterTransition).toEqual({
+        ...result.beforeTransition,
+        dragging: false,
+      });
+    }
   });
 });

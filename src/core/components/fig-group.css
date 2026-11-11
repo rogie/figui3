@@ -1,0 +1,117 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+fig-group {
+  display: block;
+  width: 100%;
+  padding-bottom: var(--spacer-2-5);
+
+  p {
+    margin: 0 var(--spacer-3) var(--spacer-2);
+  }
+
+  &[compact]:not([compact="false"]) {
+    padding-top: var(--spacer-1);
+  }
+
+  & + fig-group {
+    box-shadow: inset 0 1px 0 0 var(--figma-color-border);
+
+    &:not(:has(fig-header)) {
+      padding-top: var(--spacer-2-5);
+    }
+  }
+
+  &[borderless]:not([borderless="false"]) + fig-group {
+    box-shadow: none;
+
+    &:not([name]) {
+      padding-top: 0;
+    }
+  }
+
+  & > fig-header {
+    cursor: default;
+    gap: 0;
+
+    &:has(> h3:focus-visible) {
+      --figma-focus-outline-radius: var(--radius-medium);
+      outline: var(--figma-focus-outline);
+      outline-offset: var(--figma-focus-outline-offset);
+      border-radius: var(--figma-focus-outline-radius);
+    }
+
+    & > h3 {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: block;
+      margin: 0;
+      padding-left: 0;
+      outline: none;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      max-width: 100%;
+      cursor: default;
+    }
+
+    & > .fig-group-chevron {
+      flex: 0 0 auto;
+      color: var(--figma-color-text-tertiary);
+      transform: rotate(-90deg);
+      transition: transform var(--transition-duration)
+        var(--transition-timing-function);
+      margin-inline-start: calc(var(--spacer-2) * -1);
+      cursor: default;
+    }
+  }
+
+  &[chevron="end"] > fig-header > .fig-group-chevron {
+    margin-inline-start: 0;
+  }
+
+  &[collapsible] > fig-header h3 {
+    user-select: none;
+  }
+
+  &[collapsible]:not([open]):not([open="true"]),
+  &[collapsible][open="false"] {
+    padding-bottom: 0;
+
+    fig-header {
+      color: var(--figma-color-text-secondary);
+
+      &:has(> h3:hover, > .fig-group-chevron:hover) {
+        color: var(--figma-color-text);
+
+        .fig-group-chevron {
+          color: var(--figma-color-icon);
+        }
+      }
+    }
+  }
+
+  &[open="false"],
+  &:has(> fig-header:only-child) {
+    padding-bottom: 0;
+
+    > fig-header {
+      color: var(--figma-color-text-secondary);
+    }
+  }
+
+  & > fig-header:hover > .fig-group-chevron {
+    color: var(--figma-color-icon);
+  }
+
+  &[open]:not([open="false"]) > fig-header .fig-group-chevron {
+    transform: rotate(0deg);
+  }
+
+  &[collapsible]:not([open]):not([open="true"]) > :not(fig-header),
+  &[collapsible][open="false"] > :not(fig-header) {
+    display: none !important;
+  }
+}

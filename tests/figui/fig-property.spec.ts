@@ -1978,15 +1978,24 @@ test.describe("fig-property", () => {
   });
 });
 
-test("is registered by the property and editor bundles", async ({ page }) => {
+test("is registered by Core and reused by the editor bundle", async ({ page }) => {
   collectPageErrors(page);
   await bootFigFixture(page);
+  const coreConstructor = await page.evaluate(
+    () => customElements.get("fig-property")?.name,
+  );
+  expect(coreConstructor).toBe("FigProperty");
   expect(
-    await page.evaluate(() => Boolean(customElements.get("fig-property"))),
-  ).toBe(false);
+    await page.evaluate(async () => {
+      const standalone = await import(
+        "/fig-property.js?core-registration-assertion"
+      );
+      return standalone.FigProperty === customElements.get("fig-property");
+    }),
+  ).toBe(true);
   await page.addScriptTag({ type: "module", url: "/fig-editor.js" });
   await page.evaluate(() => customElements.whenDefined("fig-property"));
   expect(
-    await page.evaluate(() => Boolean(customElements.get("fig-property"))),
-  ).toBe(true);
+    await page.evaluate(() => customElements.get("fig-property")?.name),
+  ).toBe(coreConstructor);
 });

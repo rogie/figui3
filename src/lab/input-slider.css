@@ -1,0 +1,16 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+/**
+ * FigUI3 slider component styles.
+ */
+
+@import url("./components/fig-input-slider.css");
+@import url("./components/fig-input-slider-hue.css");
+@import url("./components/fig-input-slider-opacity.css");
+@import url("./components/fig-input-slider-delta.css");
+@import url("./components/fig-input-slider-stepper.css");
+@import url("./components/fig-input-slider-wheel.css");

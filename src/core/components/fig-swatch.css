@@ -1,0 +1,207 @@
+/*
+MIT License
+Copyright (c) 2026 Rogie King
+License: https://github.com/rogie/figui3/blob/main/LICENSE
+*/
+input[type="color"] {
+  width: 0.875rem;
+  height: 0.875rem;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  padding: 0.3125rem;
+  flex-shrink: 0;
+  box-sizing: content-box;
+  border-radius: var(--radius-medium);
+  background-color: var(--figma-color-bg-secondary);
+  display: inline-grid;
+
+  &:focus-visible {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  :is(fig-swatch, fig-chit):focus-within & {
+    outline: 0;
+  }
+
+  &::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border: 0;
+    color-scheme: inherit;
+    appearance: none;
+    border-radius: 0.125rem;
+    background: var(--checkerboard);
+    overflow: hidden;
+    grid-area: 1/1;
+    color-scheme: inherit;
+    outline: 0;
+  }
+
+  &::-webkit-color-swatch {
+    padding: 0;
+    border: 0;
+    color-scheme: inherit;
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    color-scheme: inherit;
+    border-radius: 0.125rem;
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 50%,
+      rgba(0, 0, 0, var(--alpha)) 50%
+    );
+  }
+
+  &::-moz-color-swatch {
+    color-scheme: inherit;
+    border-radius: 0.125rem;
+    padding: 0;
+    border: 0;
+    appearance: none;
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 50%,
+      rgba(0, 0, 0, var(--alpha)) 50%
+    );
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+  }
+}
+
+:is(fig-swatch, fig-chit) {
+  --size: 1.5rem;
+  --padding: 5px;
+  --width: var(--size);
+  --height: var(--size);
+  --border-radius: var(--radius-medium);
+  --swatch-background: linear-gradient(#d9d9d9, #d9d9d9);
+  --swatch-bg-size: cover;
+  --swatch-bg-position: center;
+  --alpha: 1;
+
+  display: inline-grid;
+  width: var(--size);
+  height: var(--size);
+  border-radius: var(--border-radius);
+  background-color: var(--figma-color-bg-secondary);
+  flex-shrink: 0;
+
+  &::before,
+  &::after,
+  div,
+  input {
+    grid-area: 1/1;
+  }
+
+  & > div {
+    background: var(--checkerboard-swatch);
+    border-radius: var(--border-radius);
+  }
+
+  &[size="medium"],
+  &[size="large"] {
+    --padding: 0px;
+
+    &[selected]:not([selected="false"]) {
+      --padding: 3px;
+    }
+
+    & > div {
+      background: var(--checkerboard);
+    }
+  }
+
+  &[size="medium"] {
+    --size: 1.5rem;
+    --padding: 0px;
+  }
+
+  &[size="large"] {
+    --size: 2rem;
+    --padding: 0px;
+  }
+
+  &[disabled]:not([disabled="false"]) {
+    pointer-events: none;
+  }
+
+  &::before,
+  &::after,
+  & > div {
+    content: "";
+    width: calc(var(--width) - var(--padding) * 2);
+    height: calc(var(--height) - var(--padding) * 2);
+    border-radius: var(
+      --fig-swatch-border-radius,
+      calc(var(--border-radius) - (var(--padding) / 2))
+    );
+    grid-area: 1/1;
+    place-self: center;
+    pointer-events: none;
+  }
+
+  &::after {
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    z-index: 1;
+  }
+
+  &::before {
+    content: "";
+    background-color: transparent;
+    background-image: var(--swatch-background);
+    background-size: var(--swatch-bg-size);
+    background-position: var(--swatch-bg-position);
+    background-repeat: no-repeat;
+    border-radius: var(
+      --fig-swatch-border-radius,
+      calc(var(--border-radius) - (var(--padding) / 2))
+    );
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 50%,
+      rgba(0, 0, 0, var(--alpha)) 50%
+    );
+    grid-area: 1/1;
+    place-self: center;
+  }
+
+  &[size="medium"]::before,
+  &[size="large"]::before {
+    border-radius: var(
+      --fig-swatch-border-radius,
+      calc(var(--border-radius) - var(--padding))
+    );
+  }
+
+  &:focus-visible,
+  &:has(> input[type="color"]:focus-visible) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+  }
+
+  input[type="color"] {
+    background: none;
+    width: var(--width);
+    height: var(--height);
+    grid-area: 1/1;
+    place-self: center;
+    box-sizing: border-box;
+    opacity: 0;
+
+    &:focus,
+    &:focus-visible {
+      outline: 0;
+    }
+  }
+
+  &[selected]:not([selected="false"]) {
+    outline: var(--figma-focus-outline);
+    outline-offset: var(--figma-focus-outline-offset);
+    background-color: transparent;
+  }
+}

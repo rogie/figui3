@@ -1,0 +1,95 @@
+/*
+PolyForm Shield License 1.0.0
+https://polyformproject.org/licenses/shield/1.0.0
+Required Notice: Copyright (c) 2026 Rogie King
+Licensor Line of Business: FigUI3 editor and lab (Figma-style plugin UI kit)
+*/
+
+fig-input-slider-hue.fig-input-slider {
+  --fig-input-slider-hue-handle-width: calc(2 * var(--spacer-1));
+  --fig-input-slider-hue-handle-border-radius: 0.25rem;
+  --fig-input-slider-handle-border-radius: var(
+    --fig-input-slider-hue-handle-border-radius,
+    0.125rem
+  );
+  --fig-input-slider-hue-gradient-opacity-rest: 1;
+  --fig-input-slider-hue-gradient-opacity-hover: 1;
+  --fig-input-slider-hue-gradient: linear-gradient(
+    to right,
+    #f00,
+    #ff0,
+    #0f0,
+    #0ff,
+    #00f,
+    #f0f,
+    #f00
+  );
+  --fig-input-slider-hue-handle-shadow-offset: 0.125rem;
+  --fig-input-slider-hue-handle-shadow-color: light-dark(#ffffff, #ffffff);
+
+  & .fig-input-slider-track::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucentstrong);
+    pointer-events: none;
+  }
+
+  & .fig-input-slider-track::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(
+      --fig-input-slider-hue-gradient,
+      linear-gradient(
+        to right,
+        #f00,
+        #ff0,
+        #0f0,
+        #0ff,
+        #00f,
+        #f0f,
+        #f00
+      )
+    );
+    opacity: var(--fig-input-slider-hue-gradient-opacity-rest, 0);
+    transition: opacity var(--transition-duration)
+      var(--transition-timing-function);
+  }
+
+  &:hover .fig-input-slider-track::after {
+    opacity: var(--fig-input-slider-hue-gradient-opacity-hover, 1);
+  }
+
+  & :is(.fig-input-slider-handle, .fig-input-slider-ghost-handle) {
+    background: var(
+      --fig-input-slider-color,
+      hsl(
+        calc(var(--fig-input-slider-handle-progress, 0) * 360deg) 100% 50%
+      )
+    );
+  }
+
+  & .fig-input-slider-handle {
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+      0 0 0 var(--fig-input-slider-hue-handle-shadow-offset, 0.125rem)
+        var(
+          --fig-input-slider-hue-handle-shadow-color,
+          light-dark(#ffffff, #ffffff)
+        ),
+      var(
+        --fig-input-slider-handle-box-shadow,
+        0 0 0 1px rgba(0, 0, 0, 0.1),
+        0 1px 1px rgba(0, 0, 0, 0.05)
+      );
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    & .fig-input-slider-track::after {
+      transition-duration: 0.001ms;
+    }
+  }
+}

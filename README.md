@@ -5,7 +5,7 @@ A lightweight, zero-dependency web components library for building Figma plugin 
 [![npm version](https://img.shields.io/npm/v/@rogieking/figui3.svg)](https://www.npmjs.com/package/@rogieking/figui3)
 [![License](https://img.shields.io/badge/License-split-lightgrey.svg)](LICENSE)
 
-**[Live Playground & Demos](https://rog.ie/figui3/)**
+**[Live Playground & Demos](https://rog.ie/propskit/)**
 
 ## Features
 
@@ -44,11 +44,11 @@ import "@rogieking/figui3/fig.css";
 import "@rogieking/figui3/fig.js";
 ```
 
-Opt into `<fig-layer>` when you need collapsible layer lists:
+`fig.js` registers `<fig-layer>` with the other core elements. Add its standalone
+stylesheet when you need the layer-list presentation:
 
 ```js
 import "@rogieking/figui3/fig-layer.css";
-import "@rogieking/figui3/fig-layer.js";
 ```
 
 Opt into editor components like `<fig-select>` and the full Figma-style fill picker when you need them:
@@ -65,6 +65,26 @@ import "@rogieking/figui3/fig-lab.css";
 import "@rogieking/figui3/fig-lab.js";
 ```
 
+For server-rendered apps, use the SSR-safe registration entry point. Call it
+after hydration from a React effect instead of statically importing the
+side-effect JavaScript bundles:
+
+```jsx
+import { useEffect } from "react";
+import { register } from "@rogieking/figui3/register.js";
+
+function RegisterFigUI() {
+  useEffect(() => {
+    void register({ editor: true, lab: true });
+  }, []);
+  return null;
+}
+```
+
+Render `<RegisterFigUI />` inside the hydrated root. The direct `fig.js`,
+`fig-editor.js`, and `fig-lab.js` imports remain convenient for client-only
+apps, but register immediately when evaluated in a browser.
+
 Or use a CDN:
 
 ```html
@@ -77,7 +97,15 @@ Agent skills ship in `.cursor/skills/` (included in the npm package):
 - `figui3` — core `fig.js` components
 - `fig-editor` — `fig-select` and `fig-fill-picker`
 - `fig-lab` — experimental audio, wheel, reorder, canvas, and AI components
-- `propkit` — property-row composition; examples are included in `/figui3`
+- `propskit` — declarative property panels; examples are included in `/propskit`
+
+Cursor discovers this repository's root `.cursor/skills/` automatically. In a
+consuming project, npm installs the packaged copies under
+`node_modules/@rogieking/figui3/.cursor/skills/`; Cursor does not automatically
+discover skills inside `node_modules`, but agents can read those files directly.
+
+See the generated [bundle registration inventory](BUNDLES.md) for the exact
+tags registered by Core, Editor, and Lab.
 
 Minimal example:
 
@@ -89,6 +117,75 @@ Minimal example:
 <fig-button variant="primary">Save</fig-button>
 ```
 
+### PropsKit
+
+PropsKit renders declarative property controls using only the Core bundle:
+
+```js
+import "@rogieking/figui3/fig.css";
+import {
+  figCreateProps,
+  figCreatePropsRoot,
+} from "@rogieking/figui3/propskit.js";
+
+const kit = figCreateProps("Appearance", {
+  opacity: 75,
+  width: {
+    type: "number",
+    control: "number",
+    default: 320,
+    units: "px",
+  },
+  visible: true,
+  title: "Hello",
+  layout: {
+    _collapsed: true,
+    alignment: {
+      type: "options",
+      default: "Center",
+      options: ["Left", "Center", "Right"],
+    },
+  },
+});
+
+const root = figCreatePropsRoot({
+  target: document.querySelector("#properties"),
+  panelIds: [kit.id],
+});
+
+const unsubscribe = kit.subscribe((values) => {
+  console.log(values);
+});
+```
+
+Numbers render as `fig-slider` by default. Use `control: "number"` for
+`fig-input-number` or `variant: "delta"` for a delta slider. On sliders,
+`stepper: true` enables stepper mode. Exact number inputs show steppers by
+default; set `stepper: false` to hide them.
+Nested objects become static `fig-group` sections. Add `_collapsed: false` for
+an initially open collapsible group or `_collapsed: true` for an initially
+closed one. Supported controls include text, switch, color, gradient, palette,
+options, easing, rotate, point, joystick, file, image, video, audio, and
+actions.
+Image and video definitions accept `options` as source strings or
+`{ value, label }` entries. Multiple options render in a `fig-chooser`; the
+resolved value is the selected source string, defaulting to the first option.
+Omit `options` for an upload-only control. Audio keeps its optional
+`multiple` / `maxItems` array model.
+Pass `null`, an empty string, or whitespace as the name to mount controls
+directly without an outer panel or generated header.
+
+Joystick definitions store coordinates on a `0…100` scale by default. Set
+`unitScale: 1` to store the component's normalized `0…1` coordinates instead.
+
+Call `unsubscribe()`, `root.destroy()`, and `kit.destroy()` when the owning
+view unmounts. Interactive examples are available at `/propskit` in the
+playground.
+
+`onInput` and `onChange` report user interactions only. Programmatic
+`setValue()`, `setValues()`, and `resetValues()` calls update subscribers
+without echoing through those interaction callbacks.
+
 ---
 
 ## Components
@@ -96,6 +193,7 @@ Minimal example:
 | Component | Tag | Description |
 |---|---|---|
 | [Button](#button) | `<fig-button>` | Buttons with variants, toggle, select, upload |
+| [Play Button](#play-button) | `<fig-button-play>` | Play/pause button with a timed progress ring |
 | [Dropdown](#dropdown) | `<fig-dropdown>` | Native select wrapper with Figma styling |
 | [Select](#select) | `<fig-select>` | Custom listbox select (requires `fig-editor.js`) |
 | [Split Input](#split-input) | `<fig-split-input>` | Text or number input with dropdown suggestions |
@@ -103,6 +201,7 @@ Minimal example:
 | [Radio](#radio) | `<fig-radio>` | Radio button |
 | [Switch](#switch) | `<fig-switch>` | Toggle switch |
 | [Slider](#slider) | `<fig-slider>` | Range, hue, opacity, delta, stepper |
+| [Carousel](#carousel) | `<fig-carousel>` | Timed image and video carousel with generated playback controls |
 | [Audio](#audio) | `<fig-audio>` | Waveform audio player with shared media controls |
 | [Audio Waveform](#audio-waveform) | `<fig-audio-waveform>` | Responsive waveform generated from an audio URL |
 | [Input Slider](#input-slider) | `<fig-input-slider>` | Experimental standalone slider primitives |
@@ -146,7 +245,7 @@ Minimal example:
 | [Separator](#separator) | `<fig-separator>` / `<fig-menu-separator>` | Visual divider with an optional label |
 | [Menu](#menu) | `<fig-menu>` | Triggered menu with keyboard navigation |
 | [Header](#header) | `<fig-header>` | Section header |
-| [Layer](#layer) | `<fig-layer>` | Collapsible layer list item from `fig-layer.js` |
+| [Layer](#layer) | `<fig-layer>` | Core-registered collapsible layer list item; styled by `fig-layer.css` |
 | [Preview](#preview) | `<fig-preview>` | Thin visual preview layer |
 | [Media](#media) | `<fig-media>` | Shared media host for image/video |
 | [Image](#image) | `<fig-image>` | Image display/upload |
@@ -164,7 +263,7 @@ Minimal example:
 
 #### Button
 
-`<fig-button>` — [demo](https://rog.ie/figui3/#button)
+`<fig-button>` — [demo](https://rog.ie/propskit/#button)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -174,6 +273,7 @@ Minimal example:
 | `selected` | boolean | `false` | Selected state (toggle type) |
 | `disabled` | boolean | `false` | Disabled state |
 | `icon` | boolean | `false` | Icon-only styling |
+| `pill` | boolean | `false` | Fully rounded button shape |
 | `align` | string | `"center"` | Content alignment: `"start"`, `"center"`, or `"end"` |
 | `href` | string | — | URL for link buttons |
 | `target` | string | — | Link target (e.g. `"_blank"`) |
@@ -185,10 +285,11 @@ Minimal example:
 <fig-button variant="destructiveSecondary">Destructive secondary</fig-button>
 <fig-button variant="destructiveGhost">Destructive ghost</fig-button>
 <fig-button variant="destructiveLink">Destructive link</fig-button>
+<fig-button pill>Pill</fig-button>
 <fig-button full align="start">Start aligned</fig-button>
 <fig-button variant="property">
   <fig-icon name="settings" slot="prepend"></fig-icon>
-  Effects
+  <span slot="label">Effects</span>
 </fig-button>
 <fig-button type="toggle" selected="true">Toggle</fig-button>
 <fig-button variant="ghost" icon>
@@ -196,15 +297,47 @@ Minimal example:
 </fig-button>
 ```
 
+Wrap labels that may truncate in an authored `slot="label"` element. A direct
+`<label>` child receives the same truncation styles without FigUI adding a slot
+or otherwise mutating the authored DOM. Raw text remains supported but cannot
+reliably render an ellipsis inside the button's flex layout.
+
 `type="select"` and `type="upload"` are visual wrappers for native select/file controls. They avoid nested native buttons, show the shared focus outline on the wrapper, and open the native picker from keyboard activation where supported.
 
 `variant="property"` shares the secondary visual treatment and adds the full-width, start-aligned property-trigger layout. Author a leading icon with `slot="prepend"`. The consumer owns any corresponding popup or dialog and can use `selected`, `aria-haspopup`, `aria-expanded`, and `aria-controls` on the button.
 
 ---
 
+#### Play Button
+
+`<fig-button-play>` embeds a secondary, pill-shaped icon `fig-button` and
+switches between the shared play and pause icons. Without `progress`, it runs
+an internal timer and preserves elapsed time across pause/resume. Authoring
+`progress` switches it to externally controlled mode.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `playing` | boolean | `false` | Current play/pause state |
+| `duration` | number | `5` | Internal timer duration in seconds |
+| `progress` | number | — | Controlled progress from `0` to `1` |
+| `variant` | string | `"secondary"` | Forwarded to the embedded `fig-button` |
+| `size` | string | — | Forwarded button size: `"compact"` or `"large"` |
+| `disabled` | boolean | `false` | Disables interaction and pauses the timer |
+
+```html
+<fig-button-play duration="8"></fig-button-play>
+<fig-button-play progress="0.4" playing></fig-button-play>
+```
+
+Methods: `play()`, `pause()`, `toggle()`, and `reset()`. User interaction emits
+bubbling `play` and `pause` events. The internal timer emits `complete` at the
+end.
+
+---
+
 #### Dropdown
 
-`<fig-dropdown>` — [demo](https://rog.ie/figui3/#dropdown)
+`<fig-dropdown>` — [demo](https://rog.ie/propskit/#dropdown)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -228,7 +361,7 @@ Keyboard activation follows the native select pattern. Enter opens the closed pi
 
 #### Select
 
-`<fig-select>` — [demo](https://rog.ie/figui3/#select)
+`<fig-select>` — [demo](https://rog.ie/propskit/#select)
 
 Custom listbox select with overflow chevrons, grouped options, and sticky separators. Import `fig-editor.js` and `fig-editor.css`. Prefer this over `fig-dropdown` for Figma-style menus.
 
@@ -275,7 +408,7 @@ document.querySelector("fig-select").menuAnchor =
 
 #### Split Input
 
-`<fig-split-input>` — [demo](https://rog.ie/figui3/#split-input)
+`<fig-split-input>` — [demo](https://rog.ie/propskit/#split-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -293,12 +426,13 @@ document.querySelector("fig-select").menuAnchor =
 
 `<fig-combo-input>` remains available as a legacy alias.
 The suggestion trigger uses `fig-select` when `fig-editor.js` is registered and falls back to core `fig-dropdown`.
+Typed values that exactly match an option select and check it; unmatched values clear the option selection.
 
 ---
 
 #### Checkbox
 
-`<fig-checkbox>` — [demo](https://rog.ie/figui3/#checkbox)
+`<fig-checkbox>` — [demo](https://rog.ie/propskit/#checkbox)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -319,7 +453,7 @@ The suggestion trigger uses `fig-select` when `fig-editor.js` is registered and 
 
 #### Radio
 
-`<fig-radio>` — [demo](https://rog.ie/figui3/#radio)
+`<fig-radio>` — [demo](https://rog.ie/propskit/#radio)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -338,7 +472,7 @@ The suggestion trigger uses `fig-select` when `fig-editor.js` is registered and 
 
 #### Switch
 
-`<fig-switch>` — [demo](https://rog.ie/figui3/#switch)
+`<fig-switch>` — [demo](https://rog.ie/propskit/#switch)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -362,7 +496,7 @@ normal `input` / `change` events.
 
 #### Slider
 
-`<fig-slider>` — [demo](https://rog.ie/figui3/#slider)
+`<fig-slider>` — [demo](https://rog.ie/propskit/#slider)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -402,6 +536,7 @@ An audio player that composes `fig-audio-waveform` with the shared `fig-media-co
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `src` | string | — | Audio URL used for playback and waveform generation |
+| `variant` | `bars` \| `ribbon` | `bars` | Forwarded to the generated or authored waveform |
 | `autoplay` | boolean | `false` | Start playback automatically when allowed by the browser |
 | `controls` | boolean | `false` | Show generated playback controls |
 | `muted` | boolean | `false` | Mute audio playback |
@@ -411,7 +546,7 @@ Authored direct `fig-audio-waveform` and `fig-media-controls` children are prese
 
 ```html
 <fig-audio src="track.mp3" controls></fig-audio>
-<fig-audio src="ambience.wav" autoplay muted loop></fig-audio>
+<fig-audio src="ambience.wav" variant="ribbon" autoplay muted loop></fig-audio>
 ```
 
 ---
@@ -425,15 +560,17 @@ A responsive waveform generated from an audio URL. Included in `fig.js` and `fig
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `url` | string | — | CORS-enabled audio URL to fetch, decode, and render |
+| `variant` | `bars` \| `ribbon` | `bars` | Render rounded bars or a smooth mirrored ribbon |
 | `progress` | number | `0` | Completed fraction from `0` to `1`; values are clamped |
 | `polarization` | number | `1.5` | Waveform contrast factor around half-height (`1` is neutral) |
 | `full` | boolean | `false` | Fill the available width |
 
-Set `--fig-audio-waveform-stroke-width` (default `1px`) to control waveform bar thickness. The responsive waveform targets one bar per 3px. URL fetch or decode failures render a quiet flat waveform fallback.
+Set `--fig-audio-waveform-stroke-width` (default `1px`) to control waveform bar thickness and the ribbon's minimum thickness. The responsive waveform targets one sample per 3px. URL fetch or decode failures render a quiet flat waveform fallback.
 
 ```html
 <fig-audio-waveform
   url="https://example.com/audio.wav"
+  variant="ribbon"
   progress="0.42"
 ></fig-audio-waveform>
 ```
@@ -509,7 +646,7 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 
 #### Text Input
 
-`<fig-input-text>` — [demo](https://rog.ie/figui3/#text-input)
+`<fig-input-text>` — [demo](https://rog.ie/propskit/#text-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -535,7 +672,7 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 
 #### Number Input
 
-`<fig-input-number>` — [demo](https://rog.ie/figui3/#number-input)
+`<fig-input-number>` — [demo](https://rog.ie/propskit/#number-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -552,7 +689,7 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 | `unit-position` | string | `"suffix"` | `"suffix"` or `"prefix"` |
 | `transform` | number | — | Display multiplier |
 | `precision` | number | — | Fixed displayed decimal places; omitted values use up to two places |
-| `steppers` | boolean | `false` | Show spin buttons |
+| `steppers` | boolean | `true` | Show spin buttons; set to `"false"` to hide |
 | `tabular` | boolean | `false` | Tabular numerals (`font-variant-numeric: tabular-nums`) |
 | `disabled` | boolean | `false` | Disabled state |
 
@@ -568,7 +705,7 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 
 #### Input Rotate
 
-`<fig-input-rotate>` — [demo](https://rog.ie/figui3/#input-rotate)
+`<fig-input-rotate>` — [demo](https://rog.ie/propskit/#input-rotate)
 
 An editor-bundle property button that summarizes X, Y, and Z rotation values with up to one decimal place, matching the popup fields. `variant="simple"` omits the prepend icon and X/Y/Z labels. Clicking it opens an anchored `fig-popup` containing `<fig-3d-rotate fields="rotateX,rotateY,rotateZ" aspect-ratio="4/3">`.
 
@@ -597,7 +734,7 @@ Requires `fig-editor.js` and `fig-editor.css`.
 
 #### Input Point
 
-`<fig-input-point>` — [demo](https://rog.ie/figui3/#input-point)
+`<fig-input-point>` — [demo](https://rog.ie/propskit/#input-point)
 
 An editor-bundle property button that summarizes X and Y values with up to one decimal place. Clicking it opens an anchored popup containing `<fig-origin-grid fields aspect-ratio="4/3">`. Popup edits reflect to the `x` and `y` attributes and emit numeric `{ x, y }` in `detail`.
 
@@ -624,13 +761,14 @@ Requires `fig-editor.js` and `fig-editor.css`.
 
 #### File Input
 
-`<fig-input-file>` — [demo](https://rog.ie/figui3/#file-input)
+`<fig-input-file>` — [demo](https://rog.ie/propskit/#file-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `accepts` | string | — | Native file chooser filter |
 | `preview` | `"true"` \| `"false"` \| `"large"` | `false` | Show compact media previews, or use `large` for an upload-enabled `fig-image`/`fig-video` preview |
 | `label` | string | generated | Empty-state button label; defaults to `Upload audio`, `Upload image`, or `Upload file` from the known file type |
+| `upload` | `"icon"` | — | Render an Add icon button while empty and only a Remove icon button when populated |
 | `multiple` | boolean | `false` | Allow multiple files |
 | `remove` | boolean | `true` | Show the remove button when a file is selected; set to `"false"` to omit it |
 | `disabled` | boolean | `false` | Disabled state |
@@ -644,6 +782,7 @@ Known image and audio files use media-specific icons; unmatched files retain the
 
 ```html
 <fig-input-file accepts="image/*"></fig-input-file>
+<fig-input-file accepts="image/*" upload="icon" label="Add image"></fig-input-file>
 <fig-input-file accepts="image/*" preview></fig-input-file>
 <fig-input-file accepts="video/*" preview="large"></fig-input-file>
 <fig-input-file accepts="audio/*"></fig-input-file>
@@ -654,7 +793,7 @@ Known image and audio files use media-specific icons; unmatched files retain the
 
 #### Angle
 
-`<fig-angle>` — [demo](https://rog.ie/figui3/#angle)
+`<fig-angle>` — [demo](https://rog.ie/propskit/#angle)
 
 Instrument-style angle/rotation control with an interactive dial, text input, CSS angle units, 15-degree Shift snapping, and unbounded positive/negative winding by default. Degree units display as `°` in the number field. Accepts unit suffixes in text input (`90°`, `90deg`, `3.14rad`, `0.5turn`, `100grad`). Add `min` and/or `max` to clamp the value. Changing `units` preserves the physical angle and converts `value`, `default`, `min`, `max`, and `step` (for example, `90deg` becomes `0.250turn`). When the value differs from `default`, an inset reset button restores the default and emits `input` and `change`.
 
@@ -691,7 +830,7 @@ The `defaultValue` property returns the resolved numeric default in the active u
 
 #### Swatch
 
-`<fig-swatch>` — [demo](https://rog.ie/figui3/#swatch)
+`<fig-swatch>` — [demo](https://rog.ie/propskit/#swatch)
 
 A color/gradient/image swatch element with checkerboard background for alpha.
 
@@ -712,7 +851,7 @@ A color/gradient/image swatch element with checkerboard background for alpha.
 
 #### Color Tip
 
-`<fig-color-tip>` — [demo](https://rog.ie/figui3/#color-tip)
+`<fig-color-tip>` — [demo](https://rog.ie/propskit/#color-tip)
 
 A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker is registered, otherwise falls back to the native color input.
 
@@ -742,7 +881,7 @@ A compact solid-color swatch. Uses `<fig-fill-picker>` when the optional picker 
 
 #### Color Input
 
-`<fig-input-color>` — [demo](https://rog.ie/figui3/#color-input)
+`<fig-input-color>` — [demo](https://rog.ie/propskit/#color-input)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -953,7 +1092,7 @@ Supported interpolation spaces: `srgb`, `srgb-linear`, `display-p3`, `oklab`, `o
 
 #### Fill Input
 
-`<fig-input-fill>` — [demo](https://rog.ie/figui3/#fill-input)
+`<fig-input-fill>` — [demo](https://rog.ie/propskit/#fill-input)
 
 A comprehensive fill input supporting solid, gradient, image, video, and webcam fills. Without the optional picker, it renders a passive preview.
 
@@ -987,7 +1126,7 @@ Solid `alpha` is 0–1 (canonical). `opacity` 0–100 is also emitted for compat
 
 #### Fill Picker
 
-`<fig-fill-picker>` — [demo](https://rog.ie/figui3/#fill-picker)
+`<fig-fill-picker>` — [demo](https://rog.ie/propskit/#fill-picker)
 
 Optional full fill picker dialog supporting solid, gradient, image, video, and webcam. Import `fig-editor.js` and `fig-editor.css` to register and style it.
 
@@ -1056,7 +1195,7 @@ Use `--fig-toolbelt-gap`, `--fig-toolbelt-group-gap`, `--fig-toolbelt-group-sepa
 
 #### Tabs
 
-`<fig-tabs>` / `<fig-tab>` — [demo](https://rog.ie/figui3/#tabs)
+`<fig-tabs>` / `<fig-tab>` — [demo](https://rog.ie/propskit/#tabs)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1086,7 +1225,7 @@ Overflow buttons are enabled by default. Set `overflow="fade"` for buttonless sc
 
 #### Segmented Control
 
-`<fig-segmented-control>` / `<fig-segment>` — [demo](https://rog.ie/figui3/#segmented-control)
+`<fig-segmented-control>` / `<fig-segment>` — [demo](https://rog.ie/propskit/#segmented-control)
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1376,7 +1515,7 @@ When `drag="true"`, focused handles support Arrow key movement, Home/End jumps, 
 
 #### Canvas Control
 
-`<fig-canvas-control>` — [demo](https://rog.ie/figui3/#canvas-control)
+`<fig-canvas-control>` — [demo](https://rog.ie/propskit/#canvas-control)
 
 A composite point control with optional radius circle, angle handle, or second point. Place inside a positioned container; the component uses `display: contents` and does not create its own box.
 
@@ -1429,7 +1568,7 @@ For `point-point`, both handles support direct drag (with a dynamic directional 
 
 #### Overflow Fade
 
-`.fig-overflow-fade` — [demo](https://rog.ie/figui3/#overflow-fade)
+`.fig-overflow-fade` — [demo](https://rog.ie/propskit/#overflow-fade)
 
 A progressively enhanced scroll utility that fades its edges when more content
 is available in that direction. Apply the class to a height-constrained
@@ -1478,7 +1617,7 @@ timelines. Unsupported browsers retain ordinary scrolling without a fade.
 
 #### Stack
 
-`<fig-stack>` — [demo](https://rog.ie/figui3/#stack)
+`<fig-stack>` — [demo](https://rog.ie/propskit/#stack)
 
 A layout primitive for rows, columns, and grids. Replaces the deprecated `hstack` / `vstack` tags, which still render as aliases.
 
@@ -1513,7 +1652,7 @@ Adjacent `fig-field` children in a horizontal stack share compact gutters.
 
 #### Field
 
-`<fig-field>` — [demo](https://rog.ie/figui3/#field)
+`<fig-field>` — [demo](https://rog.ie/propskit/#field)
 
 A form field wrapper with flexible layout. Automatically links `<label>` to the first `fig-*` child for accessibility.
 
@@ -1540,7 +1679,7 @@ Use `slot="leading"` for an accessory before the label, such as a disclosure or 
 
 #### Group
 
-`<fig-group>` — [demo](https://rog.ie/figui3/#group)
+`<fig-group>` — [demo](https://rog.ie/propskit/#group)
 
 A section group with an optional generated or authored header. In collapsible groups, the `h3` is the keyboard-accessible toggle and the chevron is clickable; controls placed beside the `h3` in an authored `fig-header` remain independent. Start chevrons use the compact 16px icon; end chevrons use the larger 24px icon.
 
@@ -1568,7 +1707,7 @@ A section group with an optional generated or authored header. In collapsible gr
 
 #### Dialog
 
-`<fig-dialog>` — [demo](https://rog.ie/figui3/#dialog)
+`<fig-dialog>` — [demo](https://rog.ie/propskit/#dialog)
 
 A modal/non-modal dialog. Uses `is="fig-dialog"` on a native `<dialog>` element.
 
@@ -1596,7 +1735,7 @@ Dialog close paths restore focus to the element that opened the dialog.
 
 #### Popup
 
-`<fig-popup>` — [demo](https://rog.ie/figui3/#popup)
+`<fig-popup>` — [demo](https://rog.ie/propskit/#popup)
 
 An anchored floating surface built on `<dialog>` with collision-aware positioning.
 
@@ -1630,7 +1769,7 @@ owning ancestor popup open, including recursively nested chains.
 
 #### Toast
 
-`<fig-toast>` — [demo](https://rog.ie/figui3/#toast)
+`<fig-toast>` — [demo](https://rog.ie/propskit/#toast)
 
 A toast notification. Uses `is="fig-toast"` on a native `<dialog>`.
 Defaults to `role="status"`, `aria-live="polite"`, and `aria-atomic="true"`. Use `live="assertive"` or `theme="danger"` for assertive announcements.
@@ -1655,7 +1794,7 @@ Defaults to `role="status"`, `aria-live="polite"`, and `aria-atomic="true"`. Use
 
 #### Tooltip
 
-`<fig-tooltip>` — [demo](https://rog.ie/figui3/#tooltip)
+`<fig-tooltip>` — [demo](https://rog.ie/propskit/#tooltip)
 
 Contextual tooltip on hover or click. Auto-repositions when the child element moves.
 
@@ -1680,7 +1819,7 @@ Escape dismisses an open tooltip and returns focus to its trigger.
 
 #### Separator
 
-`<fig-separator>` — [demo](https://rog.ie/figui3/#separator)
+`<fig-separator>` — [demo](https://rog.ie/propskit/#separator)
 
 A visual divider between content groups. The optional `label` attribute adds a group label and accessible name. `<fig-menu-separator>` is a backwards-compatible alias.
 
@@ -1694,7 +1833,7 @@ A visual divider between content groups. The optional `label` attribute adds a g
 
 #### Menu
 
-`<fig-menu>` / `<fig-menu-item>` / `<fig-separator>` / `<fig-menu-separator>` — [demo](https://rog.ie/figui3/#menu)
+`<fig-menu>` / `<fig-menu-item>` / `<fig-separator>` / `<fig-menu-separator>` — [demo](https://rog.ie/propskit/#menu)
 
 Triggered menu with native keyboard patterns. The trigger gets `aria-haspopup="menu"`, `aria-expanded`, and `aria-controls`; menu items use `role="menuitem"` and disabled items are skipped by keyboard navigation.
 
@@ -1752,7 +1891,7 @@ Popup list (no wrapping `fig-menu`):
 
 #### Header
 
-`<fig-header>` — [demo](https://rog.ie/figui3/#header)
+`<fig-header>` — [demo](https://rog.ie/propskit/#header)
 
 A section header component.
 
@@ -1764,10 +1903,12 @@ A section header component.
 
 #### Layer
 
-`<fig-layer>` — [demo](https://rog.ie/figui3/#layer)
+`<fig-layer>` — [demo](https://rog.ie/propskit/#layer)
 
 A collapsible layer list item with expand/collapse and visibility toggling. Supports nesting and exposes `role="treeitem"`, `aria-expanded`, `aria-hidden`, `aria-disabled`, and a keyboard-toggleable chevron button.
-Import `fig-layer.js` and `fig-layer.css` to register and style it.
+`fig.js` already registers `fig-layer`. Import `fig-layer.css` to style it.
+The standalone `fig-layer.js` entry remains available when layer registration
+is needed without the rest of Core.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1832,7 +1973,7 @@ Unified media component that supports image/video modes and shared sizing/upload
 | `src` | string | — | Media URL |
 | `alt` | string | `""` | Alt text forwarded to the generated `<img>` (image mode) |
 | `loaded` | boolean | `false` | Read-only reflected state after an image loads successfully |
-| `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `upload` | boolean \| `"icon"` | `false` | Show upload overlay; `"icon"` uses Add while empty and only Remove when populated |
 | `loading-indicator` | boolean | `true` | Set to `"false"` to disable the delayed loading spinner for generated images |
 | `label` | string | `"Upload"` | Upload button label |
 | `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
@@ -1848,9 +1989,11 @@ Unified media component that supports image/video modes and shared sizing/upload
 | `aria-label` | string | — | Accessible label forwarded to generated videos |
 
 Use meaningful `alt` text for informative images. Use `alt=""` only when the image is decorative or already described by nearby text.
+With `upload="icon"`, `label` supplies the Add button tooltip and accessible name.
 
 ```html
 <fig-media type="image" src="photo.jpg" alt="Selected image"></fig-media>
+<fig-media type="image" upload="icon" label="Add image" alt=""></fig-media>
 <fig-media type="image" src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover"></fig-media>
 <fig-media type="video" src="clip.mp4" aria-label="Product demo video" caption="Looping product demo" controls muted></fig-media>
 <fig-media type="image" src="photo.jpg" alt="Selected image">
@@ -1866,9 +2009,64 @@ For generated images, a spinner appears when loading exceeds 150ms and is remove
 
 ---
 
+#### Carousel
+
+`<fig-carousel>`
+
+Presents direct `fig-media`, `fig-image`, and `fig-video` children one at a
+time. It generates previous and next ghost pill buttons followed by a ghost
+`fig-button-play` at the bottom-right. Playback starts automatically by
+default.
+
+| Attribute | Type | Default | Description |
+|---|---|---|---|
+| `index` | number | `0` | Zero-based active item |
+| `playing` | boolean | `true` initially | Current playback state |
+| `autoplay` | boolean | `true` | Set to `"false"` to start paused |
+| `duration` | number | `5` | Default image/item duration in seconds |
+| `loop` | boolean | `false` | Wrap navigation and playback at the ends |
+| `navigation` | string | `"buttons"` | `"buttons"` or centered overlay `"dots"` |
+| `progress` | boolean | `true` | Set to `"false"` for static page navigation |
+
+Videos use their intrinsic duration and advance on `ended`. Set
+`carousel-duration` on any direct child to override that item with a fixed
+duration in seconds. Inactive videos are paused automatically.
+
+```html
+<fig-carousel duration="4" loop>
+  <fig-image src="cover.jpg" aspect-ratio="16/9" full></fig-image>
+  <fig-video src="demo.mp4" muted aspect-ratio="16/9" full></fig-video>
+  <fig-image
+    src="detail.jpg"
+    carousel-duration="8"
+    aspect-ratio="16/9"
+    full
+  ></fig-image>
+</fig-carousel>
+```
+
+Page navigation replaces the button row. Each page is a persistent native
+`progress.fig-carousel-page` inside `.fig-carousel-pages`; the active page
+stretches to a pill and displays item progress.
+
+```html
+<fig-carousel navigation="dots" duration="4" loop>
+  <fig-image src="cover.jpg" aspect-ratio="16/9" full></fig-image>
+  <fig-image src="detail.jpg" aspect-ratio="16/9" full></fig-image>
+</fig-carousel>
+```
+
+Methods: `previous()`, `next()`, `goTo(index)`, `first()`, `last()`,
+`restart()`, `play()`, `pause()`, and `toggle()`. Read-only navigation state is
+available through `items`, `currentItem`, `canGoPrevious`, and `canGoNext`.
+The bubbling `change` event includes `index`, `previousIndex`, and `item` in
+`event.detail`.
+
+---
+
 #### Image
 
-`<fig-image>` — [demo](https://rog.ie/figui3/#image)
+`<fig-image>` — [demo](https://rog.ie/propskit/#image)
 
 An image display component with optional upload, aspect ratio, and object-fit control. Renders a real `<img>` inside a `fig-preview`.
 
@@ -1877,7 +2075,7 @@ An image display component with optional upload, aspect ratio, and object-fit co
 | `src` | string | — | Image URL |
 | `alt` | string | `""` | Alt text forwarded to the generated `<img>` |
 | `loaded` | boolean | `false` | Read-only reflected state after the image loads successfully |
-| `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `upload` | boolean \| `"icon"` | `false` | Show upload overlay; `"icon"` uses Add while empty and only Remove when populated |
 | `loading-indicator` | boolean | `true` | Set to `"false"` to disable the delayed loading spinner |
 | `label` | string | `"Upload"` | Upload button label |
 | `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
@@ -1895,6 +2093,7 @@ The `loaded` attribute is removed when `src` changes or loading fails, so it can
 <fig-image src="photo.jpg" alt="Selected image"></fig-image>
 <fig-image src="photo.jpg" alt="Cover image" aspect-ratio="16 / 9" fit="cover" caption="Cover image"></fig-image>
 <fig-image upload label="Upload Image" alt=""></fig-image>
+<fig-image upload="icon" label="Add image" alt=""></fig-image>
 <fig-image src="photo.jpg" alt="Selected image">
   <figcaption>Selected image from the current document.</figcaption>
   <fig-input-file slot="overlay" variant="overlay" label="Change image"></fig-input-file>
@@ -1907,7 +2106,7 @@ Use `slot="overlay"` for custom overlay controls. Slotted overlays stay as direc
 
 #### Card
 
-`<fig-card>` — [demo](https://rog.ie/figui3/#card)
+`<fig-card>` — [demo](https://rog.ie/propskit/#card)
 
 A media card with a truncated label and attribute-only selection chrome. With `src`, it composes a generated `fig-image`. The `label` and `sublabel` attributes render inside a generated `fig-footer`.
 
@@ -1963,7 +2162,7 @@ Video display/upload component with the same preview styling model as `fig-image
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `src` | string | — | Video URL |
-| `upload` | boolean | `false` | Show upload overlay (`fig-input-file`) |
+| `upload` | boolean \| `"icon"` | `false` | Show upload overlay; `"icon"` uses Add while empty and only Remove when populated |
 | `label` | string | `"Upload"` | Upload button label |
 | `size` | string | — | `small` \| `medium` \| `large` \| `auto` (token-sized square) |
 | `aspect-ratio` | string | — | CSS aspect-ratio (e.g. `"16 / 9"`); fills container width |
@@ -1981,6 +2180,7 @@ Prefer `controls` for videos that play motion. Use native `<track>` text tracks 
 ```html
 <fig-video src="clip.mp4" aria-label="Product demo video" caption="Product demo" controls></fig-video>
 <fig-video src="clip.mp4" aria-label="Product demo video" aspect-ratio="16 / 9" controls></fig-video>
+<fig-video upload="icon" label="Add video" aria-label="Uploaded video preview" muted></fig-video>
 <fig-video upload label="Upload Video" aria-label="Uploaded video preview" controls muted>
   <figcaption>Uploaded video preview.</figcaption>
 </fig-video>
@@ -1990,7 +2190,7 @@ Prefer `controls` for videos that play motion. Use native `<track>` text tracks 
 
 #### Avatar
 
-`<fig-avatar>` — [demo](https://rog.ie/figui3/#avatar)
+`<fig-avatar>` — [demo](https://rog.ie/propskit/#avatar)
 
 Profile image or initials fallback.
 
@@ -2009,7 +2209,7 @@ Profile image or initials fallback.
 
 #### Icon
 
-`<fig-icon>` — [demo](https://rog.ie/figui3/#icon)
+`<fig-icon>` — [demo](https://rog.ie/propskit/#icon)
 
 Masked icon using `--icon-16-*` and `--icon-24-*` design tokens (SVG artboard size). Display size is controlled separately via the `size` attribute.
 
@@ -2027,11 +2227,24 @@ Masked icon using `--icon-16-*` and `--icon-24-*` design tokens (SVG artboard si
 
 Legacy: `<span class="fig-mask-icon" style="--icon: var(--icon-24-add)"></span>` still works.
 
+Icon tokens are included by `fig.css`. To consume only the generated token
+variables, import `@rogieking/figui3/icons.css` (or
+`@rogieking/figui3/src/icons.css` for the unminified source). Override any
+glyph by redefining its custom property after that import:
+
+```css
+@import "@rogieking/figui3/icons.css";
+
+:root {
+  --icon-24-add: url("./icons/custom-add.svg");
+}
+```
+
 ---
 
 #### Spinner
 
-`<fig-spinner>` — [demo](https://rog.ie/figui3/#spinner)
+`<fig-spinner>` — [demo](https://rog.ie/propskit/#spinner)
 
 A loading spinner.
 
@@ -2045,7 +2258,7 @@ Defaults to `role="status"` and `aria-label="Loading"`; override the label when 
 
 #### Shimmer
 
-`<fig-shimmer>` — [demo](https://rog.ie/figui3/#shimmer)
+`<fig-shimmer>` — [demo](https://rog.ie/propskit/#shimmer)
 
 A shimmer loading placeholder.
 
@@ -2113,35 +2326,96 @@ Focus indicators are controlled with shared tokens:
 
 ## Framework Integration
 
+Public FigUI events that bubble are also composed. Events such as `input`,
+`change`, `openchange`, and `reorder` therefore cross shadow DOM boundaries and
+can be handled by an ancestor component or application. Cancelability remains
+event-specific; check `event.cancelable` before relying on `preventDefault()`.
+
 ### React
 
+Event handling differs between React 18 and React 19:
+
+| Event | React 19 | React 18 |
+|---|---|---|
+| `click` | `onClick` | `onClick` |
+| `input` | `onInput`; read `event.nativeEvent.detail` | `onInput`; read `event.nativeEvent.detail` |
+| `change` | `onChange`; read `event.nativeEvent.detail` | Use `addEventListener` |
+| Named events such as `loaded` or `reorder` | Use `addEventListener` for portable code | Use `addEventListener` |
+
+React handlers receive a `SyntheticEvent`, so their custom-event payload is at
+`event.nativeEvent.detail`, not `event.detail`. Native listeners receive the
+`CustomEvent` directly and use `event.detail`.
+
+The native-listener pattern works in both React versions:
+
 ```jsx
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useLayoutEffect } from 'react';
+import '@rogieking/figui3/react';
 import '@rogieking/figui3/fig.css';
 import '@rogieking/figui3/fig.js';
 
-function ColorPicker({ value, onChange }) {
+function ColorPicker({ value, onChange, isAllowed }) {
   const ref = useRef(null);
+  const committed = useRef(value);
+  committed.current = value;
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const handleChange = (e) => onChange(e.detail);
+    const handleChange = (e) => {
+      const next = e.detail.value ?? e.detail;
+      if (isAllowed && !isAllowed(next)) {
+        el.setAttribute('value', committed.current);
+        return;
+      }
+      onChange(next);
+    };
     el.addEventListener('change', handleChange);
     return () => el.removeEventListener('change', handleChange);
-  }, [onChange]);
+  }, [isAllowed, onChange]);
 
-  useEffect(() => {
-    if (ref.current) ref.current.setAttribute('value', value);
-  }, [value]);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (el && el.getAttribute('value') !== value) {
+      el.setAttribute('value', value);
+    }
+  });
 
   return <fig-input-color ref={ref} text="true" alpha="true" />;
 }
 ```
 
-> **Note:** Avoid setting `value` directly in JSX during re-renders — use refs to prevent infinite loops from `attributeChangedCallback`.
+The React subpath supplies JSX tags, typed refs and imperative methods, and
+typed `nativeEvent.detail` payloads for every core, editor, and Lab component.
+DOM consumers receive the same element types through
+`HTMLElementTagNameMap`.
+
+In React 19, JSX handlers can be used for `input` and `change`:
+
+```jsx
+function onChange(event) {
+  const detail = event.nativeEvent.detail;
+  console.log('Final:', detail);
+}
+
+<fig-input-color onChange={onChange} text="true" alpha="true" />
+```
+
+In React 18, do not rely on JSX `onChange` for custom elements. Use the
+native-listener pattern above for `change` and named custom events.
+
+> **Controlled state:** FigUI3 controls are event-driven/uncontrolled from
+> React's perspective. React does not restore an unchanged JSX `value` or
+> `checked` prop after a rejected edit. Synchronize through a ref after every
+> committed render and immediately restore rejected edits in the event
+> handler. For checked controls, set `.checked` and call
+> `.toggleAttribute("checked", checked)`.
 >
-> **SSR (Next.js/Remix/Astro):** Import `fig.js` only on the client to keep server rendering safe.
+> **SSR (Next.js/Remix/Astro):** The JavaScript bundles can be imported by the
+> server without throwing, but browser-side registration must happen after
+> hydration. Use `@rogieking/figui3/register.js` from a post-hydration effect;
+> do not statically import `fig.js`, `fig-editor.js`, or `fig-lab.js` in a
+> hydrating client bundle.
 
 ### Vue
 
@@ -2184,10 +2458,34 @@ git clone https://github.com/rogie/figui3.git
 cd figui3
 bun install
 bun dev                # Component docs at http://localhost:3000
-npm run dev:playground # Playground at http://localhost:6600 (/figui3, /figui3/lab, /sandbox)
+npm run dev:playground # Playground at http://localhost:6600 (/propskit, /propskit/lab, /sandbox)
 npm run build          # Build minified dist/ (JS + CSS)
+npm run build:icons    # Regenerate icons.css from icons/ SVG sources
+npm run check:icons    # Verify the manifest, SVGs, and generated CSS agree
 npm run build:css      # Build minified CSS only
 ```
+
+To add an icon, place its mask-safe monochrome SVG in `icons/<size>/<name>.svg`
+and add the name, sizes, and optional `<fig-icon>` mapping to
+`icons/manifest.js`. Do not edit `icons.css` directly.
+
+Component implementations live under `src/`:
+
+- `src/core/` — MIT core components and styles
+- `src/editor/` — PolyForm editor components and styles
+- `src/lab/` — PolyForm experimental components and styles
+- `src/shared/` — MIT runtime helpers shared across bundles
+
+Each registered custom element owns a matching
+`components/fig-<name>.js` / `components/fig-<name>.css` pair. Shared runtime
+and selector primitives live outside `components/`; they must not register a
+tag themselves.
+
+The aggregate `fig.*`, `fig-editor.*`, and `fig-lab.*` barrels remain at the
+repository root. Standalone component source entrypoints live in each domain's
+`entrypoints/` directory; their npm and `dist/` import names remain unchanged.
+Add or edit component implementation in its `src/` domain; do not move
+consumer imports to internal paths.
 
 ### Build Output
 
@@ -2195,11 +2493,14 @@ npm run build:css      # Build minified CSS only
 
 | Source | Minified | Tool |
 |---|---|---|
-| `fig.js` (413 KB) | `dist/fig.js` (223 KB) | Bun `--minify` |
-| `fig-editor.js` (67 KB) | `dist/fig-editor.js` (37 KB) | Bun `--minify` |
-| `fig.css` | `dist/fig.css` (102 KB) | lightningcss `--minify --nesting --bundle` |
-| `components.css` (130 KB) | `dist/components.css` (100 KB) | lightningcss |
-| `fig-editor.css` (6 KB) | `dist/fig-editor.css` (4 KB) | lightningcss |
+| `fig.js` + `src/core/` | `dist/fig.js` (395 KB) | Bun `--minify` |
+| `fig-editor.js` + `src/editor/` | `dist/fig-editor.js` (154 KB) | Bun `--minify` |
+| `fig-lab.js` + `src/lab/` | `dist/fig-lab.js` (81 KB) | Bun `--minify` |
+| `fig.css` + imported source CSS | `dist/fig.css` (218 KB) | lightningcss `--minify --nesting --bundle` |
+| `components.css` + `src/core/` CSS | `dist/components.css` (216 KB) | lightningcss |
+| `icons.css` (generated) | `dist/icons.css` | `scripts/build-icons.mjs` + lightningcss |
+| `fig-editor.css` + `src/editor/` CSS | `dist/fig-editor.css` (24 KB) | lightningcss |
+| `fig-lab.css` + `src/lab/` CSS | `dist/fig-lab.css` (46 KB) | lightningcss |
 | `base.css` (2 KB) | `dist/base.css` (2 KB) | lightningcss |
 
 Default imports resolve to minified `dist/` files. Unminified source is available via `@rogieking/figui3/src/*`:
@@ -2213,17 +2514,25 @@ import "@rogieking/figui3/src/fig.css";  // unminified source
 
 The playground is the fastest way to explore and validate component markup:
 
-- **`/figui3`** — component examples and property panel patterns with attribute controls
-- **`/figui3/lab`** — experimental component examples
+- **`/propskit`** — component examples and property panel patterns with attribute controls
+- **`/propskit/lab`** — experimental component examples
 - **`/sandbox`** — styled React sample app
 
 ---
 
 ## Browser Support
 
-- Chrome/Edge 67+
-- Firefox 63+
-- Safari 10.1+
+- Chrome/Edge 123+
+- Firefox 120+
+- Safari 17.5+
+
+These floors match the modern CSS baseline used by the distributed styles,
+including CSS nesting, `:has()`, and `light-dark()`. Releases run the full
+suite in Playwright Chromium plus a core, editor, Lab, events, and customized
+built-ins smoke suite in current Playwright Firefox and WebKit. Older browser
+versions are not supported; FigUI3 does not transpile JavaScript or polyfill
+general platform features. Safari's customized built-in elements use the
+included WebKit polyfill.
 
 ---
 
@@ -2231,7 +2540,8 @@ The playground is the fastest way to explore and validate component markup:
 
 Split license. See [LICENSE](LICENSE).
 
-- **MIT:** `fig.js`, `fig-layer.js`, core CSS, `polyfills/`
-- **PolyForm Shield 1.0.0 (not OSI open source):** `fig-editor.js`, `fig-lab.js`, and their CSS
+- **MIT:** Core, including `fig.js`, `fig-layer.js`, `fig-color.js`, and core CSS
+- **PolyForm Shield 1.0.0 (not OSI open source):** Editor and Lab entry points, helper modules, CSS, and skill docs enumerated in `LICENSE`
+- **ISC:** Vendored `@ungap/custom-elements-builtin` WebKit polyfill
 
 &copy; Rogie King
