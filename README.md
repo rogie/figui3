@@ -269,10 +269,10 @@ without echoing through those interaction callbacks.
 |---|---|---|---|
 | `variant` | string | `"primary"` | `"primary"`, `"secondary"`, `"property"`, `"destructive"`, `"destructiveSecondary"`, `"destructiveGhost"`, `"destructiveLink"`, `"ghost"`, `"link"` |
 | `type` | string | `"button"` | `"button"`, `"toggle"`, `"submit"`, `"select"`, `"upload"` |
-| `size` | string | — | `"large"`, `"compact"` |
+| `size` | string | — | `"large"` |
 | `selected` | boolean | `false` | Selected state (toggle type) |
 | `disabled` | boolean | `false` | Disabled state |
-| `icon` | boolean | `false` | Icon-only styling |
+| `icon` | boolean \| `"compact"` | `false` | Icon-only styling; `"compact"` content-sizes the button with no inline padding |
 | `pill` | boolean | `false` | Fully rounded button shape |
 | `align` | string | `"center"` | Content alignment: `"start"`, `"center"`, or `"end"` |
 | `href` | string | — | URL for link buttons |
@@ -321,7 +321,7 @@ an internal timer and preserves elapsed time across pause/resume. Authoring
 | `duration` | number | `5` | Internal timer duration in seconds |
 | `progress` | number | — | Controlled progress from `0` to `1` |
 | `variant` | string | `"secondary"` | Forwarded to the embedded `fig-button` |
-| `size` | string | — | Forwarded button size: `"compact"` or `"large"` |
+| `size` | string | — | Forwarded button size: `"large"` |
 | `disabled` | boolean | `false` | Disables interaction and pauses the timer |
 
 ```html
@@ -1172,7 +1172,9 @@ A selectable horizontal or vertical toolbar that keeps authored items in the lig
 | `layout` | `horizontal` \| `vertical` | `horizontal` | Item and keyboard-navigation direction |
 | `overflow` | `buttons` \| `scrollbar` | `scrollbar` | Generated paging buttons or buttonless scrolling; scrollbars remain hidden |
 
-Wrap related items in `fig-toolbelt-group`; adjacent groups receive a direction-aware separator. Add `aria-label` to groups when the grouping has a meaningful name. Items support `value`, `selected`, and `disabled`. `input` and `change` bubble from the toolbelt with the selected value. ArrowLeft/ArrowRight navigate horizontal toolbelts; ArrowUp/ArrowDown navigate vertical toolbelts. Home and End move to the edges; Enter or Space selects the focused item.
+`fig-toolbelt-item` is optional. Use it to make custom content one selectable item, or place valued `fig-button` controls directly inside the toolbelt, groups, tooltips, or `fig-button-combo`; each unwrapped button is independently selectable and keyboard-navigable. A button inside `fig-toolbelt-item` belongs to that wrapper and is not counted separately. A button inside `fig-menu` is that menu's trigger and is not counted as a tool.
+
+Wrap related controls in `fig-toolbelt-group`; adjacent groups receive a direction-aware separator. Add `aria-label` to groups when the grouping has a meaningful name. Items and direct buttons support `value`, `selected`, and `disabled`. `input` and `change` bubble from the toolbelt with the selected value. ArrowLeft/ArrowRight navigate horizontal toolbelts; ArrowUp/ArrowDown navigate vertical toolbelts. Home and End move to the edges; Enter or Space selects the focused control.
 
 Place an item, group, or custom element in `slot="prepend"` or `slot="append"` to keep it fixed outside the scrolling and faded viewport. Slotted toolbelt items remain part of selection and keyboard navigation.
 
@@ -1182,10 +1184,13 @@ Use `--fig-toolbelt-gap`, `--fig-toolbelt-group-gap`, `--fig-toolbelt-group-sepa
 <fig-toolbelt layout="horizontal" overflow="buttons" value="move" aria-label="Design tools">
   <fig-toolbelt-item slot="prepend" value="move" selected>Move</fig-toolbelt-item>
   <fig-toolbelt-group aria-label="Transform tools">
-    <fig-toolbelt-item value="frame">Frame</fig-toolbelt-item>
+    <fig-button value="frame">Frame</fig-button>
   </fig-toolbelt-group>
   <fig-toolbelt-group aria-label="Shape tools">
-    <fig-toolbelt-item value="shape">Shape</fig-toolbelt-item>
+    <fig-button-combo>
+      <fig-button value="shape">Shape</fig-button>
+      <fig-button value="shape-menu" aria-label="Shape menu">⌄</fig-button>
+    </fig-button-combo>
   </fig-toolbelt-group>
   <fig-toolbelt-item slot="append" value="settings">Settings</fig-toolbelt-item>
 </fig-toolbelt>

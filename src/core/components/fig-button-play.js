@@ -28,7 +28,7 @@ const clampProgress = (value) => {
  * @attr {number} progress - Controlled progress from 0 to 1.
  * @attr {boolean} disabled - Disables interaction and pauses the timer.
  * @attr {string} variant - Variant forwarded to the inner fig-button.
- * @attr {string} size - Size forwarded to the inner fig-button.
+ * @attr {string} size - Large size forwarded to the inner fig-button.
  */
 class FigButtonPlay extends HTMLElement {
   #button = null;

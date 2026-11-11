@@ -687,6 +687,102 @@ test.describe("fig.js component contracts", () => {
     expect(styles.wrappedDropdownDivider).not.toBe("none");
   });
 
+  test("button combo brand divider is limited to primary buttons", async ({
+    page,
+  }) => {
+    const styles = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const variants = [
+        "primary",
+        "secondary",
+        "ghost",
+        "link",
+        "input",
+        "overlay",
+      ];
+      root.innerHTML = variants
+        .map((variant) => {
+          const attr =
+            variant === "primary" ? "" : ` variant="${variant}"`;
+          return `
+            <fig-button id="solo-${variant}"${attr}>Solo</fig-button>
+            <fig-button-combo id="combo-${variant}">
+              <fig-button${attr}>Save</fig-button>
+              <fig-button id="combo-${variant}-second"${attr}>Cancel</fig-button>
+            </fig-button-combo>
+            <fig-button-combo id="tooltip-${variant}">
+              <fig-tooltip text="Save"><fig-button${attr}>Save</fig-button></fig-tooltip>
+              <fig-tooltip text="Cancel"><fig-button id="tooltip-${variant}-second"${attr}>Cancel</fig-button></fig-tooltip>
+            </fig-button-combo>
+          `;
+        })
+        .join("");
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+      const styleOf = (id: string) => {
+        const style = getComputedStyle(document.querySelector(`#${id}`)!);
+        return {
+          boxShadow: style.boxShadow,
+          backgroundImage: style.backgroundImage,
+          backgroundColor: style.backgroundColor,
+          color: style.color,
+        };
+      };
+      const resolve = (token: string) => {
+        const probe = document.createElement("div");
+        probe.style.backgroundColor = `var(${token})`;
+        probe.style.color = `var(${token})`;
+        document.body.append(probe);
+        const probeStyle = getComputedStyle(probe);
+        const color = probeStyle.backgroundColor;
+        probe.remove();
+        return color;
+      };
+      return {
+        bg: resolve("--figma-color-bg"),
+        secondary: resolve("--figma-color-bg-secondary"),
+        variants: Object.fromEntries(
+          variants.map((variant) => [
+            variant,
+            {
+              solo: styleOf(`solo-${variant}`),
+              combo: styleOf(`combo-${variant}-second`),
+              tooltip: styleOf(`tooltip-${variant}-second`),
+            },
+          ]),
+        ),
+      };
+    });
+
+    expect(styles.variants.primary.solo.boxShadow).toBe("none");
+    expect(styles.variants.primary.combo.boxShadow).not.toBe("none");
+    expect(styles.variants.primary.tooltip.boxShadow).toBe(
+      styles.variants.primary.combo.boxShadow,
+    );
+    expect(styles.variants.secondary.combo.boxShadow).toBe("none");
+    expect(styles.variants.secondary.combo.backgroundImage).not.toBe("none");
+    expect(styles.variants.secondary.tooltip.boxShadow).toBe("none");
+    expect(styles.variants.secondary.tooltip.backgroundImage).not.toBe("none");
+    for (const variant of ["ghost", "link", "overlay"]) {
+      expect(styles.variants[variant].combo).toEqual(styles.variants[variant].solo);
+      expect(styles.variants[variant].tooltip).toEqual(
+        styles.variants[variant].solo,
+      );
+    }
+    expect(styles.variants.input.solo.backgroundColor).toBe(styles.secondary);
+    expect(styles.variants.input.combo.backgroundColor).toBe(styles.secondary);
+    expect(styles.variants.input.combo.color).toBe(
+      styles.variants.input.solo.color,
+    );
+    expect(styles.variants.input.combo.boxShadow).toContain(styles.bg);
+    expect(styles.variants.input.combo.boxShadow).not.toBe(
+      styles.variants.primary.combo.boxShadow,
+    );
+    expect(styles.variants.input.tooltip).toEqual(styles.variants.input.combo);
+  });
+
   test("fig.js alone does not register fig-select", async ({ page }) => {
     const registered = await page.evaluate(() => Boolean(customElements.get("fig-select")));
     expect(registered).toBe(false);
@@ -5410,6 +5506,51 @@ test('fig-dropdown and fig-select size="large" match large control height', asyn
     select: 32,
     triggerSize: "large",
   });
+});
+
+test('fig-button icon="compact" uses content width without inline padding', async ({
+  page,
+}) => {
+  collectPageErrors(page);
+  await bootFigFixture(page);
+  await page.evaluate(async () => {
+    await import("/fig.js");
+    await customElements.whenDefined("fig-button");
+    const root = document.querySelector("#fixture-root");
+    if (!root) throw new Error("Missing #fixture-root");
+    root.innerHTML = `
+      <fig-button id="icon-default" icon aria-label="Default icon"><span style="display:inline-block;width:8px;height:8px"></span></fig-button>
+      <fig-button id="icon-compact" icon="compact" aria-label="Compact icon"><span style="display:inline-block;width:8px;height:8px"></span></fig-button>
+      <fig-button id="icon-compact-large" icon="compact" size="large" aria-label="Large compact icon"><span style="display:inline-block;width:8px;height:8px"></span></fig-button>
+    `;
+  });
+
+  const dimensions = await page.evaluate(() => {
+    const read = (selector: string) => {
+      const element = document.querySelector(selector);
+      if (!element) throw new Error(`Missing ${selector}`);
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return {
+        height: rect.height,
+        width: rect.width,
+        paddingInline: [style.paddingLeft, style.paddingRight],
+      };
+    };
+    return {
+      defaultIcon: read("#icon-default"),
+      compactIcon: read("#icon-compact"),
+      compactLargeIcon: read("#icon-compact-large"),
+    };
+  });
+
+  expect(dimensions.compactIcon.height).toBe(dimensions.defaultIcon.height);
+  expect(dimensions.defaultIcon.width).toBe(24);
+  expect(dimensions.compactIcon.width).toBe(8);
+  expect(dimensions.compactIcon.paddingInline).toEqual(["0px", "0px"]);
+  expect(dimensions.compactLargeIcon.height).toBe(32);
+  expect(dimensions.compactLargeIcon.width).toBe(8);
+  expect(dimensions.compactLargeIcon.paddingInline).toEqual(["0px", "0px"]);
 });
 
 test("fig-select icon mode renders a square chevron-only trigger", async ({

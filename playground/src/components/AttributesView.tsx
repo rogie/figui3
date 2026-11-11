@@ -1,7 +1,20 @@
-import { Fragment, useMemo, useCallback, useEffect, useRef } from "react";
+import {
+  Children,
+  cloneElement,
+  createElement,
+  Fragment,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import {
   applyAttributeMutation,
   applyAttributeMutationToMatchingControls,
+  applyButtonComboVariantMutation,
   applyButtonIconMutation,
   applyButtonTypeMutation,
   applyButtonVariantMutation,
@@ -64,6 +77,70 @@ interface RuleEntry {
   name: string;
   value: string | undefined;
   rule: AttributeRule;
+}
+
+function propertyRatio(columns: unknown): string | undefined {
+  if (typeof columns !== "string") return undefined;
+  const match = columns.match(/^(\d+)\/(\d+)$/);
+  if (!match) return undefined;
+  const label = Number(match[1]);
+  const total = Number(match[2]);
+  return label > 0 && total > label ? `${label}:${total - label}` : undefined;
+}
+
+function convertAttributeField(child: ReactNode): ReactNode {
+  if (!isValidElement(child)) return child;
+  const props = child.props as {
+    children?: ReactNode;
+    columns?: unknown;
+    [key: string]: unknown;
+  };
+
+  if (child.type === Fragment) {
+    return cloneElement(
+      child,
+      undefined,
+      Children.map(props.children, convertAttributeField),
+    );
+  }
+  if (child.type !== "fig-field") return child;
+
+  const { children, columns, ...propertyProps } = props;
+  const parts = Children.toArray(children);
+  const labels = parts.filter(
+    (part) => isValidElement(part) && part.type === "label",
+  );
+  const inputs = parts.filter(
+    (part) => !(isValidElement(part) && part.type === "label"),
+  );
+  const input =
+    inputs.length === 1 && isValidElement(inputs[0]) ? (
+      cloneElement(inputs[0] as ReactElement<{ slot?: string }>, {
+        slot: "input",
+      })
+    ) : (
+      <span slot="input">{inputs}</span>
+    );
+  const ratio = propertyRatio(columns);
+
+  return createElement(
+    "fig-property",
+    {
+      ...propertyProps,
+      ...(ratio ? { ratio } : {}),
+      key: child.key,
+    },
+    ...labels,
+    input,
+  );
+}
+
+function AttributePropertyGroup({ children }: { children: ReactNode }) {
+  return (
+    <div className="propkit-attributes-group">
+      {Children.map(children, convertAttributeField)}
+    </div>
+  );
 }
 
 type FieldInputTag =
@@ -890,17 +967,6 @@ export default function AttributesView({
                   }
 
                   if (
-                    target.controlTag === "fig-button" &&
-                    scope === "control" &&
-                    name === "icon"
-                  ) {
-                    onMarkupChange(
-                      applyButtonIconMutation(markup, target.fieldIndex, next),
-                    );
-                    return;
-                  }
-
-                  if (
                     target.controlTag === "fig-switch" &&
                     scope === "control" &&
                     name === "indeterminate"
@@ -1147,6 +1213,10 @@ export default function AttributesView({
               name === "label" &&
               (target.controlTag === "fig-checkbox" ||
                 target.controlTag === "fig-radio");
+            const isButtonIconMode =
+              target.controlTag === "fig-button" &&
+              scope === "control" &&
+              name === "icon";
             const isColorPickerMode =
               target.controlTag === "fig-input-color" &&
               scope === "control" &&
@@ -1155,6 +1225,12 @@ export default function AttributesView({
               ? value !== undefined && value !== null
                 ? "label"
                 : "none"
+              : isButtonIconMode
+                ? value === undefined
+                  ? "none"
+                  : value === "compact"
+                    ? "compact"
+                    : "true"
               : target.controlTag === "fig-input-file" &&
                   name === "preview" &&
                   value === ""
@@ -1171,6 +1247,7 @@ export default function AttributesView({
                 : currentRaw;
             const useSegmentedControl =
               isCheckRadioLabel ||
+              isButtonIconMode ||
               isColorPickerMode ||
               (target.controlTag === "fig-icon" &&
                 scope === "control" &&
@@ -1206,6 +1283,11 @@ export default function AttributesView({
                 if (target.controlTag === "fig-icon" && name === "size") {
                   return option === "medium" ? "Default" : "Small";
                 }
+                if (isButtonIconMode) {
+                  return option === "true"
+                    ? "Default"
+                    : toSentenceCaseLabel(option);
+                }
                 if (
                   isDefaultLargeSizeControl(target.controlTag) &&
                   name === "size"
@@ -1237,6 +1319,16 @@ export default function AttributesView({
                     name,
                     option === "none" ? null : "Label",
                   );
+                  return;
+                }
+                if (isButtonIconMode) {
+                  const enabled = option !== "none";
+                  const updated = applyButtonIconMutation(
+                    markup,
+                    target.fieldIndex,
+                    option === "compact" ? "compact" : enabled,
+                  );
+                  onMarkupChange(updated);
                   return;
                 }
                 if (
@@ -1410,7 +1502,11 @@ export default function AttributesView({
                     return "Always";
                   }
                   if (isShimmerLikeControl && name === "direction") return "Default";
-                  if (target.controlTag === "fig-button" && name === "variant") {
+                  if (
+                    (target.controlTag === "fig-button" ||
+                      target.controlTag === "fig-button-combo") &&
+                    name === "variant"
+                  ) {
                     return "Default (primary)";
                   }
                   if (target.controlTag === "fig-button" && name === "size") {
@@ -1449,21 +1545,24 @@ export default function AttributesView({
                   return "None";
                 }
                 if (
-                  target.controlTag === "fig-button" &&
+                  (target.controlTag === "fig-button" ||
+                    target.controlTag === "fig-button-combo") &&
                   name === "variant" &&
                   option === "destructiveSecondary"
                 ) {
                   return "Destructive (secondary)";
                 }
                 if (
-                  target.controlTag === "fig-button" &&
+                  (target.controlTag === "fig-button" ||
+                    target.controlTag === "fig-button-combo") &&
                   name === "variant" &&
                   option === "destructiveGhost"
                 ) {
                   return "Destructive (ghost)";
                 }
                 if (
-                  target.controlTag === "fig-button" &&
+                  (target.controlTag === "fig-button" ||
+                    target.controlTag === "fig-button-combo") &&
                   name === "variant" &&
                   option === "destructiveLink"
                 ) {
@@ -1505,6 +1604,19 @@ export default function AttributesView({
                     ) {
                       onMarkupChange(
                         applyButtonVariantMutation(
+                          markup,
+                          target.fieldIndex,
+                          resolvedValue,
+                        ),
+                      );
+                      return;
+                    }
+                    if (
+                      target.controlTag === "fig-button-combo" &&
+                      name === "variant"
+                    ) {
+                      onMarkupChange(
+                        applyButtonComboVariantMutation(
                           markup,
                           target.fieldIndex,
                           resolvedValue,
@@ -1909,7 +2021,7 @@ export default function AttributesView({
                   <h3>Field</h3>
                 </fig-header>
                 <section className="propkit-attributes-content">
-                  <div className="propkit-attributes-group">
+                  <AttributePropertyGroup>
                     <fig-field
                       columns="2/5"
                       key={`field-label-${target.fieldIndex}`}
@@ -2029,7 +2141,7 @@ export default function AttributesView({
                         </fig-dropdown>
                       </fig-field>
                     )}
-                  </div>
+                  </AttributePropertyGroup>
                 </section>
               </div>
             )}
@@ -2045,7 +2157,7 @@ export default function AttributesView({
                   <h3>{getInputPanelTitle(target.controlTag)}</h3>
                 </fig-header>
                 <section className="propkit-attributes-content">
-                  <div className="propkit-attributes-group">
+                  <AttributePropertyGroup>
                     {target.controlTag === "fig-group" &&
                       (() => {
                         const currentControl = getGroupHeaderControl(
@@ -3066,7 +3178,7 @@ export default function AttributesView({
                             </fig-field>
                           );
                         })}
-                  </div>
+                  </AttributePropertyGroup>
                 </section>
               </div>
             )}

@@ -96,6 +96,31 @@ function unwrapChooserField(markup: string): string {
     .replace(/\n      /g, "\n    ");
 }
 
+function toolbeltSplitTool(
+  value: string,
+  icon: string,
+  label: string,
+  options: Array<[value: string, label: string]>,
+  selected = false,
+): string {
+  const selectedAttr = selected ? " selected" : "";
+  const items = options
+    .map(
+      ([optionValue, optionLabel]) =>
+        `        <fig-menu-item value="${optionValue}">${optionLabel}</fig-menu-item>`,
+    )
+    .join("\n");
+  return `    <fig-toolbelt-item value="${value}" aria-label="${label}"${selectedAttr}>
+      <fig-tooltip text="${label}">
+        <fig-button value="${value}" size="large" variant="ghost" icon aria-label="${label}" tabindex="-1"><fig-icon name="${icon}"></fig-icon></fig-button>
+      </fig-tooltip>
+      <fig-menu position="bottom left">
+        <fig-button icon="compact" aria-label="${label} menu" variant="ghost" size="large" fig-menu-trigger tabindex="-1"><fig-icon name="chevron" size="small"></fig-icon></fig-button>
+${items}
+      </fig-menu>
+    </fig-toolbelt-item>`;
+}
+
 function figui3ChooserGridMarkup(): string {
   const images = Array.from({ length: 10 }, (_, index) => {
     const label = `Image ${String.fromCharCode(65 + index)}`;
@@ -422,6 +447,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <fig-button-combo>
     <fig-button>Save</fig-button>
+    <fig-button>Apply</fig-button>
     <fig-button>Cancel</fig-button>
   </fig-button-combo>
 </div>`,
@@ -1920,6 +1946,54 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         <fig-button variant="ghost" icon aria-label="Settings" tabindex="-1"><fig-icon name="settings"></fig-icon></fig-button>
       </fig-tooltip>
     </fig-toolbelt-item>
+  </fig-toolbelt>
+</div>`,
+      },
+      {
+        id: "large",
+        name: "Large",
+        markup: `<div class="prop-panel">
+  <fig-toolbelt layout="horizontal" value="edit" aria-label="Design tools" data-playground-hide-field>
+${toolbeltSplitTool("add", "add", "Add", [
+  ["frame", "Frame"],
+  ["section", "Section"],
+  ["component", "Component"],
+])}
+${toolbeltSplitTool("edit", "edit", "Edit", [
+  ["vector", "Vector"],
+  ["pencil", "Pencil"],
+  ["bend", "Bend"],
+], true)}
+${toolbeltSplitTool("search", "search", "Search", [
+  ["find", "Find"],
+  ["replace", "Replace"],
+  ["find-in-file", "Find in file"],
+])}
+${toolbeltSplitTool("preview", "visible", "Preview", [
+  ["present", "Present"],
+  ["prototype", "Prototype"],
+  ["mirror", "Mirror"],
+])}
+${toolbeltSplitTool("duplicate", "copy", "Duplicate", [
+  ["duplicate", "Duplicate"],
+  ["copy", "Copy"],
+  ["paste", "Paste"],
+])}
+${toolbeltSplitTool("upload", "upload", "Upload", [
+  ["upload", "Upload"],
+  ["import", "Import"],
+  ["place", "Place image"],
+])}
+${toolbeltSplitTool("download", "download", "Download", [
+  ["png", "Export PNG"],
+  ["svg", "Export SVG"],
+  ["save", "Save"],
+])}
+${toolbeltSplitTool("settings", "settings", "Settings", [
+  ["preferences", "Preferences"],
+  ["shortcuts", "Shortcuts"],
+  ["plugins", "Plugins"],
+])}
   </fig-toolbelt>
 </div>`,
       },

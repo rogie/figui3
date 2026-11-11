@@ -3,6 +3,7 @@ import {
   applyAttributeMutation,
   applyButtonIconMutation,
   applyButtonTypeMutation,
+  applyButtonComboVariantMutation,
   applyButtonVariantMutation,
   applyChooserContentMutation,
   applyChooserMaxSizeMutation,
@@ -246,6 +247,17 @@ export function applyParamsToMarkup(
 
   for (const { idx, attr, val } of controlEntries) {
     if (stripsAttribute(defaultTargets[idx], attr)) continue;
+    if (
+      attr === "variant" &&
+      defaultTargets[idx]?.controlTag === "fig-button-combo"
+    ) {
+      markup = applyButtonComboVariantMutation(
+        markup,
+        idx,
+        val === REMOVE_SENTINEL ? "" : val,
+      );
+      continue;
+    }
     if (attr === "style") {
       markup = applyChooserMaxSizeMutation(markup, idx, val);
     } else {

@@ -28,8 +28,9 @@ Import pure color math from `@rogieking/figui3/fig-color.js`.
 
 - `variant`: `""` (primary), `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`
 - `type`: `button`, `toggle`, `submit`, `select`, `upload`
-- `size`: `""`, `large`, `compact`
-- `selected`, `disabled`, `icon` (presence)
+- `size`: `""`, `large`
+- `selected`, `disabled`
+- `icon`: boolean or `"compact"`; compact icon buttons use content width with no inline padding
 - `variant="property"` shares secondary styling and adds full-width, start-aligned layout
 - Property icons use authored `slot="prepend"` content; consumers manage the popup/dialog
 

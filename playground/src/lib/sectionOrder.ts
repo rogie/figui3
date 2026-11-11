@@ -162,6 +162,12 @@ function sortExamples(section: Section): Section {
           return aIsCustomAccepts ? 1 : -1;
         }
       }
+      if (section.id === "toolbelt") {
+        const rank = (id: string) =>
+          id === "default" ? 0 : id === "large" ? 1 : 2;
+        const rankDifference = rank(a.id) - rank(b.id);
+        if (rankDifference !== 0) return rankDifference;
+      }
       return compareExampleNames(a.name, b.name);
     }),
   };

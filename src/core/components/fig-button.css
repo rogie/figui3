@@ -182,9 +182,13 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
     color: var(--figma-color-text);
     box-shadow: 0 0 0 1px var(--figma-color-bordertranslucent);
 
+    &:hover {
+      background-color: var(--figma-color-bg-hover);
+    }
+
     &:active,
     &:has(:active) {
-      background-color: var(--figma-color-bg-secondary);
+      background-color: var(--figma-color-bg-tertiary);
       color: var(--figma-color-text);
     }
   }
@@ -193,11 +197,6 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
     width: var(--spacer-4);
     padding: 0;
     flex: 0 0 var(--spacer-4);
-
-    &[size="compact"] {
-      width: var(--spacer-3);
-      flex-basis: var(--spacer-3);
-    }
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -238,6 +237,13 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
     width: var(--spacer-5);
     flex-basis: var(--spacer-5);
     padding: 0;
+  }
+
+  &[icon]:not([icon="false"])[icon="compact"],
+  &[icon]:not([icon="false"])[icon="compact"] > button {
+    width: fit-content;
+    flex-basis: auto;
+    padding-inline: 0;
   }
 
   &[full]:not([full="false"]) {

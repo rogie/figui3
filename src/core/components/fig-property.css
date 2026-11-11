@@ -135,6 +135,33 @@ fig-property {
   }
 }
 
+fig-property[ratio="1:1"] {
+  --fig-property-attribute-label-ratio: 1fr;
+  --fig-property-attribute-input-ratio: 1fr;
+  --fig-property-attribute-label-track: calc(
+    (100% - var(--fig-property-left-padding) - var(--fig-property-right-padding)) /
+      2
+  );
+}
+
+fig-property[ratio="1:2"] {
+  --fig-property-attribute-label-ratio: 1fr;
+  --fig-property-attribute-input-ratio: 2fr;
+  --fig-property-attribute-label-track: calc(
+    (100% - var(--fig-property-left-padding) - var(--fig-property-right-padding)) /
+      3
+  );
+}
+
+fig-property[ratio="2:3"] {
+  --fig-property-attribute-label-ratio: 2fr;
+  --fig-property-attribute-input-ratio: 3fr;
+  --fig-property-attribute-label-track: calc(
+    (100% - var(--fig-property-left-padding) - var(--fig-property-right-padding)) /
+      2.5
+  );
+}
+
 fig-property[activation="row"] {
   --fig-property-label-track: minmax(0, 1fr);
   --fig-property-input-ratio: 1fr;

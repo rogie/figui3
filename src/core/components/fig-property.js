@@ -19,6 +19,12 @@ const FIG_PROPERTY_DEFAULT_RATIO = Object.freeze({
   input: 2,
   value: "1:2",
 });
+const FIG_PROPERTY_KNOWN_RATIOS = new Set(["1:1", "1:2", "2:3"]);
+const FIG_PROPERTY_RATIO_PROPERTIES = [
+  "--fig-property-attribute-label-ratio",
+  "--fig-property-attribute-input-ratio",
+  "--fig-property-attribute-label-track",
+];
 
 function parseFigPropertyRatio(value) {
   const parts = String(value ?? "")
@@ -213,6 +219,16 @@ class FigProperty extends HTMLElement {
   }
 
   #syncRatio() {
+    const authoredRatio = this.getAttribute("ratio");
+    if (
+      authoredRatio === null ||
+      FIG_PROPERTY_KNOWN_RATIOS.has(authoredRatio)
+    ) {
+      FIG_PROPERTY_RATIO_PROPERTIES.forEach((property) =>
+        this.style.removeProperty(property),
+      );
+      return;
+    }
     const ratio = parseFigPropertyRatio(this.getAttribute("ratio"));
     this.style.setProperty(
       "--fig-property-attribute-label-ratio",

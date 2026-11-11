@@ -30,7 +30,7 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 </fig-button>
 ```
 
-- Attrs: `variant` (`""` primary, `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`, `compact`), `align`, `selected`, `disabled`, `icon`, `close-dialog`
+- Attrs: `variant` (`""` primary, `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`), `align`, `selected`, `disabled`, `icon` (boolean or `"compact"`), `close-dialog`
 - `variant="property"` shares secondary styling and adds full-width, start-aligned property-trigger layout; use `slot="prepend"` for its leading icon
 - Property triggers own no popup behavior; consumers manage the popup/dialog and reflect `selected`, `aria-haspopup`, `aria-expanded`, and `aria-controls`
 - Events: `click`; toggle also reflects `selected`

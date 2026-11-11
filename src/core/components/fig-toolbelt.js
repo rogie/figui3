@@ -135,7 +135,7 @@ class FigToolbelt extends HTMLElement {
   }
 
   get value() {
-    return this.selectedItem?.value || "";
+    return this.#itemValue(this.selectedItem);
   }
 
   set value(value) {
@@ -147,7 +147,10 @@ class FigToolbelt extends HTMLElement {
   }
 
   get selectedItem() {
-    return this.#items().find((item) => figBooleanAttribute(item, "selected")) || null;
+    return (
+      this.#items().find((item) => figBooleanAttribute(item, "selected")) ||
+      null
+    );
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -180,8 +183,17 @@ class FigToolbelt extends HTMLElement {
       viewport: [],
       append: [],
     };
-    for (const item of this.querySelectorAll("fig-toolbelt-item")) {
+    const candidates = this.querySelectorAll(
+      "fig-toolbelt-item, fig-button:not([data-fig-toolbelt-nav])",
+    );
+    for (const item of candidates) {
       if (item.closest("fig-toolbelt") !== this) continue;
+      if (
+        item.localName === "fig-button" &&
+        (item.closest("fig-toolbelt-item") || item.closest("fig-menu"))
+      ) {
+        continue;
+      }
       const region = this.#itemRegion(item);
       if (region) itemsByRegion[region].push(item);
     }
@@ -205,6 +217,35 @@ class FigToolbelt extends HTMLElement {
 
   #availableItems() {
     return this.#items().filter((item) => !figBooleanAttribute(item, "disabled"));
+  }
+
+  #itemValue(item) {
+    if (!item) return "";
+    if (item.localName === "fig-toolbelt-item") return item.value;
+    return (
+      item.getAttribute("value") ||
+      item.getAttribute("aria-label") ||
+      item.textContent?.trim() ||
+      ""
+    );
+  }
+
+  #eventItem(event) {
+    const target = event.target;
+    if (!(target instanceof Element)) return null;
+    const wrappedItem = target.closest("fig-toolbelt-item");
+    if (wrappedItem?.closest("fig-toolbelt") === this) return wrappedItem;
+    const button = target.closest(
+      "fig-button:not([data-fig-toolbelt-nav])",
+    );
+    if (
+      button?.closest("fig-toolbelt") === this &&
+      !button.closest("fig-toolbelt-item") &&
+      !button.closest("fig-menu")
+    ) {
+      return button;
+    }
+    return null;
   }
 
   #applyDisabled(disabled) {
@@ -238,14 +279,14 @@ class FigToolbelt extends HTMLElement {
     for (const item of selectedItems.slice(1)) {
       item.removeAttribute("selected");
     }
-    if (selected) this.#reflectValue(selected.value);
+    if (selected) this.#reflectValue(this.#itemValue(selected));
   }
 
   #selectByValue(value) {
     const target =
       value === null
         ? null
-        : this.#items().find((item) => item.value === value) || null;
+        : this.#items().find((item) => this.#itemValue(item) === value) || null;
     for (const item of this.#items()) {
       item.toggleAttribute("selected", item === target);
     }
@@ -260,11 +301,12 @@ class FigToolbelt extends HTMLElement {
     for (const item of this.#items()) {
       item.toggleAttribute("selected", item === target);
     }
-    this.#reflectValue(target.value);
+    const nextValue = this.#itemValue(target);
+    this.#reflectValue(nextValue);
     this.#syncTabIndexes(target);
     if (focus) target.focus();
     this.#scrollSelectedItemIntoView(target);
-    if (emit && (previousItem !== target || previousValue !== target.value)) {
+    if (emit && (previousItem !== target || previousValue !== nextValue)) {
       this.#emitSelectionEvents();
     }
     return true;
@@ -292,17 +334,18 @@ class FigToolbelt extends HTMLElement {
 
   #handleClick(event) {
     if (figBooleanAttribute(this, "disabled")) return;
-    const target = event.target.closest?.("fig-toolbelt-item");
-    if (!target || target.closest("fig-toolbelt") !== this) return;
+    const target = this.#eventItem(event);
+    if (!target) return;
     this.#selectItem(target, { emit: true });
   }
 
   #handleKeyDown(event) {
     if (figBooleanAttribute(this, "disabled")) return;
-    const target = event.target.closest?.("fig-toolbelt-item");
-    if (!target || target.closest("fig-toolbelt") !== this) return;
+    const target = this.#eventItem(event);
+    if (!target) return;
 
     if (event.key === "Enter" || event.key === " ") {
+      if (target.localName === "fig-button") return;
       event.preventDefault();
       this.#selectItem(target, { emit: true });
       return;
@@ -379,7 +422,9 @@ class FigToolbelt extends HTMLElement {
         (record) =>
           record.type === "childList" ||
           (record.target instanceof Element &&
-            record.target.matches("fig-toolbelt-item") &&
+            record.target.matches(
+              "fig-toolbelt-item, fig-button:not([data-fig-toolbelt-nav])",
+            ) &&
             record.target.closest("fig-toolbelt") === this),
       );
       if (!authoredChange) return;

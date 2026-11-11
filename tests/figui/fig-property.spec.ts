@@ -84,6 +84,9 @@ test.describe("fig-property", () => {
         <fig-property id="equal-ratio" label="Equal" ratio="1:1" style="width: 300px">
           <fig-input-text slot="input" value="Equal" full></fig-input-text>
         </fig-property>
+        <fig-property id="common-ratio" label="Common" ratio="2:3" style="width: 300px">
+          <fig-input-text slot="input" value="Common" full></fig-input-text>
+        </fig-property>
         <fig-property id="decimal-ratio" label="Decimal" ratio="2.5:3" style="width: 300px">
           <fig-input-text slot="input" value="Decimal" full></fig-input-text>
         </fig-property>
@@ -132,15 +135,26 @@ test.describe("fig-property", () => {
           property: element.ratio,
           trackRatio: tracks[1] / tracks[2],
           labelTrack: tracks[1],
+          inlineRatioProperties: [
+            "--fig-property-attribute-label-ratio",
+            "--fig-property-attribute-input-ratio",
+            "--fig-property-attribute-label-track",
+          ].map((property) => element.style.getPropertyValue(property)),
         };
       });
 
-    expect((await readRatio("#default-ratio")).trackRatio).toBeCloseTo(0.5, 2);
-    expect((await readRatio("#equal-ratio")).trackRatio).toBeCloseTo(1, 2);
-    expect((await readRatio("#decimal-ratio")).trackRatio).toBeCloseTo(
-      2.5 / 3,
-      2,
-    );
+    const defaultRatio = await readRatio("#default-ratio");
+    expect(defaultRatio.trackRatio).toBeCloseTo(0.5, 2);
+    expect(defaultRatio.inlineRatioProperties).toEqual(["", "", ""]);
+    const equalRatio = await readRatio("#equal-ratio");
+    expect(equalRatio.trackRatio).toBeCloseTo(1, 2);
+    expect(equalRatio.inlineRatioProperties).toEqual(["", "", ""]);
+    const commonRatio = await readRatio("#common-ratio");
+    expect(commonRatio.trackRatio).toBeCloseTo(2 / 3, 2);
+    expect(commonRatio.inlineRatioProperties).toEqual(["", "", ""]);
+    const decimalRatio = await readRatio("#decimal-ratio");
+    expect(decimalRatio.trackRatio).toBeCloseTo(2.5 / 3, 2);
+    expect(decimalRatio.inlineRatioProperties.every(Boolean)).toBe(true);
     const invalid = await readRatio("#invalid-ratio");
     expect(invalid.property).toBe("1:2");
     expect(invalid.trackRatio).toBeCloseTo(0.5, 2);

@@ -117,6 +117,22 @@ const splitInputAttributeRules: AttributeRuleSet = {
   disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
 };
 
+const buttonVariantOptions = [
+  "",
+  "secondary",
+  "property",
+  "destructive",
+  "destructiveSecondary",
+  "destructiveGhost",
+  "destructiveLink",
+  "ghost",
+  "link",
+  "input",
+  "overlay",
+];
+
+const buttonComboVariantOptions = ["", "secondary", "input", "overlay"];
+
 const inputSliderAttributeRules: AttributeRuleSet = {
   name: { label: "Name", type: "string" },
   value: { label: "Value", type: "string" },
@@ -176,19 +192,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     variant: {
       label: "Variant",
       type: "enum",
-      options: [
-        "",
-        "secondary",
-        "property",
-        "destructive",
-        "destructiveSecondary",
-        "destructiveGhost",
-        "destructiveLink",
-        "ghost",
-        "link",
-        "input",
-        "overlay",
-      ],
+      options: buttonVariantOptions,
     },
     type: {
       label: "Type",
@@ -198,17 +202,28 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     size: {
       label: "Size",
       type: "enum",
-      options: ["", "large", "compact"],
+      options: ["", "large"],
     },
     align: {
       label: "Align",
       type: "enum",
       options: ["", "start", "center", "end"],
     },
+    icon: {
+      label: "Icon",
+      type: "enum",
+      options: ["none", "true", "compact"],
+    },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
-    icon: { label: "Icon", type: "boolean", boolMode: "presence" },
     pill: { label: "Pill", type: "boolean", boolMode: "presence" },
+  },
+  "fig-button-combo": {
+    variant: {
+      label: "Variant",
+      type: "enum",
+      options: buttonComboVariantOptions,
+    },
   },
   "fig-dropdown": {
     value: { label: "Value", type: "string" },
@@ -1225,7 +1240,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     size: {
       label: "Size",
       type: "enum",
-      options: ["", "compact", "large"],
+      options: ["", "large"],
     },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },

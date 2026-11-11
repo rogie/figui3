@@ -54,7 +54,7 @@ export type FigReactProps<TElement extends HTMLElement> = Omit<
   open?: FigBooleanAttribute;
   full?: FigBooleanAttribute;
   compact?: FigBooleanAttribute;
-  icon?: FigBooleanAttribute;
+  icon?: FigBooleanAttribute | "compact";
   pill?: FigBooleanAttribute;
   selected?: FigBooleanAttribute;
   playing?: FigBooleanAttribute;

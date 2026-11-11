@@ -28,8 +28,9 @@ Import pure color math from `@rogieking/figui3/fig-color.js`.
 
 - `variant`: `""` (primary), `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`
 - `type`: `button`, `toggle`, `submit`, `select`, `upload`
-- `size`: `""`, `large`, `compact`
-- `selected`, `disabled`, `icon`, `pill` (presence; `"false"` disables)
+- `size`: `""`, `large`
+- `selected`, `disabled`, `pill` (presence; `"false"` disables)
+- `icon`: boolean or `"compact"`; compact icon buttons use content width with no inline padding
 - Label content: author `slot="label"` for reliable single-line ellipsis; a direct `<label>` child is styled equivalently without its DOM being mutated
 - `variant="property"` shares secondary styling and adds full-width, start-aligned layout
 - Property icons use authored `slot="prepend"` content; consumers manage the popup/dialog
@@ -96,8 +97,10 @@ Import pure color math from `@rogieking/figui3/fig-color.js`.
 ## `fig-toolbelt`
 
 - Attrs: `value`, `disabled`, `layout="horizontal|vertical"`, `overflow="buttons|scrollbar"`; role `toolbar`
-- Direct `fig-toolbelt-item` or `fig-toolbelt-group` children; groups wrap related items and use role `group`
-- Items: `value`, `selected`, `disabled`; role `button`, `aria-pressed`
+- `fig-toolbelt-item` is optional: valued `fig-button` descendants are independently selectable and navigable, including buttons in groups, tooltips, and `fig-button-combo`
+- Use `fig-toolbelt-item` to make custom content one selectable item; nested buttons belong to the wrapper and are not counted separately
+- A button inside `fig-menu` is that menu's trigger and is not counted as a tool
+- Items and direct buttons: `value`, `selected`, `disabled`; groups wrap related controls and use role `group`
 - ArrowLeft/ArrowRight navigate horizontal layouts; ArrowUp/ArrowDown navigate vertical layouts; Home/End move roving focus; Enter/Space select
 - Events: bubbling `input` and `change` with the selected value
 - `overflow="scrollbar"` is the default and uses buttonless scrolling with the scrollbar hidden; `overflow="buttons"` adds direction-aware paging controls

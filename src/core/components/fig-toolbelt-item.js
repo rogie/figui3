@@ -16,6 +16,8 @@ import {
  * @attr {boolean} disabled - Whether the item is unavailable
  */
 class FigToolbeltItem extends HTMLElement {
+  #childObserver = new MutationObserver(() => this.#syncPrimaryButton());
+
   static get observedAttributes() {
     return ["selected", "disabled"];
   }
@@ -23,6 +25,8 @@ class FigToolbeltItem extends HTMLElement {
   connectedCallback() {
     if (!this.hasAttribute("role")) this.setAttribute("role", "button");
     if (!this.hasAttribute("tabindex")) this.setAttribute("tabindex", "-1");
+    this.#childObserver.observe(this, { childList: true, subtree: true });
+    this.#syncPrimaryButton();
     this.#syncA11yState();
   }
 
@@ -65,6 +69,23 @@ class FigToolbeltItem extends HTMLElement {
     } else {
       this.removeAttribute("aria-disabled");
     }
+  }
+
+  #syncPrimaryButton() {
+    const primaryButton = this.querySelector("fig-button");
+    this.querySelectorAll("fig-button[data-fig-toolbelt-item-primary]").forEach(
+      (button) => {
+        button.toggleAttribute(
+          "data-fig-toolbelt-item-primary",
+          button === primaryButton,
+        );
+      },
+    );
+    primaryButton?.setAttribute("data-fig-toolbelt-item-primary", "");
+  }
+
+  disconnectedCallback() {
+    this.#childObserver.disconnect();
   }
 }
 figDefineElement("fig-toolbelt-item", FigToolbeltItem);

@@ -117,13 +117,18 @@ function ensureButtonText(button: Element, text: string) {
   if (!hasText) button.prepend(document.createTextNode(text));
 }
 
-function createButtonIcon(doc: Document): HTMLElement {
+function createButtonIcon(doc: Document, compact = false): HTMLElement {
   const icon = doc.createElement("fig-icon");
-  icon.setAttribute("name", "visible");
+  icon.setAttribute("name", compact ? "chevron" : "visible");
+  if (compact) icon.setAttribute("size", "small");
   return icon;
 }
 
-function makeButtonIconOnly(button: Element, doc: Document) {
+function makeButtonIconOnly(
+  button: Element,
+  doc: Document,
+  compact = false,
+) {
   const label = Array.from(button.childNodes)
     .filter((node) => {
       if (node.nodeType === Node.TEXT_NODE) return true;
@@ -147,7 +152,7 @@ function makeButtonIconOnly(button: Element, doc: Document) {
     const tag = (node as Element).tagName.toLowerCase();
     if (tag !== "fig-dropdown" && tag !== "input") node.remove();
   });
-  button.prepend(createButtonIcon(doc));
+  button.prepend(createButtonIcon(doc, compact));
 }
 
 function createDefaultFieldControl(
@@ -400,6 +405,10 @@ function attrsToRecord(element: Element): Record<string, string> {
   Array.from(element.attributes).forEach((attr) => {
     out[attr.name] = attr.value;
   });
+  if (getControlTag(element) === "fig-button-combo") {
+    const firstButton = element.querySelector("fig-button");
+    out.variant = firstButton?.getAttribute("variant") ?? "";
+  }
   return out;
 }
 
@@ -762,7 +771,11 @@ export function applyButtonTypeMutation(
     }
   }
   if (element.hasAttribute("icon")) {
-    makeButtonIconOnly(element, root.ownerDocument);
+    makeButtonIconOnly(
+      element,
+      root.ownerDocument,
+      element.getAttribute("icon") === "compact",
+    );
   }
 
   return getExampleSourceMarkup(serializeSourceMarkup(root));
@@ -792,18 +805,37 @@ export function applyButtonVariantMutation(
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 
+export function applyButtonComboVariantMutation(
+  markup: string,
+  fieldIndex: number,
+  nextVariant: string,
+): string {
+  const root = parseSourceRoot(markup);
+  const element = getTargetElement(root, { fieldIndex, target: "control" });
+  if (!element || getControlTag(element) !== "fig-button-combo") return markup;
+
+  element.querySelectorAll("fig-button").forEach((button) => {
+    if (nextVariant) button.setAttribute("variant", nextVariant);
+    else button.removeAttribute("variant");
+  });
+
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
 export function applyButtonIconMutation(
   markup: string,
   fieldIndex: number,
-  enabled: boolean,
+  mode: boolean | "compact",
 ): string {
   const root = parseSourceRoot(markup);
   const element = getTargetElement(root, { fieldIndex, target: "control" });
   if (!element || getControlTag(element) !== "fig-button") return markup;
 
+  const enabled = mode !== false;
+  const compact = mode === "compact";
   if (enabled) {
-    element.setAttribute("icon", "");
-    makeButtonIconOnly(element, root.ownerDocument);
+    element.setAttribute("icon", compact ? "compact" : "");
+    makeButtonIconOnly(element, root.ownerDocument, compact);
   } else {
     element.removeAttribute("icon");
     Array.from(element.children).forEach((child) => {

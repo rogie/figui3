@@ -58,7 +58,6 @@ test("playground control tags have attribute rules or an explicit exclusion", ()
     "fig-ai-context",
     "fig-ai-prompt",
     "fig-attachments",
-    "fig-button-combo",
     "fig-content",
     "fig-footer",
     "fig-header",
@@ -82,6 +81,14 @@ test("playground control tags have attribute rules or an explicit exclusion", ()
     )
     .sort();
   expect(missing).toEqual([]);
+});
+
+test("button combos expose a reduced nested-button variant control", () => {
+  expect(controlAttributeRules["fig-button-combo"]?.variant).toEqual({
+    label: "Variant",
+    type: "enum",
+    options: ["", "secondary", "input", "overlay"],
+  });
 });
 
 async function getAvailablePort(): Promise<number> {
@@ -263,6 +270,38 @@ test.describe("PropsKit playground migration", () => {
         `${section.id} has duplicate example ids`,
       ).toBe(exampleIds.length);
     }
+  });
+
+  test("places the large toolbelt after default with wrapped split buttons", () => {
+    const toolbelt = sortSectionsWithinGroups(figui3Sections).find(
+      (section) => section.id === "toolbelt",
+    );
+    expect(toolbelt?.examples.slice(0, 2).map((example) => example.id)).toEqual([
+      "default",
+      "large",
+    ]);
+    const largeMarkup = toolbelt?.examples[1]?.markup ?? "";
+    expect(largeMarkup).toContain("<fig-toolbelt");
+    expect(
+      [...largeMarkup.matchAll(/<fig-button-combo\b/g)],
+    ).toHaveLength(0);
+    expect(
+      [...largeMarkup.matchAll(/<fig-toolbelt-item\b/g)],
+    ).toHaveLength(8);
+    expect(
+      [...largeMarkup.matchAll(/<fig-tooltip\b/g)],
+    ).toHaveLength(8);
+    expect(
+      [...largeMarkup.matchAll(/<fig-menu(?:\s|>)/g)],
+    ).toHaveLength(8);
+    const values = [
+      ...largeMarkup.matchAll(/<fig-button\b[^>]*\bvalue="([^"]+)"/g),
+    ].map((match) => match[1]);
+    expect(values).toHaveLength(8);
+    expect(new Set(values).size).toBe(values.length);
+    expect(
+      [...largeMarkup.matchAll(/<fig-button\b[^>]*\bsize="large"/g)],
+    ).toHaveLength(16);
   });
 
   test("orders common inputs before specialized controls", () => {
@@ -1029,7 +1068,7 @@ test.describe.serial("ExampleView DOM synchronization", () => {
     if (playgroundServer.exitCode === null) playgroundServer.kill("SIGKILL");
   });
 
-  test("button icon control keeps the preview icon-only across type changes", async ({
+  test("compact button icon control uses a small chevron across type changes", async ({
     page,
   }) => {
     await page.goto(`${playgroundUrl}/propskit`);
@@ -1044,25 +1083,69 @@ test.describe.serial("ExampleView DOM synchronization", () => {
           <fig-button><span>Apply Changes</span></fig-button>
         </fig-field>
       </div>`;
-      markup = applyButtonIconMutation(markup, 0, true);
+      markup = applyButtonIconMutation(markup, 0, "compact");
       markup = applyButtonTypeMutation(markup, 0, "toggle");
 
       const template = document.createElement("template");
       template.innerHTML = markup;
       const button = template.content.querySelector("fig-button")!;
       return {
+        iconMode: button.getAttribute("icon"),
         label: button.getAttribute("aria-label"),
         text: button.textContent?.trim() ?? "",
         children: Array.from(button.children).map((child) =>
           child.tagName.toLowerCase(),
         ),
+        iconName: button.querySelector("fig-icon")?.getAttribute("name"),
+        iconSize: button.querySelector("fig-icon")?.getAttribute("size"),
       };
     });
 
     expect(state).toEqual({
+      iconMode: "compact",
       label: "Apply Changes",
       text: "",
       children: ["fig-icon"],
+      iconName: "chevron",
+      iconSize: "small",
+    });
+  });
+
+  test("button combo variant mutation updates every nested button", async ({
+    page,
+  }) => {
+    await page.goto(`${playgroundUrl}/propskit`);
+    const state = await page.evaluate(async () => {
+      const {
+        applyButtonComboVariantMutation,
+        parseAttributeTargets,
+      } = await import("/src/lib/attributeParser.ts");
+      const markup = `<div class="prop-panel">
+        <fig-button-combo>
+          <fig-button>Save</fig-button>
+          <fig-button>Cancel</fig-button>
+        </fig-button-combo>
+      </div>`;
+      const updated = applyButtonComboVariantMutation(
+        markup,
+        0,
+        "secondary",
+      );
+      const template = document.createElement("template");
+      template.innerHTML = updated;
+      return {
+        parsedVariant:
+          parseAttributeTargets(updated)[0]?.controlAttributes.variant,
+        variants: Array.from(
+          template.content.querySelectorAll("fig-button"),
+          (button) => button.getAttribute("variant"),
+        ),
+      };
+    });
+
+    expect(state).toEqual({
+      parsedVariant: "secondary",
+      variants: ["secondary", "secondary"],
     });
   });
 

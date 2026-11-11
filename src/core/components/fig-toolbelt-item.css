@@ -8,13 +8,13 @@ fig-toolbelt-item {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  height: var(--fig-toolbelt-item-height, var(--control-height));
   padding-inline: 0;
   border-radius: var(--radius-medium);
   color: var(--figma-color-text-secondary);
   line-height: var(--line-height);
   cursor: default;
   user-select: none;
+  gap: 1px;
 
   &:has(> fig-tooltip > fig-button[icon]:not([icon="false"])) {
     padding-inline: 0;
@@ -24,22 +24,22 @@ fig-toolbelt-item {
     color: var(--figma-color-text);
     background-color: var(--figma-color-bg-secondary);
 
-    fig-button,
-    fig-button:hover {
+    &:has(fig-button) {
+      background-color: transparent;
+    }
+
+    fig-button[data-fig-toolbelt-item-primary],
+    fig-button[data-fig-toolbelt-item-primary]:hover {
       color: var(--figma-color-icon-onbrand);
       background-color: var(--figma-color-bg-brand);
     }
-    fig-button[variant="secondary"],
-    fig-button[variant="ghost"],
-    fig-button[variant="secondary"]:hover,
-    fig-button[variant="ghost"]:hover {
+    fig-button[data-fig-toolbelt-item-primary][variant="secondary"],
+    fig-button[data-fig-toolbelt-item-primary][variant="ghost"],
+    fig-button[data-fig-toolbelt-item-primary][variant="secondary"]:hover,
+    fig-button[data-fig-toolbelt-item-primary][variant="ghost"]:hover {
       color: var(--figma-color-icon-selected);
       background-color: var(--figma-color-bg-selected);
     }
-  }
-
-  &:hover {
-    background-color: var(--figma-color-bg-secondary);
   }
 
   &:focus-visible,

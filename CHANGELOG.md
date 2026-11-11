@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.7]
+
+### Added
+
+- Added direct `fig-button` selection and navigation inside toolbelts, including grouped, tooltip-wrapped, and button-combo controls.
+- Added preset and custom column ratios for `fig-property`.
+- Added compact icon-button mode with content-sized controls.
+
+### Changed
+
+- Refined button-combo variants, separators, examples, and playground controls.
+- Updated overlay button hover and pressed states.
+- Increased toolbelt spacing and refined selected compound-item styling.
+
+### Fixed
+
+- Preserved select, dropdown, tooltip, and menu chrome inside button combos.
+
 ## [11.11.6]
 
 ### Added

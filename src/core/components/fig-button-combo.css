@@ -15,19 +15,22 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
 
   & > * {
     &:first-child:not(:last-child),
-    &:first-child:not(:last-child) > * {
+    &:first-child:not(:last-child)
+      > :not(fig-menu-item):not(fig-separator):not(fig-menu-separator) {
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
     }
 
     &:last-child:not(:first-child),
-    &:last-child:not(:first-child) > * {
+    &:last-child:not(:first-child)
+      > :not(fig-menu-item):not(fig-separator):not(fig-menu-separator) {
       border-top-left-radius: 0;
       border-bottom-left-radius: 0;
     }
 
     &:not(:last-child):not(:first-child),
-    &:not(:last-child):not(:first-child) > * {
+    &:not(:last-child):not(:first-child)
+      > :not(fig-menu-item):not(fig-separator):not(fig-menu-separator) {
       border-radius: 0;
     }
   }
@@ -103,17 +106,51 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
 }
 
 :is(.fig-button-combo, fig-button-combo) {
-  > :not(fig-tooltip):not([variant="secondary"]):not(
-      [variant="property"]
-    ):not(fig-select):not(fig-dropdown):not(:first-child),
+  > :is(fig-button, button):is(
+      :not([variant]),
+      [variant=""],
+      [variant="primary"]
+    ):not(:first-child),
   > fig-tooltip:not(:first-child)
-    > :not([variant="secondary"]):not([variant="property"]):not(
-      fig-select
-    ):not(fig-dropdown) {
+    > :is(fig-button, button):is(
+      :not([variant]),
+      [variant=""],
+      [variant="primary"]
+    ),
+  > fig-menu:not(:first-child)
+    > fig-button:is(:not([variant]), [variant=""], [variant="primary"]) {
     box-shadow: inset 1px 0 0 0 var(--figma-color-bg-brand-hover);
 
     &[disabled]:not([disabled="false"]) {
       box-shadow: inset 1px 0 0 0 var(--figma-color-border-disabled);
+    }
+  }
+
+  > :is(fig-button, button)[variant="input"]:not(:first-child),
+  > fig-tooltip:not(:first-child) > :is(fig-button, button)[variant="input"],
+  > fig-menu:not(:first-child) > fig-button[variant="input"],
+  &[variant="input"]
+    > :is(fig-button, button):is(
+      :not([variant]),
+      [variant=""],
+      [variant="primary"]
+    ):not(:first-child),
+  &[variant="input"]
+    > fig-tooltip:not(:first-child)
+    > :is(fig-button, button):is(
+      :not([variant]),
+      [variant=""],
+      [variant="primary"]
+    ),
+  &[variant="input"]
+    > fig-menu:not(:first-child)
+    > fig-button:is(:not([variant]), [variant=""], [variant="primary"]) {
+    box-shadow: inset 1px 0 0 0 var(--figma-color-bg);
+
+    &:hover,
+    &:active,
+    &:hover:active {
+      box-shadow: inset 1px 0 0 0 var(--figma-color-bg);
     }
   }
 }

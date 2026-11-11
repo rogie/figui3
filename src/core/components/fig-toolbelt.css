@@ -4,7 +4,7 @@ Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 fig-toolbelt {
-  --fig-toolbelt-gap: var(--spacer-1);
+  --fig-toolbelt-gap: var(--spacer-2);
   --fig-toolbelt-group-gap: var(--spacer-2);
   --fig-toolbelt-group-separator-color: var(--figma-color-border);
   --fig-toolbelt-overflow-fade-size: calc(var(--spacer-6) + var(--spacer-2));

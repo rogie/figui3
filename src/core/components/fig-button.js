@@ -16,6 +16,7 @@ import {
  * @attr {boolean} selected - Whether the button is in a selected state
  * @attr {boolean} disabled - Whether the button is disabled
  * @attr {boolean} pill - Whether the button is fully rounded
+ * @attr {boolean|string} icon - Icon-only styling; "compact" content-sizes the button
  * @attr {string} align - Content alignment: "start", "center" (default), or "end"
  * @attr {string} href - URL for link type buttons
  * @attr {string} target - Target window for link type buttons (e.g., "_blank")

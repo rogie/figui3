@@ -30,7 +30,7 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 </fig-button>
 ```
 
-- Attrs: `variant` (`""` primary, `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`, `compact`), `align`, `selected`, `disabled`, `icon`, `pill`, `close-dialog`
+- Attrs: `variant` (`""` primary, `secondary`, `property`, `destructive`, `destructiveSecondary`, `destructiveGhost`, `destructiveLink`, `ghost`, `link`, `input`, `overlay`), `type` (`button`, `toggle`, `submit`, `select`, `upload`), `size` (`""`, `large`), `align`, `selected`, `disabled`, `icon` (boolean or `"compact"`), `pill`, `close-dialog`
 - Wrap truncatable text in an authored `slot="label"` element. A direct `<label>` child receives the same styles without DOM mutation; raw text remains supported but cannot reliably ellipsize in flex layout.
 - `variant="property"` shares secondary styling and adds full-width, start-aligned property-trigger layout; use `slot="prepend"` for its leading icon
 - Property triggers own no popup behavior; consumers manage the popup/dialog and reflect `selected`, `aria-haspopup`, `aria-expanded`, and `aria-controls`
@@ -457,10 +457,15 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
     Select
   </fig-toolbelt-item>
   <fig-toolbelt-group aria-label="Transform tools">
-    <fig-toolbelt-item value="move" selected={tool === "move" || undefined}>
+    <fig-button value="move" selected={tool === "move" || undefined}>
       Move
-    </fig-toolbelt-item>
-    <fig-toolbelt-item value="frame">Frame</fig-toolbelt-item>
+    </fig-button>
+    <fig-button-combo>
+      <fig-button value="frame">Frame</fig-button>
+      <fig-button value="frame-menu" aria-label="Frame menu">
+        <fig-icon name="chevron" size="small" />
+      </fig-button>
+    </fig-button-combo>
   </fig-toolbelt-group>
   <fig-toolbelt-item slot="append" value="settings">
     Settings
@@ -470,7 +475,11 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 
 - Toolbelt attrs: `value`, `disabled`, `layout="horizontal|vertical"`, `overflow="buttons|scrollbar"`
 - Group: wraps related items; adjacent groups receive direction-aware separators
-- Item attrs: `value`, `selected`, `disabled`
+- `fig-toolbelt-item` is optional; use it to make custom content one selectable item
+- Valued `fig-button` descendants are individually selectable, including buttons inside groups, tooltips, and `fig-button-combo`
+- Buttons inside a `fig-toolbelt-item` belong to that wrapper and are not counted separately
+- A button inside `fig-menu` is that menu's trigger and is not counted as a tool
+- Item and direct-button attrs: `value`, `selected`, `disabled`
 - ArrowLeft/ArrowRight move focus horizontally; ArrowUp/ArrowDown move focus vertically; Enter/Space selects
 - Items stay in light DOM; the internal `part="viewport"` owns scrolling and overflow fades
 - `slot="prepend"` and `slot="append"` keep authored content fixed outside the viewport; slotted items remain selectable and keyboard-navigable

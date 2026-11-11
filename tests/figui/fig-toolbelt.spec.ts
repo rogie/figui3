@@ -127,6 +127,46 @@ test.describe("fig-toolbelt", () => {
     );
   });
 
+  test("applies selected styling only to the first nested button", async ({
+    page,
+  }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <fig-toolbelt value="edit">
+          <fig-toolbelt-item value="edit">
+            <fig-tooltip text="Edit">
+              <fig-button id="primary" variant="ghost" icon aria-label="Edit">
+                <fig-icon name="edit"></fig-icon>
+              </fig-button>
+            </fig-tooltip>
+            <fig-menu>
+              <fig-button id="menu" variant="ghost" icon="compact" aria-label="Edit menu" fig-menu-trigger>
+                <fig-icon name="chevron" size="small"></fig-icon>
+              </fig-button>
+            </fig-menu>
+          </fig-toolbelt-item>
+        </fig-toolbelt>
+        <span id="selected-probe" style="background: var(--figma-color-bg-selected)"></span>`;
+    });
+
+    const styles = await page.locator("#fixture-root").evaluate((root) => {
+      const item = root.querySelector("fig-toolbelt-item")!;
+      const primary = root.querySelector("#primary")!;
+      const menu = root.querySelector("#menu")!;
+      const selectedProbe = root.querySelector("#selected-probe")!;
+      return {
+        item: getComputedStyle(item).backgroundColor,
+        primary: getComputedStyle(primary).backgroundColor,
+        menu: getComputedStyle(menu).backgroundColor,
+        selected: getComputedStyle(selectedProbe).backgroundColor,
+      };
+    });
+
+    expect(styles.primary).toBe(styles.selected);
+    expect(styles.menu).not.toBe(styles.selected);
+    expect(styles.item).toBe("rgba(0, 0, 0, 0)");
+  });
+
   test("selects by click, emits host events, and keeps property updates silent", async ({
     page,
   }) => {
@@ -177,6 +217,194 @@ test.describe("fig-toolbelt", () => {
         return (tools as HTMLElement & { events?: unknown[] }).events;
       }),
     ).toHaveLength(2);
+  });
+
+  test("selects and navigates individual unwrapped buttons inside combos", async ({
+    page,
+  }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <fig-toolbelt id="tools" value="edit" aria-label="Design tools">
+          <fig-button-combo>
+            <fig-button value="edit">Edit</fig-button>
+            <fig-button value="edit-menu" aria-label="Edit menu">Menu</fig-button>
+          </fig-button-combo>
+          <fig-button-combo>
+            <fig-button value="preview" disabled>Preview</fig-button>
+            <fig-button value="preview-menu" aria-label="Preview menu">Menu</fig-button>
+          </fig-button-combo>
+        </fig-toolbelt>`;
+      const tools = root.querySelector("#tools")!;
+      const events: Array<Record<string, unknown>> = [];
+      for (const type of ["input", "change"]) {
+        tools.addEventListener(type, (event) => {
+          events.push({
+            type,
+            detail: (event as CustomEvent).detail,
+            targetIsHost: event.target === tools,
+          });
+        });
+      }
+      (tools as HTMLElement & { events?: unknown[] }).events = events;
+    });
+
+    const tools = page.locator("#tools");
+    const edit = tools.locator('fig-button[value="edit"]');
+    const editMenu = tools.locator('fig-button[value="edit-menu"]');
+    const preview = tools.locator('fig-button[value="preview"]');
+    const previewMenu = tools.locator('fig-button[value="preview-menu"]');
+
+    await expect(edit).toHaveAttribute("selected", "");
+    await expect(edit).toHaveAttribute("tabindex", "0");
+    await expect(editMenu).toHaveAttribute("tabindex", "-1");
+    await expect(preview).toHaveAttribute("tabindex", "-1");
+
+    await editMenu.click();
+    await expect(tools).toHaveAttribute("value", "edit-menu");
+    await expect(edit).not.toHaveAttribute("selected", "");
+    await expect(editMenu).toHaveAttribute("selected", "");
+
+    await editMenu.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(previewMenu).toBeFocused();
+    await page.keyboard.press("Space");
+    await expect(tools).toHaveAttribute("value", "preview-menu");
+    await expect(previewMenu).toHaveAttribute("selected", "");
+
+    await page.keyboard.press("Home");
+    await expect(edit).toBeFocused();
+    await page.keyboard.press("End");
+    await expect(previewMenu).toBeFocused();
+
+    expect(
+      await tools.evaluate(
+        (element) => (element as HTMLElement & { events?: unknown[] }).events,
+      ),
+    ).toEqual([
+      { type: "input", detail: "edit-menu", targetIsHost: true },
+      { type: "change", detail: "edit-menu", targetIsHost: true },
+      { type: "input", detail: "preview-menu", targetIsHost: true },
+      { type: "change", detail: "preview-menu", targetIsHost: true },
+    ]);
+  });
+
+  test("opens a combo menu without selecting the trigger", async ({ page }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <fig-toolbelt id="tools" value="edit" aria-label="Design tools">
+          <fig-button-combo>
+            <fig-button value="edit">Edit</fig-button>
+            <fig-menu position="bottom left">
+              <fig-button icon="compact" aria-label="Edit menu" fig-menu-trigger>Menu</fig-button>
+              <fig-menu-item value="vector">Vector</fig-menu-item>
+              <fig-menu-item value="pencil">Pencil</fig-menu-item>
+            </fig-menu>
+          </fig-button-combo>
+          <fig-button value="preview">Preview</fig-button>
+        </fig-toolbelt>`;
+    });
+
+    const tools = page.locator("#tools");
+    const edit = tools.locator('fig-button[value="edit"]');
+    const menuButton = tools.locator('fig-button[aria-label="Edit menu"]');
+    const preview = tools.locator('fig-button[value="preview"]');
+    const vector = page.locator('fig-menu-item[value="vector"]');
+
+    await expect(edit).toHaveAttribute("selected", "");
+    await expect(menuButton).toHaveAttribute("aria-haspopup", "menu");
+    await edit.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(preview).toBeFocused();
+
+    const radii = await page.evaluate(() => {
+      const button = document.querySelector('fig-button[aria-label="Edit menu"]');
+      const item = document.querySelector('fig-menu-item[value="vector"]');
+      if (!button || !item) throw new Error("Missing menu controls");
+      return {
+        button: getComputedStyle(button).borderTopLeftRadius,
+        item: getComputedStyle(item).borderTopLeftRadius,
+      };
+    });
+    expect(radii.button).toBe("0px");
+    expect(radii.item).not.toBe("0px");
+
+    await menuButton.click();
+    await expect(tools).toHaveAttribute("value", "edit");
+    await expect(edit).toHaveAttribute("selected", "");
+    await expect(menuButton).toHaveAttribute("aria-expanded", "true");
+    await expect(vector).toBeVisible();
+  });
+
+  test("preserves wrapped items without double-counting their buttons", async ({
+    page,
+  }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <fig-toolbelt id="tools" value="direct">
+          <fig-toolbelt-item value="wrapped">
+            <fig-button value="nested" tabindex="-1">Wrapped button</fig-button>
+          </fig-toolbelt-item>
+          <fig-button value="direct">Direct button</fig-button>
+        </fig-toolbelt>`;
+    });
+
+    const tools = page.locator("#tools");
+    const wrapped = tools.locator('fig-toolbelt-item[value="wrapped"]');
+    const nested = tools.locator('fig-button[value="nested"]');
+    const direct = tools.locator('fig-button[value="direct"]');
+
+    await nested.click();
+    await expect(tools).toHaveAttribute("value", "wrapped");
+    await expect(wrapped).toHaveAttribute("selected", "");
+    await expect(nested).not.toHaveAttribute("selected", "");
+
+    await wrapped.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(direct).toBeFocused();
+    await page.keyboard.press("ArrowLeft");
+    await expect(wrapped).toBeFocused();
+  });
+
+  test("supports unwrapped buttons in groups, fixed slots, and overflow", async ({
+    page,
+  }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <div style="width: 150px">
+          <fig-toolbelt id="tools" value="pin" overflow="buttons">
+            <fig-toolbelt-group slot="prepend">
+              <fig-button value="pin">Pin</fig-button>
+            </fig-toolbelt-group>
+            <fig-toolbelt-group>
+              <fig-button value="one">One</fig-button>
+              <fig-button value="two">Two</fig-button>
+              <fig-button value="three" disabled>Three</fig-button>
+              <fig-button value="four">Four</fig-button>
+            </fig-toolbelt-group>
+            <fig-toolbelt-group slot="append">
+              <fig-button value="settings">Settings</fig-button>
+            </fig-toolbelt-group>
+          </fig-toolbelt>
+        </div>`;
+    });
+
+    const tools = page.locator("#tools");
+    const pin = tools.locator('fig-button[value="pin"]');
+    const settings = tools.locator('fig-button[value="settings"]');
+    const end = tools.locator('[data-fig-toolbelt-nav="end"]');
+
+    await expect(end).toBeVisible();
+    await end.click();
+    await expect(tools).toHaveAttribute("value", "pin");
+
+    await pin.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(tools.locator('fig-button[value="one"]')).toBeFocused();
+    await page.keyboard.press("End");
+    await expect(settings).toBeFocused();
+    await settings.click();
+    await expect(tools).toHaveAttribute("value", "settings");
+    await expect(settings).toHaveAttribute("selected", "");
   });
 
   test("uses roving keyboard focus and activates with Space", async ({
@@ -326,21 +554,29 @@ test.describe("fig-toolbelt", () => {
         <fig-toolbelt id="tools" value="move">
           <fig-toolbelt-item value="move">Move</fig-toolbelt-item>
           <fig-toolbelt-item value="frame" disabled>Frame</fig-toolbelt-item>
+          <fig-button value="direct">Direct</fig-button>
+          <fig-button value="authored-disabled" disabled>Authored disabled</fig-button>
         </fig-toolbelt>`;
     });
 
     const tools = page.locator("#tools");
     const move = tools.locator('[value="move"]');
     const frame = tools.locator('[value="frame"]');
+    const direct = tools.locator('[value="direct"]');
+    const authoredDisabled = tools.locator('[value="authored-disabled"]');
     await tools.evaluate((element) => element.setAttribute("disabled", ""));
     await expect(tools).toHaveAttribute("aria-disabled", "true");
     await expect(move).toHaveAttribute("disabled", "");
     await expect(frame).toHaveAttribute("disabled", "");
+    await expect(direct).toHaveAttribute("disabled", "");
+    await expect(authoredDisabled).toHaveAttribute("disabled", "");
 
     await tools.evaluate((element) => element.removeAttribute("disabled"));
     await expect(tools).not.toHaveAttribute("aria-disabled", "");
     await expect(move).not.toHaveAttribute("disabled", "");
     await expect(frame).toHaveAttribute("disabled", "");
+    await expect(direct).not.toHaveAttribute("disabled", "");
+    await expect(authoredDisabled).toHaveAttribute("disabled", "");
   });
 
   test("adds overflow controls, scrolls by page, and preserves direct items", async ({
@@ -549,7 +785,7 @@ test.describe("fig-toolbelt", () => {
           overflow="buttons"
           value="top"
           aria-label="Vertical fixed tools"
-          style="height: 190px"
+          style="height: 160px"
         >
           <fig-toolbelt-group slot="prepend" aria-label="Top tools">
             <fig-toolbelt-item value="top">Top</fig-toolbelt-item>
