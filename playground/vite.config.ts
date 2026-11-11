@@ -56,8 +56,9 @@ const figuiBuildInfo = {
   author: packageJson.author ?? "",
   repositoryUrl: normalizeRepoUrl(repositoryUrl),
   sha: git(["rev-parse", "--short", "HEAD"]) || "unknown",
-  date: git(["log", "-1", "--format=%cs"]) || "unknown",
   branch: git(["rev-parse", "--abbrev-ref", "HEAD"]) || "unknown",
+  // Wall-clock time when Vite loads (dev server start or production build).
+  builtAt: new Date().toISOString(),
 };
 
 export default defineConfig({

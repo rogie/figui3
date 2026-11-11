@@ -5,8 +5,9 @@ export interface FiguiBuildInfo {
   author: string;
   repositoryUrl: string;
   sha: string;
-  date: string;
   branch: string;
+  /** ISO-8601 timestamp baked in at Vite config load time. */
+  builtAt: string;
 }
 
 declare const __FIGUI_BUILD_INFO__: FiguiBuildInfo;
@@ -16,11 +17,45 @@ export function getBuildInfo(): FiguiBuildInfo {
   return __FIGUI_BUILD_INFO__;
 }
 
-/** Format: v11.8.5 (76c00a2, 2026-11-06) */
+/** `2026-11-11` */
+function formatBuiltDate(builtAt: string): string {
+  const stamp = Date.parse(builtAt);
+  if (Number.isNaN(stamp)) return "unknown";
+  return new Date(stamp).toLocaleDateString("en-CA");
+}
+
+/** `1:22 AM` (narrow space before meridiem when the locale supplies it). */
+function formatBuiltTime(builtAt: string): string {
+  const stamp = Date.parse(builtAt);
+  if (Number.isNaN(stamp)) return "unknown";
+  return new Date(stamp).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+/** Format: v11.11.5 (2026-11-11, 1:22 AM) */
 export function formatBuildVersionLine(
   info: FiguiBuildInfo = getBuildInfo(),
 ): string {
-  return `v${info.version} (${info.sha}, ${info.date})`;
+  const date = formatBuiltDate(info.builtAt);
+  const time = formatBuiltTime(info.builtAt);
+  return `v${info.version} (${date}, ${time})`;
+}
+
+/** Format: 936214e, feat-build-info */
+export function formatBuildRevisionLine(
+  info: FiguiBuildInfo = getBuildInfo(),
+): string {
+  return `${info.sha}, ${info.branch}`;
+}
+
+/** Two-line clipboard payload for the About build info block. */
+export function formatBuildInfoCopyText(
+  info: FiguiBuildInfo = getBuildInfo(),
+): string {
+  return `${formatBuildVersionLine(info)}\n${formatBuildRevisionLine(info)}`;
 }
 
 /** `https://github.com/rogie/figui3` → `rogie/figui3` */

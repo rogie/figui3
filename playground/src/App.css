@@ -301,23 +301,39 @@ nav {
     }
   }
 
-  fig-field {
+  .info-build-row {
+    align-items: center;
+    gap: 0;
     width: 100%;
+    /* Match popup fig-header title inset (header padding + h3 padding). */
+    padding-inline-start: calc(var(--spacer-2) + var(--spacer-3));
+    padding-inline-end: var(--spacer-2);
 
-    --fig-field-top-padding: 0;
-    --fig-field-bottom-padding: 0;
+    .info-build-lines {
+      flex: 1 1 auto;
+      min-width: 0;
 
-    /* Version is the field label; branch is the secondary value. */
-    > label {
-      padding-block: 0;
-      font-size: var(--font-size-small);
-      font-variant-numeric: tabular-nums;
+      p {
+        margin: 0;
+        font-size: var(--font-size-small);
+        font-variant-numeric: tabular-nums;
+      }
     }
 
-    > span {
+    .info-build-revision {
       color: var(--figma-color-text-secondary);
-      font-size: var(--font-size-small);
     }
+
+    fig-button[icon] svg {
+      width: var(--spacer-4);
+      height: var(--spacer-4);
+      display: block;
+      flex-shrink: 0;
+    }
+  }
+
+  .preferences-popup--with-about & .info-build-row {
+    padding-inline-start: var(--spacer-3);
   }
 
   .info-popup-links {
