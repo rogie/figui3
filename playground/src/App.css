@@ -241,20 +241,15 @@ nav {
     flex: 1 1 auto;
     min-width: 0;
     margin: 0;
-    color: var(--figma-color-text);
+    color: var(--figma-color-text-secondary);
     font-size: var(--font-size-small);
     font-variant-numeric: tabular-nums;
     line-height: 1.8;
     overflow-wrap: anywhere;
   }
 
-  .info-build-timestamp {
-    color: var(--figma-color-text-secondary);
-  }
-
   .info-build-revision {
     display: block;
-    color: var(--figma-color-text-secondary);
   }
 
   fig-button[icon] svg {
