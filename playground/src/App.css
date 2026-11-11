@@ -246,8 +246,23 @@ nav {
       padding-block: 0;
     }
 
-    .info-about {
-      padding-top: 0;
+    > p {
+      margin-block: 0 var(--spacer-1);
+      color: var(--figma-color-text-secondary);
+      line-height: 1.4;
+    }
+
+    a {
+      color: var(--figma-color-text-brand);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    > fig-separator {
+      --fig-separator-margin-block: var(--spacer-2);
     }
   }
 }
@@ -257,98 +272,72 @@ nav {
   width: 240px;
   padding: var(--spacer-2);
 
-  > fig-header > h3 {
-    padding-left: var(--spacer-3);
-  }
-}
+  fig-content {
+    padding-block: var(--spacer-2);
 
-/* Shared About body in info popup or Preferences → About group. */
-.info-about {
-  .info-popup-intro {
-    padding-inline: var(--spacer-3);
-    /* Tighter gap before “Crafted by” credit line. */
-    margin-bottom: var(--spacer-1);
-
-    p {
-      margin: 0;
+    > p:not(.info-build-text) {
+      margin-block: 0 var(--spacer-1);
       color: var(--figma-color-text-secondary);
       line-height: 1.4;
     }
-  }
 
-  .info-popup-credit {
-    margin: 0;
-    padding-inline: var(--spacer-3);
-    color: var(--figma-color-text-secondary);
-    line-height: 1.4;
-    white-space: nowrap;
-  }
+    a {
+      color: var(--figma-color-text-brand);
+      text-decoration: none;
 
-  .info-popup-credit-link {
-    appearance: none;
-    display: inline;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--figma-color-text-brand);
-    font: inherit;
-    line-height: inherit;
-    cursor: pointer;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  .info-build-row {
-    align-items: center;
-    gap: 0;
-    width: 100%;
-    /* Match popup fig-header title inset (header padding + h3 padding). */
-    padding-inline-start: calc(var(--spacer-2) + var(--spacer-3));
-    padding-inline-end: var(--spacer-2);
-
-    .info-build-lines {
-      flex: 1 1 auto;
-      min-width: 0;
-
-      p {
-        margin: 0;
-        font-size: var(--font-size-small);
-        font-variant-numeric: tabular-nums;
+      &:hover {
+        text-decoration: underline;
       }
     }
 
-    .info-build-revision {
-      color: var(--figma-color-text-secondary);
-    }
-
-    fig-button[icon] svg {
-      width: var(--spacer-4);
-      height: var(--spacer-4);
-      display: block;
-      flex-shrink: 0;
+    > fig-separator {
+      --fig-separator-margin-block: var(--spacer-2);
     }
   }
+}
 
-  .preferences-popup--with-about & .info-build-row {
-    padding-inline-start: var(--spacer-3);
+/* About link row + build metadata (fig-content / fig-group children). */
+.info-popup-links {
+  padding-inline: var(--spacer-3);
+  margin-block: var(--spacer-2);
+  gap: var(--spacer-1);
+  align-items: center;
+
+  fig-button[icon] svg {
+    width: var(--spacer-4);
+    height: var(--spacer-4);
+    display: block;
+    flex-shrink: 0;
+  }
+}
+
+.info-build-row {
+  align-items: center;
+  width: 100%;
+  gap: 0;
+  padding-inline: var(--fig-field-left-padding, var(--spacer-3))
+    var(--fig-field-right-padding, var(--spacer-3));
+
+  .info-build-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    color: var(--figma-color-text);
+    font-size: var(--font-size-small);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
   }
 
-  .info-popup-links {
-    /* Same horizontal inset as intro text / fig-field (spacer-3). */
-    padding-inline: var(--spacer-3);
-    margin-block: var(--spacer-2);
-    gap: var(--spacer-1);
-    align-items: center;
+  .info-build-timestamp,
+  .info-build-revision {
+    color: var(--figma-color-text-secondary);
+  }
 
-    fig-button[icon] svg {
-      width: var(--spacer-4);
-      height: var(--spacer-4);
-      display: block;
-      flex-shrink: 0;
-    }
+  fig-button[icon] svg {
+    width: var(--spacer-4);
+    height: var(--spacer-4);
+    display: block;
+    flex-shrink: 0;
   }
 }
 

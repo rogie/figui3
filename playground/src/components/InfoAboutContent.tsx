@@ -8,7 +8,7 @@ import { copyText } from "../lib/prompt";
 import {
   formatBuildInfoCopyText,
   formatBuildRevisionLine,
-  formatBuildVersionLine,
+  getBuildVersionDisplayParts,
   formatGithubLabel,
   formatNpmLabel,
   formatNpmUrl,
@@ -31,7 +31,7 @@ export default function InfoAboutContent() {
   const buildCopyTooltipRef = useRef<HTMLElement>(null);
   const { showCopyTooltip } = useCopyTooltip();
   const buildInfo = getBuildInfo();
-  const versionLine = formatBuildVersionLine(buildInfo);
+  const { version, date, time } = getBuildVersionDisplayParts(buildInfo);
   const revisionLine = formatBuildRevisionLine(buildInfo);
 
   const handleCopyBuildInfo = useCallback(async () => {
@@ -69,22 +69,14 @@ export default function InfoAboutContent() {
   ];
 
   return (
-    <div className="info-about">
-      <div className="info-popup-intro">
-        <p>{buildInfo.description}</p>
-      </div>
+    <>
+      <p>{buildInfo.description}</p>
       {buildInfo.author ? (
-        <p className="info-popup-credit">
+        <p>
           Crafted by{" "}
-          <button
-            type="button"
-            className="info-popup-credit-link"
-            onClick={() => {
-              window.open(AUTHOR_URL, "_blank", "noopener,noreferrer");
-            }}
-          >
+          <a href={AUTHOR_URL} target="_blank" rel="noopener noreferrer">
             {buildInfo.author}
-          </button>
+          </a>
         </p>
       ) : null}
       <fig-stack className="info-popup-links">
@@ -105,10 +97,14 @@ export default function InfoAboutContent() {
       </fig-stack>
       <fig-separator />
       <fig-stack className="info-build-row">
-        <div className="info-build-lines">
-          <p className="info-build-version">{versionLine}</p>
-          <p className="info-build-revision">{revisionLine}</p>
-        </div>
+        <p className="info-build-text">
+          v{version}{" "}
+          <span className="info-build-timestamp">
+            ({date}, {time})
+          </span>
+          <br />
+          <span className="info-build-revision">{revisionLine}</span>
+        </p>
         <fig-tooltip ref={buildCopyTooltipRef} text="Copy build info">
           <fig-button
             variant="ghost"
@@ -120,6 +116,6 @@ export default function InfoAboutContent() {
           </fig-button>
         </fig-tooltip>
       </fig-stack>
-    </div>
+    </>
   );
 }

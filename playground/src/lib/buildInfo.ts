@@ -35,13 +35,21 @@ function formatBuiltTime(builtAt: string): string {
   });
 }
 
+/** UI parts for the first build-info line (time is shown muted in About). */
+export function getBuildVersionDisplayParts(info: FiguiBuildInfo = getBuildInfo()) {
+  return {
+    version: info.version,
+    date: formatBuiltDate(info.builtAt),
+    time: formatBuiltTime(info.builtAt),
+  };
+}
+
 /** Format: v11.11.5 (2026-11-11, 1:22 AM) */
 export function formatBuildVersionLine(
   info: FiguiBuildInfo = getBuildInfo(),
 ): string {
-  const date = formatBuiltDate(info.builtAt);
-  const time = formatBuiltTime(info.builtAt);
-  return `v${info.version} (${date}, ${time})`;
+  const { version, date, time } = getBuildVersionDisplayParts(info);
+  return `v${version} (${date}, ${time})`;
 }
 
 /** Format: 936214e, feat-build-info */
