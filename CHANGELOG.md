@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.8]
+
+### Changed
+
+- Removed spacing between media controls and made the modern seek-slider background transparent.
+
 ## [11.11.7]
 
 ### Added

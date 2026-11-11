@@ -16189,6 +16189,21 @@ test.describe("media accessibility", () => {
     expect(box?.height).toBeGreaterThan(8);
   });
 
+  test("fig-media-controls seek slider has a transparent background", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-media-controls duration="10" time="4"></fig-media-controls>`;
+    });
+
+    await expect(page.locator("fig-media-controls fig-slider")).toHaveCSS(
+      "background-color",
+      "rgba(0, 0, 0, 0)",
+    );
+  });
+
   test("fig-media-controls names the seek slider with formatted value text", async ({
     page,
   }) => {
