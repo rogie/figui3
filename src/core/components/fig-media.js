@@ -105,6 +105,8 @@ class FigMedia extends HTMLElement {
   #controlsOnPlay = null;
   #controlsOnPause = null;
   #controlsOnSeek = null;
+  #controlsProgressFrame = 0;
+  #controlsProgressSecond = null;
   #animatedPlayback = null;
   #animatedSource = null;
   #sourceOwner = new AsyncOperationOwner();
@@ -805,6 +807,37 @@ class FigMedia extends HTMLElement {
     this.#syncControlsDisabled();
   }
 
+  #stopControlsProgress() {
+    cancelAnimationFrame(this.#controlsProgressFrame);
+    this.#controlsProgressFrame = 0;
+    this.#controlsProgressSecond = null;
+  }
+
+  #startControlsProgress(playback, controls) {
+    if (this.#controlsProgressFrame) return;
+    const tick = () => {
+      this.#controlsProgressFrame = 0;
+      if (
+        this.#controlsWiredFor !== playback ||
+        this.#controlsWiredControls !== controls ||
+        playback.paused ||
+        playback.ended
+      ) {
+        return;
+      }
+      const time = Number(playback.currentTime) || 0;
+      const second = Math.floor(time);
+      if (second !== this.#controlsProgressSecond) {
+        this.#controlsProgressSecond = second;
+        controls.time = time;
+      } else {
+        controls.setPresentationTime?.(time);
+      }
+      this.#controlsProgressFrame = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
   #wireControlsToMedia() {
     const playback = this.playbackEl;
     if (!this.#controlsEl || !playback) return;
@@ -825,9 +858,12 @@ class FigMedia extends HTMLElement {
     const syncFromPlayback = () => {
       this.#syncControlsDisabled();
       if (!this.#hasPlayableMedia()) return;
-      controls.playing = !playback.paused && !playback.ended;
+      const playing = !playback.paused && !playback.ended;
+      if (controls.playing !== playing) controls.playing = playing;
       if (Number.isFinite(playback.duration)) {
-        controls.duration = playback.duration;
+        if (controls.duration !== playback.duration) {
+          controls.duration = playback.duration;
+        }
       }
       if (pendingSeekTime !== null) {
         if (Math.abs(playback.currentTime - pendingSeekTime) < 0.25) {
@@ -836,7 +872,14 @@ class FigMedia extends HTMLElement {
           return;
         }
       }
-      controls.time = playback.currentTime || 0;
+      const time = playback.currentTime || 0;
+      if (playing) {
+        controls.setPresentationTime?.(time);
+        this.#startControlsProgress(playback, controls);
+      } else {
+        this.#stopControlsProgress();
+        if (controls.time !== time) controls.time = time;
+      }
     };
     const onPlay = () => {
       if (!this.#hasPlayableMedia()) return;
@@ -872,6 +915,7 @@ class FigMedia extends HTMLElement {
   }
 
   #unwireControls() {
+    this.#stopControlsProgress();
     const playback = this.#controlsWiredFor;
     const controls = this.#controlsWiredControls;
     if (playback && this.#controlsSync) {

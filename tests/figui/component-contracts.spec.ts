@@ -16233,8 +16233,8 @@ test.describe("media accessibility", () => {
     expect(state).toEqual({
       hostRole: "group",
       hostLabel: "Media controls",
-      sliderStep: "1",
-      inputStep: "1",
+      sliderStep: "0.01",
+      inputStep: "0.01",
       sliderLabel: "Seek",
       sliderValueText: "00:12 of 01:30",
       timeTag: "SPAN",
@@ -16252,6 +16252,82 @@ test.describe("media accessibility", () => {
         ),
       )
       .toBe("00:30 of 02:00");
+  });
+
+  test("fig-media-controls preserves fractional seek values", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-media-controls duration="4.37" time="0"></fig-media-controls>`;
+    });
+
+    const state = await page
+      .locator("fig-media-controls")
+      .evaluate((host: HTMLElement) => {
+        let seekTime = null;
+        host.addEventListener("seek", (event) => {
+          seekTime = (event as CustomEvent).detail.time;
+        });
+        const input = host.querySelector<HTMLInputElement>(
+          'fig-slider input[type="range"]',
+        );
+        if (!input) throw new Error("Missing media seek input");
+        input.value = "4.37";
+        input.dispatchEvent(
+          new Event("input", { bubbles: true, composed: true }),
+        );
+        return {
+          inputValue: input.value,
+          hostTime: host.getAttribute("time"),
+          seekTime,
+        };
+      });
+
+    expect(state).toEqual({
+      inputValue: "4.37",
+      hostTime: "4.37",
+      seekTime: 4.37,
+    });
+  });
+
+  test("fig-media-controls updates playback presentation without reflecting attributes", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-media-controls duration="10" time="1"></fig-media-controls>`;
+    });
+
+    const state = await page.locator("fig-media-controls").evaluate((host) => {
+      (host as HTMLElement & { setPresentationTime(value: number): void })
+        .setPresentationTime(4.25);
+      const slider = host.querySelector("fig-slider");
+      const input = slider?.querySelector<HTMLInputElement>(
+        'input[type="range"]',
+      );
+      return {
+        hostTime: host.getAttribute("time"),
+        sliderValue: slider?.getAttribute("value"),
+        inputValue: input?.value,
+        complete: slider
+          ? getComputedStyle(slider).getPropertyValue("--slider-complete").trim()
+          : null,
+        valueText: input?.getAttribute("aria-valuetext"),
+        timeText: host.querySelector(".fig-media-controls-time")?.textContent,
+      };
+    });
+
+    expect(state).toEqual({
+      hostTime: "1",
+      sliderValue: "1",
+      inputValue: "4.25",
+      complete: "0.425",
+      valueText: "00:04 of 00:10",
+      timeText: "00:04",
+    });
   });
 
   test("fig-media-controls selects its play button while playing", async ({

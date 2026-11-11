@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.9]
+
+### Changed
+
+- Smoothed media scrubber playback with animation-frame presentation updates while throttling reflected state.
+
+### Fixed
+
+- Preserved fractional media durations and seek positions with a `0.01`-second scrubber step.
+
 ## [11.11.8]
 
 ### Changed

@@ -83,6 +83,21 @@ class FigMediaControls extends HTMLElement {
     this.setAttribute("time", String(n));
   }
 
+  setPresentationTime(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return;
+    const time = Math.min(this.duration || number, Math.max(0, number));
+    this.#timeSlider?.setPresentationValue?.(time);
+    const valueText = this.#formatTimeValueText(time, this.duration);
+    if (this.#timeSlider?.getAttribute("aria-valuetext") !== valueText) {
+      this.#timeSlider?.setAttribute("aria-valuetext", valueText);
+    }
+    const timeText = this.#formatTime(time);
+    if (this.#timeEl && this.#timeEl.textContent !== timeText) {
+      this.#timeEl.textContent = timeText;
+    }
+  }
+
   get disabled() {
     return figBooleanAttribute(this, "disabled");
   }
@@ -124,7 +139,7 @@ class FigMediaControls extends HTMLElement {
     slider.setAttribute("text", "false");
     slider.setAttribute("min", "0");
     slider.setAttribute("max", String(this.duration));
-    slider.setAttribute("step", "1");
+    slider.setAttribute("step", "0.01");
     slider.setAttribute("value", String(this.time));
     slider.setAttribute("full", "");
     slider.setAttribute("aria-label", "Seek");
@@ -219,11 +234,7 @@ class FigMediaControls extends HTMLElement {
     if (!this.#userSeeking) {
       this.#timeSlider.setAttribute("value", String(t));
     }
-    this.#timeSlider.setAttribute(
-      "aria-valuetext",
-      this.#formatTimeValueText(t, duration),
-    );
-    if (this.#timeEl) this.#timeEl.textContent = this.#formatTime(t);
+    this.setPresentationTime(t);
   }
 
   toggle() {

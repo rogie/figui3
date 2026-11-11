@@ -408,6 +408,15 @@ class FigSlider extends HTMLElement {
     if (this.input) this.#syncProperties();
   }
 
+  setPresentationValue(value) {
+    if (!this.input || this.#isInteracting) return;
+    const normalized = String(this.#normalizeSliderValue(value));
+    if (this.input.value !== normalized) {
+      this.input.value = normalized;
+    }
+    this.#syncProperties(normalized);
+  }
+
   get default() {
     return this.#resolveDefaultValue();
   }
@@ -565,8 +574,8 @@ class FigSlider extends HTMLElement {
     if (parsed === null) return this.#getFallbackValue();
     return this.#clampToBounds(parsed);
   }
-  #syncProperties() {
-    const complete = this.#calculateNormal(this.value);
+  #syncProperties(value = this.value) {
+    const complete = this.#calculateNormal(value);
     const defaultValue = this.#calculateNormal(this.default);
     const deltaDirection = complete < defaultValue ? -1 : 1;
     const unchanged = complete === defaultValue ? 1 : 0;
