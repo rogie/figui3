@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
+  formatBuildInfoCopyText,
+  formatBuildRevisionLine,
   formatBuildVersionLine,
   formatGithubLabel,
   formatNpmLabel,
@@ -15,14 +17,26 @@ const sample: FiguiBuildInfo = {
   author: "Rogie King",
   repositoryUrl: "https://github.com/rogie/figui3",
   sha: "76c00a2",
-  date: "2026-11-06",
   branch: "feat-build-info",
+  // Midday UTC keeps en-CA calendar date stable across US test timezones.
+  builtAt: "2026-11-06T12:00:00.000Z",
 };
 
 test.describe("playground build info formatters", () => {
-  test("formats version line from sha + date", () => {
-    expect(formatBuildVersionLine(sample)).toBe(
-      "v11.8.5 (76c00a2, 2026-11-06)",
+  test("formats version line from builtAt (date + local time)", () => {
+    const line = formatBuildVersionLine(sample);
+    expect(line).toMatch(/^v11\.8\.5 \(2026-11-06, \d{1,2}:\d{2} (AM|PM)\)$/);
+  });
+
+  test("formats revision line from sha + branch", () => {
+    expect(formatBuildRevisionLine(sample)).toBe(
+      "76c00a2, feat-build-info",
+    );
+  });
+
+  test("formats clipboard text as version line then revision line", () => {
+    expect(formatBuildInfoCopyText(sample)).toBe(
+      `${formatBuildVersionLine(sample)}\n${formatBuildRevisionLine(sample)}`,
     );
   });
 

@@ -327,11 +327,16 @@ nav {
     color: var(--figma-color-text);
     font-size: var(--font-size-small);
     font-variant-numeric: tabular-nums;
-    line-height: 1.4;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
   }
 
-  .info-build-timestamp,
+  .info-build-timestamp {
+    color: var(--figma-color-text-secondary);
+  }
+
   .info-build-revision {
+    display: block;
     color: var(--figma-color-text-secondary);
   }
 

@@ -101,8 +101,7 @@ export default function InfoAboutContent() {
           v{version}{" "}
           <span className="info-build-timestamp">
             ({date}, {time})
-          </span>
-          <br />
+          </span>{" "}
           <span className="info-build-revision">{revisionLine}</span>
         </p>
         <fig-tooltip ref={buildCopyTooltipRef} text="Copy build info">
