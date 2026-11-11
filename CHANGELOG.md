@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Added a playground About popup with package/git build metadata, author credit, and GitHub/npm/playground links.
+- Added `npm run test:import` for Playwright specs that do not need the bun fixture server.
+
 ## [11.11.5]
 
 ### Changed

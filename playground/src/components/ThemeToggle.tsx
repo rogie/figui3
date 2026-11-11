@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import SunIcon from "../icons/sun.svg?react";
 import MoonIcon from "../icons/moon.svg?react";
 import AdjustIcon from "../icons/icon.24.adjust.svg?react";
+import { useFigPopupAnchor } from "../hooks/useFigPopupAnchor";
+import InfoAboutContent from "./InfoAboutContent";
 
 interface Props {
   isDark: boolean;
@@ -29,24 +31,10 @@ export default function ThemeToggle({
     theme: isDark ? "light" : "dark",
   } as any;
 
-  useEffect(() => {
-    const popup = popupRef.current;
-    if (!popup) return;
-    (popup as any).anchor = settingsButtonRef.current;
-    const handleLifecycle = (event: Event) => {
-      if (event.target !== popup) return;
-      const state = (event as CustomEvent<{ state?: string }>).detail?.state;
-      setPreferencesOpen(state === "opening" || state === "open");
-    };
-    popup.addEventListener("fig-popup-lifecycle", handleLifecycle);
-    return () =>
-      popup.removeEventListener("fig-popup-lifecycle", handleLifecycle);
-  }, []);
-
-  useEffect(() => {
-    if (!popupRef.current || !settingsButtonRef.current) return;
-    (popupRef.current as any).anchor = settingsButtonRef.current;
-  }, [preferencesOpen]);
+  // Anchor preferences popover to the settings trigger; sync dismiss to React state.
+  useFigPopupAnchor(popupRef, settingsButtonRef, preferencesOpen, () =>
+    setPreferencesOpen(false),
+  );
 
   const handleModeChange = (event: any) => {
     const nextMode = (event as CustomEvent).detail ?? event.target?.value;
@@ -88,14 +76,15 @@ export default function ThemeToggle({
         </fig-button>
       </fig-tooltip>
       <dialog
+        id="preferences-popup"
         ref={popupRef}
         {...popupAttrs}
-        id="preferences-popup"
         open={preferencesOpen ? true : undefined}
         className="preferences-popup"
+        aria-labelledby="preferences-popup-title"
       >
         <fig-header>
-          <h3>Preferences</h3>
+          <h3 id="preferences-popup-title">Preferences</h3>
         </fig-header>
         <fig-content>
           <fig-field columns="half">
@@ -113,6 +102,10 @@ export default function ThemeToggle({
               onChange={handleModeChange}
             ></fig-options>
           </fig-field>
+          <fig-separator />
+          <fig-group name="About" compact>
+            <InfoAboutContent />
+          </fig-group>
         </fig-content>
       </dialog>
     </fig-stack>

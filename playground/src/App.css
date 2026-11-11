@@ -123,6 +123,9 @@ nav {
     padding-right: var(--spacer-2);
 
     > h1 {
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 0;
       font-size: var(--text-heading-small-font-size);
       font-weight: var(--text-heading-small-font-weight);
       line-height: var(--text-heading-small-line-height);
@@ -170,11 +173,90 @@ nav {
 }
 
 .preferences-popup {
-  width: 180px;
+  width: 240px;
   padding: var(--spacer-2);
 
   fig-field {
     width: 100%;
+  }
+
+  > fig-content > fig-separator {
+    --fig-separator-margin-block: var(--spacer-1);
+  }
+
+  fig-group[name="About"] {
+    padding-bottom: var(--spacer-2);
+
+    > fig-header {
+      --fig-header-height: var(--spacer-5);
+      height: var(--spacer-5);
+      padding-block: 0;
+    }
+
+    > p {
+      margin-block: 0 var(--spacer-1);
+      color: var(--figma-color-text-secondary);
+      line-height: 1.4;
+    }
+
+    a {
+      color: var(--figma-color-text-brand);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    > fig-separator {
+      --fig-separator-margin-block: var(--spacer-2);
+    }
+  }
+}
+
+/* About link row + build metadata (Preferences → About group). */
+.info-about-links {
+  padding-inline: var(--spacer-3);
+  margin-block: var(--spacer-2);
+  gap: var(--spacer-1);
+  align-items: center;
+
+  fig-button[icon] svg {
+    width: var(--spacer-4);
+    height: var(--spacer-4);
+    display: block;
+    flex-shrink: 0;
+  }
+}
+
+.info-build-row {
+  align-items: center;
+  width: 100%;
+  gap: 0;
+  padding-block: var(--spacer-1) var(--spacer-2);
+  padding-inline: var(--fig-field-left-padding, var(--spacer-3))
+    var(--fig-field-right-padding, var(--spacer-3));
+
+  .info-build-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    color: var(--figma-color-text-secondary);
+    font-size: var(--font-size-small);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+  .info-build-revision {
+    display: block;
+  }
+
+  fig-button[icon] svg {
+    width: var(--spacer-4);
+    height: var(--spacer-4);
+    display: block;
+    flex-shrink: 0;
   }
 }
 
