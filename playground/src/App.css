@@ -293,6 +293,7 @@ nav {
     > fig-separator {
       --fig-separator-margin-block: var(--spacer-2);
     }
+
   }
 }
 
@@ -315,6 +316,7 @@ nav {
   align-items: center;
   width: 100%;
   gap: 0;
+  padding-block: var(--spacer-1) var(--spacer-2);
   padding-inline: var(--fig-field-left-padding, var(--spacer-3))
     var(--fig-field-right-padding, var(--spacer-3));
 
