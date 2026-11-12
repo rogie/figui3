@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.10]
+
+### Changed
+
+- Added logical default values to all slider playground examples.
+- Refined modern slider track and tick styling.
+- Simplified playground event and state output containers.
+
+### Fixed
+
+- Kept delta slider fills within the track when defaults are at either edge.
+- Aligned delta and stepper ticks with their slider tracks.
+- Kept text-enabled slider ranges exposed to assistive technologies.
+- Coerced string-backed PropsKit number events to numeric values.
+
 ## [11.11.9]
 
 ### Changed

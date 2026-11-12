@@ -1244,28 +1244,28 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "range",
         name: "Range",
         markup: `<div class="prop-panel">
-  <fig-slider value="50" min="0" max="100" full></fig-slider>
+  <fig-slider value="50" default="50" min="0" max="100" full></fig-slider>
 </div>`,
       },
       {
         id: "opacity-with-text",
         name: "Opacity",
         markup: `<div class="prop-panel">
-  <fig-slider type="opacity" value="75" color="#ff0000" units="%" full></fig-slider>
+  <fig-slider type="opacity" value="75" default="100" color="#ff0000" units="%" full></fig-slider>
 </div>`,
       },
       {
         id: "hue-with-text",
         name: "Hue",
         markup: `<div class="prop-panel">
-  <fig-slider type="hue" value="180" full></fig-slider>
+  <fig-slider type="hue" value="180" default="180" full></fig-slider>
 </div>`,
       },
       {
         id: "stepper-with-text",
         name: "Stepper",
         markup: `<div class="prop-panel">
-  <fig-slider type="stepper" value="50" step="25" full>
+  <fig-slider type="stepper" value="50" default="50" step="25" full>
     <datalist>
       <option value="0"></option>
       <option value="25"></option>

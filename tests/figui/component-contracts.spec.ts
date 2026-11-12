@@ -8584,6 +8584,7 @@ test.describe("slider accessibility", () => {
       return {
         rangeHidden: range?.getAttribute("aria-hidden"),
         rangeLabel: range?.getAttribute("aria-label"),
+        rangeTabIndex: range?.getAttribute("tabindex"),
         numberLabel: number?.getAttribute("aria-label"),
         numberRole: number?.getAttribute("role"),
         numberValueText: number?.getAttribute("aria-valuetext"),
@@ -8591,8 +8592,9 @@ test.describe("slider accessibility", () => {
     });
 
     expect(textSliderState).toEqual({
-      rangeHidden: "true",
-      rangeLabel: null,
+      rangeHidden: null,
+      rangeLabel: "Opacity",
+      rangeTabIndex: "-1",
       numberLabel: "Opacity",
       numberRole: "spinbutton",
       numberValueText: "50%",
@@ -8825,6 +8827,192 @@ test.describe("slider accessibility", () => {
       defaultColor: "var(--figma-color-icon)",
       customColor: "#0D99FF",
     });
+  });
+
+  test("fig-slider delta fill stays within the track when default equals an edge", async ({
+    page,
+  }) => {
+    const geometry = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider
+          id="delta-min"
+          type="delta"
+          value="0.75"
+          default="0"
+          min="0"
+          max="5"
+          step="0.25"
+          text="false"
+          variant="classic"
+          style="width: 200px"
+        ></fig-slider>
+        <fig-slider
+          id="delta-max"
+          type="delta"
+          value="4.25"
+          default="5"
+          min="0"
+          max="5"
+          step="0.25"
+          text="false"
+          variant="classic"
+          style="width: 200px"
+        ></fig-slider>
+      `;
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+
+      const firstSlider = root.querySelector("#delta-min") as HTMLElement;
+      const probe = document.createElement("span");
+      probe.style.cssText =
+        "position:absolute;width:var(--slider-height);height:0";
+      firstSlider.append(probe);
+      const thumbSize = probe.getBoundingClientRect().width;
+      probe.remove();
+
+      const read = (id: string) => {
+        const slider = root.querySelector(`#${id}`) as HTMLElement;
+        const container = slider.querySelector(
+          ".fig-slider-input-container",
+        ) as HTMLElement;
+        const fill = getComputedStyle(container, "::before");
+        const containerWidth = container.getBoundingClientRect().width;
+        const complete = Number(
+          getComputedStyle(slider).getPropertyValue("--slider-complete"),
+        );
+        const left = parseFloat(fill.left);
+        const width = parseFloat(fill.width);
+        return {
+          left,
+          right: left + width,
+          containerWidth,
+          expectedLeft: complete * (containerWidth - thumbSize),
+          expectedRight:
+          thumbSize +
+            complete * (containerWidth - thumbSize),
+        };
+      };
+
+      return {
+        min: read("delta-min"),
+        max: read("delta-max"),
+      };
+    });
+
+    expect(geometry.min.left).toBe(0);
+    expect(geometry.min.right).toBeCloseTo(
+      geometry.min.expectedRight,
+      1,
+    );
+    expect(geometry.max.left).toBeCloseTo(geometry.max.expectedLeft, 1);
+    expect(geometry.max.right).toBeCloseTo(geometry.max.containerWidth, 1);
+  });
+
+  test("fig-slider delta default tick follows the native thumb axis", async ({
+    page,
+  }) => {
+    const positions = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      const cases = [
+        { id: "min", value: 2, defaultValue: 0 },
+        { id: "center-left", value: 1, defaultValue: 2.5 },
+        { id: "center-right", value: 4, defaultValue: 2.5 },
+        { id: "max", value: 3, defaultValue: 5 },
+      ];
+      root.innerHTML = cases
+        .map(
+          ({ id, value, defaultValue }) => `
+            <fig-slider
+              id="delta-tick-${id}"
+              type="delta"
+              value="${value}"
+              default="${defaultValue}"
+              min="0"
+              max="5"
+              text="false"
+              variant="classic"
+              style="width: 200px"
+            ></fig-slider>
+          `,
+        )
+        .join("");
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+
+      return cases.map(({ id, defaultValue }) => {
+        const slider = root.querySelector(
+          `#delta-tick-${id}`,
+        ) as HTMLElement;
+        const container = slider.querySelector(
+          ".fig-slider-input-container",
+        ) as HTMLElement;
+        const marker = slider.querySelector("datalist option") as HTMLElement;
+        const probe = document.createElement("span");
+        probe.style.cssText =
+          "position:absolute;width:var(--slider-height);height:0";
+        slider.append(probe);
+        const thumbSize = probe.getBoundingClientRect().width;
+        probe.remove();
+        const containerRect = container.getBoundingClientRect();
+        const markerRect = marker.getBoundingClientRect();
+        return {
+          id,
+          actual: markerRect.left + markerRect.width / 2,
+          expected:
+            containerRect.left +
+            thumbSize / 2 +
+            (defaultValue / 5) * (containerRect.width - thumbSize),
+        };
+      });
+    });
+
+    for (const position of positions) {
+      expect(position.actual, position.id).toBeCloseTo(position.expected, 1);
+    }
+  });
+
+  test("fig-slider stepper ticks use symmetric track insets", async ({
+    page,
+  }) => {
+    const insets = await page.evaluate(async () => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-slider
+          type="stepper"
+          value="50"
+          default="50"
+          min="0"
+          max="100"
+          step="25"
+          text="false"
+          style="width: 200px"
+        ></fig-slider>
+      `;
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+
+      const container = root.querySelector(
+        ".fig-slider-input-container",
+      ) as HTMLElement;
+      const options = container.querySelectorAll("datalist option");
+      const containerRect = container.getBoundingClientRect();
+      const firstRect = options[0].getBoundingClientRect();
+      const lastRect = options[options.length - 1].getBoundingClientRect();
+      return {
+        left: firstRect.left + firstRect.width / 2 - containerRect.left,
+        right:
+          containerRect.right - (lastRect.left + lastRect.width / 2),
+      };
+    });
+
+    expect(insets.left).toBeCloseTo(insets.right, 1);
   });
 
   test("fig-slider ignores invalid defaults and keeps runtime defaults in range", async ({
@@ -16445,6 +16633,15 @@ test.describe("media accessibility", () => {
   test("fig-image reflects loaded state and resets it for a new source", async ({
     page,
   }) => {
+    await page.route("**/next-image.png", async (route) => {
+      await route.fulfill({
+        contentType: "image/gif",
+        body: Buffer.from(
+          "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+          "base64",
+        ),
+      });
+    });
     const state = await page.evaluate(() => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");

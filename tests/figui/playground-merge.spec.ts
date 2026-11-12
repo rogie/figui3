@@ -865,6 +865,31 @@ test("slider exposes an optional default control", () => {
   });
 });
 
+test("slider examples author logical defaults", () => {
+  const sliderSection = figui3Sections.find(
+    (section) => section.id === "slider",
+  );
+  expect(
+    Object.fromEntries(
+      (sliderSection?.examples ?? []).map((example) => [
+        example.id,
+        example.markup.match(/\bdefault="([^"]+)"/)?.[1] ?? null,
+      ]),
+    ),
+  ).toEqual({
+    "range": "50",
+    "range-propskit": "50",
+    "opacity-with-text": "100",
+    "opacity-with-text-propskit": "100",
+    "hue-with-text": "180",
+    "hue-with-text-propskit": "180",
+    "stepper-with-text": "50",
+    "stepper-with-text-propskit": "50",
+    "delta-with-text": "0",
+    "delta-with-text-propskit": "0",
+  });
+});
+
 test("reorder examples live with editor components, not lab", () => {
   expect(
     figui3Sections.find((section) => section.id === "reorder"),

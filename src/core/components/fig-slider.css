@@ -105,20 +105,28 @@ fig-slider {
   }
 
   &[type="delta"] {
+    datalist {
+      left: calc(var(--slider-height) / 2);
+      right: calc(var(--slider-height) / 2);
+    }
+
     datalist option {
       position: absolute;
       margin: 0;
-      left: calc(var(--start-percent) - var(--slider-tick-width) / 2);
+      left: var(--start-percent);
       top: calc(50% - var(--slider-tick-height) / 2);
+      transform: translateX(-50%);
     }
 
     .fig-slider-input-container::before {
       --left-start: calc(var(--start-percent) - var(--slider-height) / 2);
-      left: min(
+      --left-unclamped: min(
         var(--left-start),
         var(--slider-percent) - (var(--slider-complete)) *
           var(--slider-height)
       );
+      --left: max(0px, var(--left-unclamped));
+      left: var(--left);
       --width: calc(var(--slider-percent) - var(--start-percent));
       --abs-width: max(
         var(--width) + var(--slider-height) / 2 +
@@ -126,7 +134,13 @@ fig-slider {
         -1 * var(--width) + var(--slider-height) / 2 +
           (var(--slider-complete)) * var(--slider-height)
       );
-      width: var(--abs-width);
+      --width-left-clamped: calc(
+        var(--abs-width) - var(--left) + var(--left-unclamped)
+      );
+      width: min(
+        var(--width-left-clamped),
+        100% - var(--left)
+      );
       --delta: calc(var(--slider-complete) - var(--default));
       --abs-delta: max(var(--delta), -1 * var(--delta));
       opacity: calc(var(--abs-delta) * 100);
@@ -320,6 +334,12 @@ fig-slider {
         margin: 0 auto;
       }
     }
+
+  }
+  &:not([variant="classic"]) {
+    datalist option[default] {
+      background: var(--figma-color-icon-onbrand-secondary);
+    }
   }
 
   & > datalist:not([data-generated]) {
@@ -342,10 +362,10 @@ fig-slider {
   }
 
   &:not([variant="classic"]) {
-    --slider-height: 0.375rem;
+    --slider-height: 7px;
     --slider-thumb-size: 0.75rem;
-    --slider-tick-width: calc(var(--slider-height) - 3px);
-    --slider-tick-height: calc(var(--slider-height) - 3px);
+    --slider-tick-width: calc(var(--slider-height) - 4px);
+    --slider-tick-height: calc(var(--slider-height) - 4px);
     --slider-number-width: var(--input-opacity-width);
     --handle-transition: none;
     --slider-transition: none;

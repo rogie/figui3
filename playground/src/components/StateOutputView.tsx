@@ -15,7 +15,7 @@ export default function StateOutputView({
   emptyText,
   kind,
 }: Props) {
-  const editorContainerRef = useRef<HTMLElement>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
 
   useEffect(() => {
@@ -46,11 +46,9 @@ export default function StateOutputView({
       </fig-header>
       <section className="propkit-attributes-content event-view-content">
         {json === undefined && emptyText ? (
-          <fig-field className="event-view-empty" direction="vertical">
-            <label>{emptyText}</label>
-          </fig-field>
+          <div className="event-view-empty">{emptyText}</div>
         ) : null}
-        <fig-field
+        <div
           ref={editorContainerRef}
           className="event-view-editor"
           style={{ display: json === undefined ? "none" : undefined }}

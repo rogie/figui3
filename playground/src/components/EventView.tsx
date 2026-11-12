@@ -126,11 +126,11 @@ export default function EventView() {
       </fig-header>
       <section className="propkit-attributes-content event-view-content">
         {latest === null && (
-          <fig-field className="event-view-empty" direction="vertical">
-            <label>Interact with the component to see event output</label>
-          </fig-field>
+          <div className="event-view-empty">
+            Interact with the component to see event output
+          </div>
         )}
-        <fig-field
+        <div
           ref={editorContainerRef}
           className="event-view-editor"
           style={{ display: latest === null ? "none" : undefined }}

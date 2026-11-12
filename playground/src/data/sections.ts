@@ -1401,7 +1401,7 @@ export const legacyPropsKitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Amount</label>
-    <fig-slider value="50" min="0" max="100" full></fig-slider>
+    <fig-slider value="50" default="50" min="0" max="100" full></fig-slider>
   </fig-field>
 </div>`,
       },
@@ -1411,7 +1411,7 @@ export const legacyPropsKitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Opacity</label>
-    <fig-slider type="opacity" value="75" color="#ff0000" units="%" full></fig-slider>
+    <fig-slider type="opacity" value="75" default="100" color="#ff0000" units="%" full></fig-slider>
   </fig-field>
 </div>`,
       },
@@ -1421,7 +1421,7 @@ export const legacyPropsKitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Hue</label>
-    <fig-slider type="hue" value="180" units="°" full></fig-slider>
+    <fig-slider type="hue" value="180" default="180" units="°" full></fig-slider>
   </fig-field>
 </div>`,
       },
@@ -1431,7 +1431,7 @@ export const legacyPropsKitSections: Section[] = [
         markup: `<div class="prop-panel">
   <fig-field>
     <label>Steps</label>
-    <fig-slider type="stepper" value="50" step="25" full>
+    <fig-slider type="stepper" value="50" default="50" step="25" full>
       <datalist>
         <option value="0"></option>
         <option value="25"></option>

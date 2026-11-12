@@ -246,10 +246,10 @@ test.describe("PropsKit", () => {
         '[data-propskit-path="opacity"]',
       ) as HTMLElement;
       slider.dispatchEvent(
-        new CustomEvent("input", { detail: 64, bubbles: true }),
+        new CustomEvent("input", { detail: "64", bubbles: true }),
       );
       slider.dispatchEvent(
-        new CustomEvent("change", { detail: 72, bubbles: true }),
+        new CustomEvent("change", { detail: "72", bubbles: true }),
       );
       kit.setValues({ enabled: false });
       const afterSet = kit.values;

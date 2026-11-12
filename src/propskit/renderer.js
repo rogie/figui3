@@ -383,6 +383,20 @@ function valueFromEvent(event, node) {
       filename: host.getAttribute("filename") || files[0]?.name || "",
     };
   }
+  if (node.controlType === "number") {
+    const value =
+      isRecord(detail) && "value" in detail
+        ? detail.value
+        : detail !== undefined && !isRecord(detail)
+          ? detail
+          : host.value;
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : undefined;
+    }
+    if (typeof value !== "string" || value.trim() === "") return undefined;
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : undefined;
+  }
   if (isRecord(detail) && "value" in detail) return detail.value;
   if (detail !== undefined && !isRecord(detail)) return detail;
   return host.value;

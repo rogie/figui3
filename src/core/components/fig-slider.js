@@ -609,15 +609,6 @@ class FigSlider extends HTMLElement {
   }
   #syncInputA11yAttributes() {
     if (!this.input) return;
-    if (this.text) {
-      this.input.setAttribute("aria-hidden", "true");
-      ["aria-label", "aria-labelledby", "aria-describedby", "aria-valuetext"].forEach(
-        (name) => this.input.removeAttribute(name),
-      );
-      this.#syncTextInputA11yAttributes();
-      return;
-    }
-    this.input.removeAttribute("aria-hidden");
     this.#a11yAttributes.forEach((name) => {
       const value = this.getAttribute(name);
       if (value === null) {
@@ -626,6 +617,7 @@ class FigSlider extends HTMLElement {
         this.input.setAttribute(name, value);
       }
     });
+    this.#syncTextInputA11yAttributes();
   }
   #syncTextInputA11yAttributes() {
     if (!this.figInputNumber) return;
