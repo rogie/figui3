@@ -17,8 +17,14 @@ import {
   INSTALL_COMMAND,
   INSTALL_PROMPT,
 } from "../../playground/src/lib/installPrompt";
+import {
+  landscapeUrl,
+  portraitUrl,
+  squareUrl,
+} from "../../playground/src/lib/images";
 import { labSections } from "../../playground/src/data/labSections";
 import { propskitSections } from "../../playground/src/data/propskitSections";
+import { allComponentContracts } from "../../playground/src/testing/componentManifest";
 
 function markupTags(value: unknown, tags = new Set<string>()) {
   if (Array.isArray(value)) {
@@ -51,6 +57,36 @@ test("installation prompt points agents to packaged Cursor skills", () => {
   );
   expect(INSTALL_PROMPT).not.toContain("playground");
   expect(INSTALL_PROMPT).not.toContain("propkit/SKILL.md");
+});
+
+test("generated playground images use fixed Unsplash CDN assets", () => {
+  const urls = [portraitUrl(), landscapeUrl(), squareUrl()];
+  for (const value of urls) {
+    const url = new URL(value);
+    expect(url.origin).toBe("https://images.unsplash.com");
+    expect(url.pathname).toMatch(/^\/photo-/);
+    expect(url.searchParams.get("fit")).toBe("crop");
+    expect(url.searchParams.get("w")).toBe("320");
+    expect(url.searchParams.get("h")).toMatch(/^(180|320|400)$/);
+  }
+});
+
+test("playground examples do not depend on Picsum", () => {
+  const propskitExamples = propskitSections.flatMap((section) =>
+    section.examples.map((example) => ({
+      markup: example.markup,
+      config: example.createConfig(),
+    })),
+  );
+  expect(
+    JSON.stringify([
+      figui3Sections,
+      legacyPropsKitSections,
+      labSections,
+      propskitExamples,
+      allComponentContracts,
+    ]),
+  ).not.toContain("picsum.photos");
 });
 
 test("playground control tags have attribute rules or an explicit exclusion", () => {
@@ -525,6 +561,15 @@ test("property exposes selected without experimental activation controls", () =>
   expect(controlAttributeRules["fig-property"]?.activation).toBeUndefined();
   expect(controlAttributeRules["fig-property"]?.selected).toEqual({
     label: "Selected",
+    type: "boolean",
+    boolMode: "presence",
+  });
+  expect(controlAttributeRules["fig-property"]?.full).toBeUndefined();
+});
+
+test("swatch exposes a full-width toggle", () => {
+  expect(controlAttributeRules["fig-swatch"]?.full).toEqual({
+    label: "Full",
     type: "boolean",
     boolMode: "presence",
   });
@@ -1172,6 +1217,48 @@ test.describe.serial("ExampleView DOM synchronization", () => {
       parsedVariant: "secondary",
       variants: ["secondary", "secondary"],
     });
+  });
+
+  test("swatch fill control creates a stepped palette gradient", async ({
+    page,
+  }) => {
+    await page.goto(`${playgroundUrl}/propskit#swatch/default`);
+    const fillControl = page.locator(
+      'fig-options[options="Solid,Gradient,Palette,Image"]',
+    );
+    await expect(fillControl).toBeVisible();
+    const swatchPanel = page
+      .locator(".propkit-attributes-view")
+      .filter({ has: fillControl });
+    const alphaField = swatchPanel
+      .locator("fig-property")
+      .filter({ hasText: "Alpha" });
+    await expect(alphaField).toHaveCount(0);
+
+    await fillControl.locator("select").selectOption("Solid");
+    await expect(alphaField).toHaveCount(1);
+    expect(
+      await swatchPanel.locator("fig-property > label").allTextContents(),
+    ).toEqual(expect.arrayContaining(["Fill", "Alpha"]));
+    const labels = await swatchPanel
+      .locator("fig-property > label")
+      .allTextContents();
+    expect(labels.indexOf("Alpha")).toBe(labels.indexOf("Fill") + 1);
+
+    await fillControl.locator("select").selectOption("Palette");
+    await expect(alphaField).toHaveCount(0);
+
+    await expect(page.locator(".propkit-example fig-swatch")).toHaveAttribute(
+      "background",
+      "linear-gradient(to right, #0D99FF 0%, #0D99FF 20%, #14AE5C 20%, #14AE5C 40%, #FFCD29 40%, #FFCD29 60%, #FF7262 60%, #FF7262 80%, #9747FF 80%, #9747FF 100%)",
+    );
+    await expect(fillControl).toHaveAttribute("value", "Palette");
+
+    await fillControl.locator("select").selectOption("Image");
+    await expect(page.locator(".propkit-example fig-swatch")).toHaveAttribute(
+      "background",
+      /^url\("https:\/\/images\.unsplash\.com\/photo-/,
+    );
   });
 
   test("PropsKit source is editable and rebuilds the preview", async ({

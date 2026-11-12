@@ -4,7 +4,7 @@ import {
   type Section,
 } from "./sections";
 import { mergePropsKitSections } from "./propkitMigration";
-import { landscapeUrl } from "../lib/images";
+import { imageUrl, landscapeUrl } from "../lib/images";
 import { DEMO_FILL_VIDEO, videoExampleAttrs } from "../lib/videos";
 
 const randomAvatarId = Math.floor(Math.random() * 70) + 1;
@@ -1186,7 +1186,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "image",
         name: "Image",
         markup: `<div class="prop-panel">
-  <fig-fill-picker mode="image" value='{"type":"image","image":{"url":"https://picsum.photos/320/320?random=41","scaleMode":"fill","scale":50}}' dialog-position="left">
+  <fig-fill-picker mode="image" value='{"type":"image","image":{"url":"${imageUrl(320, 320, 1)}","scaleMode":"fill","scale":50}}' dialog-position="left">
     <fig-swatch></fig-swatch>
   </fig-fill-picker>
 </div>`,
@@ -1228,7 +1228,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-swatch background="linear-gradient(135deg, #667eea, #764ba2)" alpha="0.8"></fig-swatch>
+  <fig-swatch background="linear-gradient(135deg, rgba(0, 229, 255, 0.5), #7A00FF 50%, #FF007A)" alpha="0.8"></fig-swatch>
 </div>`,
       },
     ],
@@ -1445,7 +1445,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "image",
         name: "Image",
         markup: `<div class="prop-panel">
-  <fig-input-fill mode="image" value='{"type":"image","image":{"url":"https://picsum.photos/320/320?random=41","scaleMode":"fill","scale":50}}' full></fig-input-fill>
+  <fig-input-fill mode="image" value='{"type":"image","image":{"url":"${imageUrl(320, 320, 1)}","scaleMode":"fill","scale":50}}' full></fig-input-fill>
 </div>`,
       },
       {
@@ -2228,7 +2228,7 @@ ${toolbeltSplitTool("settings", "settings", "Settings", [
           ];
           const [w, h] = ratios[Math.floor(Math.random() * ratios.length)];
           return `<div class="prop-panel">
-  <fig-image src="https://picsum.photos/${w}/${h}" checkerboard="true"></fig-image>
+  <fig-image src="${imageUrl(w, h)}" checkerboard="true"></fig-image>
 </div>`;
         })(),
       },
@@ -2353,7 +2353,7 @@ ${toolbeltSplitTool("settings", "settings", "Settings", [
         id: "image",
         name: "Image type",
         markup: `<div class="prop-panel">
-  <fig-media type="image" src="https://picsum.photos/640/360" fit="cover" size="auto" full checkerboard="true"></fig-media>
+  <fig-media type="image" src="${imageUrl(640, 360, 2)}" fit="cover" size="auto" full checkerboard="true"></fig-media>
 </div>`,
       },
       {
@@ -2452,9 +2452,9 @@ ${toolbeltSplitTool("settings", "settings", "Settings", [
         name: "Default",
         markup: `<div class="prop-panel">
   <fig-carousel duration="3" loop>
-    <fig-image src="https://picsum.photos/id/106/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="${imageUrl(640, 360, 0)}" aspect-ratio="16/9" fit="cover" full></fig-image>
     <fig-video ${videoExampleAttrs('muted aspect-ratio="16/9" fit="cover" full')}></fig-video>
-    <fig-media type="image" src="https://picsum.photos/id/1084/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-media>
+    <fig-media type="image" src="${imageUrl(640, 360, 3)}" aspect-ratio="16/9" fit="cover" full></fig-media>
   </fig-carousel>
 </div>`,
       },
@@ -2463,8 +2463,8 @@ ${toolbeltSplitTool("settings", "settings", "Settings", [
         name: "Item timing",
         markup: `<div class="prop-panel">
   <fig-carousel duration="5" autoplay="false">
-    <fig-image src="https://picsum.photos/id/1025/640/360.webp" carousel-duration="2" aspect-ratio="16/9" fit="cover" full></fig-image>
-    <fig-image src="https://picsum.photos/id/1035/640/360.webp" carousel-duration="8" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="${imageUrl(640, 360, 2)}" carousel-duration="2" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="${imageUrl(640, 360, 4)}" carousel-duration="8" aspect-ratio="16/9" fit="cover" full></fig-image>
   </fig-carousel>
 </div>`,
       },
@@ -2473,9 +2473,9 @@ ${toolbeltSplitTool("settings", "settings", "Settings", [
         name: "Progress pagination",
         markup: `<div class="prop-panel">
   <fig-carousel navigation="dots" duration="3" loop>
-    <fig-image src="https://picsum.photos/id/237/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
-    <fig-image src="https://picsum.photos/id/1025/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
-    <fig-image src="https://picsum.photos/id/1084/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="${imageUrl(640, 360, 1)}" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="${imageUrl(640, 360, 2)}" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="${imageUrl(640, 360, 3)}" aspect-ratio="16/9" fit="cover" full></fig-image>
   </fig-carousel>
 </div>`,
       },
@@ -2495,9 +2495,9 @@ ${toolbeltSplitTool("settings", "settings", "Settings", [
         name: "Static pagination",
         markup: `<div class="prop-panel">
   <fig-carousel navigation="dots" progress="false" duration="3" loop>
-    <fig-image src="https://picsum.photos/id/106/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
-    <fig-image src="https://picsum.photos/id/1035/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
-    <fig-image src="https://picsum.photos/id/1084/640/360.webp" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="${imageUrl(640, 360, 0)}" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="${imageUrl(640, 360, 4)}" aspect-ratio="16/9" fit="cover" full></fig-image>
+    <fig-image src="${imageUrl(640, 360, 3)}" aspect-ratio="16/9" fit="cover" full></fig-image>
   </fig-carousel>
 </div>`,
       },

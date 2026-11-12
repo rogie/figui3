@@ -65,6 +65,21 @@ import {
 } from "../lib/gradientPreview";
 import { landscapeUrl } from "../lib/images";
 
+const SWATCH_PALETTE_COLORS = [
+  "#0D99FF",
+  "#14AE5C",
+  "#FFCD29",
+  "#FF7262",
+  "#9747FF",
+];
+const SWATCH_PALETTE_BACKGROUND = `linear-gradient(to right, ${SWATCH_PALETTE_COLORS.flatMap(
+  (color, index) => {
+    const start = (index / SWATCH_PALETTE_COLORS.length) * 100;
+    const end = ((index + 1) / SWATCH_PALETTE_COLORS.length) * 100;
+    return [`${color} ${start}%`, `${color} ${end}%`];
+  },
+).join(", ")})`;
+
 interface Props {
   markup: string;
   onMarkupChange: (markup: string) => void;
@@ -814,6 +829,19 @@ export default function AttributesView({
         const mediaImageType =
           target.controlTag === "fig-media" &&
           (target.controlAttributes.type || "image").toLowerCase() !== "video";
+        const swatchBackground = (
+          target.controlAttributes.background ?? ""
+        ).toLowerCase();
+        const swatchFill =
+          target.controlTag !== "fig-swatch"
+            ? null
+            : swatchBackground === SWATCH_PALETTE_BACKGROUND.toLowerCase()
+              ? "Palette"
+              : swatchBackground.includes("url(")
+                ? "Image"
+                : swatchBackground.includes("gradient")
+                  ? "Gradient"
+                  : "Solid";
         const mediaVideoOnlyAttrs = new Set([
           "controls",
           "autoplay",
@@ -825,6 +853,10 @@ export default function AttributesView({
           .filter(
             (entry) =>
               !hiddenControlAttrs.has(entry.name) &&
+              !(
+                target.controlTag === "fig-swatch" &&
+                entry.name === "alpha"
+              ) &&
               !(mediaImageType && mediaVideoOnlyAttrs.has(entry.name)) &&
               !(
                 entry.name === "placeholder" &&
@@ -2667,37 +2699,53 @@ export default function AttributesView({
                       })()}
                     {target.controlTag === "fig-swatch" &&
                       (() => {
-                        const bg = (target.controlAttributes.background ?? "").toLowerCase();
-                        const currentFill = bg.includes("url(")
-                          ? "Image"
-                          : bg.includes("gradient")
-                            ? "Gradient"
-                            : "Solid";
+                        const alphaEntry = controlEntries.find(
+                          (entry) => entry.name === "alpha",
+                        );
                         return (
-                          <fig-field
-                            columns="2/5"
-                            key={`control-swatch-fill-${target.fieldIndex}`}
-                          >
-                            <label>Fill</label>
-                            <fig-options
-                              full
-                              options="Solid,Gradient,Image"
-                              value={currentFill}
-                              onChange={(e: any) => {
-                                const val = (e as CustomEvent).detail ?? e.target?.value;
-                                applyChange(
-                                  target.fieldIndex,
-                                  "control",
-                                  "background",
-                                  val === "Gradient"
-                                    ? "linear-gradient(135deg, #667eea, #764ba2)"
-                                    : val === "Image"
-                                      ? `url("${landscapeUrl()}")`
-                                    : "#0D99FF",
-                                );
-                              }}
-                            ></fig-options>
-                          </fig-field>
+                          <>
+                            <fig-field
+                              columns="2/5"
+                              key={`control-swatch-fill-${target.fieldIndex}`}
+                            >
+                              <label>Fill</label>
+                              <fig-options
+                                full
+                                options="Solid,Gradient,Palette,Image"
+                                value={swatchFill ?? "Solid"}
+                                onChange={(e: any) => {
+                                  const val =
+                                    (e as CustomEvent).detail ?? e.target?.value;
+                                  let background = "#0D99FF";
+                                  if (val === "Gradient") {
+                                    background =
+                                      "linear-gradient(135deg, rgba(0, 229, 255, 0.5), #7A00FF 50%, #FF007A)";
+                                  } else if (val === "Palette") {
+                                    background = SWATCH_PALETTE_BACKGROUND;
+                                  } else if (val === "Image") {
+                                    background = `url("${landscapeUrl()}")`;
+                                  }
+                                  applyChange(
+                                    target.fieldIndex,
+                                    "control",
+                                    "background",
+                                    background,
+                                  );
+                                }}
+                              ></fig-options>
+                            </fig-field>
+                            {swatchFill === "Solid" && alphaEntry ? (
+                              <fig-field
+                                columns="2/5"
+                                key={`control-swatch-alpha-${target.fieldIndex}`}
+                              >
+                                <label>
+                                  {sentenceCase(alphaEntry.rule.label)}
+                                </label>
+                                {renderControl(alphaEntry, "control")}
+                              </fig-field>
+                            ) : null}
+                          </>
                         );
                       })()}
                     {visibleControlEntries.flatMap((entry) => {

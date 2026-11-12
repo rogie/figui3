@@ -253,7 +253,7 @@ fig-fill-picker {
   fig-image.fig-fill-picker-image-preview {
     max-width: none;
     max-height: none;
-    width: auto;
+    width: stretch;
   }
 
   video.fig-fill-picker-video-preview {

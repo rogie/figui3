@@ -1,4 +1,9 @@
 import type { PropsKitConfig } from "../../../types/propskit";
+import { imageUrl } from "../lib/images";
+
+const PROPSKIT_IMAGE_URLS = Array.from({ length: 5 }, (_, index) =>
+  imageUrl(640, 480, index),
+);
 
 export interface PropsKitExample {
   id: string;
@@ -243,7 +248,7 @@ const imageEmptySource = createMediaSource("Image", `{
 const imageSource = createMediaSource("Image", `{
   image: {
     type: "image",
-    default: "https://picsum.photos/id/106/640/480.webp"
+    default: "${PROPSKIT_IMAGE_URLS[0]}"
   }
 }`);
 
@@ -251,14 +256,14 @@ const imagesSource = createMediaSource("Images", `{
   images: {
     type: "image",
     options: [
-      "https://picsum.photos/id/237/640/480.webp",
+      "${PROPSKIT_IMAGE_URLS[1]}",
       {
-        value: "https://picsum.photos/id/1025/640/480.webp",
+        value: "${PROPSKIT_IMAGE_URLS[2]}",
         label: "Dog portrait"
       },
-      "https://picsum.photos/id/106/640/480.webp",
-      "https://picsum.photos/id/1084/640/480.webp",
-      "https://picsum.photos/id/1035/640/480.webp"
+      "${PROPSKIT_IMAGE_URLS[0]}",
+      "${PROPSKIT_IMAGE_URLS[3]}",
+      "${PROPSKIT_IMAGE_URLS[4]}"
     ]
   }
 }`);
@@ -564,7 +569,7 @@ export const propskitSections: PropsKitSection[] = [
         createConfig: () => ({
           image: {
             type: "image",
-            default: "https://picsum.photos/id/106/640/480.webp",
+            default: PROPSKIT_IMAGE_URLS[0],
           },
         }),
       },
@@ -580,14 +585,14 @@ export const propskitSections: PropsKitSection[] = [
           images: {
             type: "image",
             options: [
-              "https://picsum.photos/id/237/640/480.webp",
+              PROPSKIT_IMAGE_URLS[1],
               {
-                value: "https://picsum.photos/id/1025/640/480.webp",
+                value: PROPSKIT_IMAGE_URLS[2],
                 label: "Dog portrait",
               },
-              "https://picsum.photos/id/106/640/480.webp",
-              "https://picsum.photos/id/1084/640/480.webp",
-              "https://picsum.photos/id/1035/640/480.webp",
+              PROPSKIT_IMAGE_URLS[0],
+              PROPSKIT_IMAGE_URLS[3],
+              PROPSKIT_IMAGE_URLS[4],
             ],
           },
         }),

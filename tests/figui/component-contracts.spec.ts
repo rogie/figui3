@@ -9758,6 +9758,43 @@ test.describe("reconnect resilience", () => {
     expect(state.chit).toEqual(state.swatch);
   });
 
+  test("fig-swatch applies the alpha split only to solid colors", async ({
+    page,
+  }) => {
+    const masks = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-swatch id="solid" background="#14AE5C" alpha="0.5"></fig-swatch>
+        <fig-swatch id="gradient" background="linear-gradient(90deg, #0D99FF, #9747FF)" alpha="0.5"></fig-swatch>
+        <fig-swatch id="palette" background="linear-gradient(to right, #0D99FF 0%, #0D99FF 50%, #14AE5C 50%, #14AE5C 100%)" alpha="0.5"></fig-swatch>
+        <fig-swatch id="image" background="url(&quot;data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==&quot;)" alpha="0.5"></fig-swatch>
+      `;
+      return Object.fromEntries(
+        ["solid", "gradient", "palette", "image"].map((id) => {
+          const element = root.querySelector(`#${id}`) as HTMLElement;
+          return [id, getComputedStyle(element, "::before").maskImage];
+        }),
+      );
+    });
+
+    expect(masks.solid).toContain("linear-gradient");
+    expect(masks.gradient).toBe("none");
+    expect(masks.palette).toBe("none");
+    expect(masks.image).toBe("none");
+
+    const layers = await page.locator("#gradient").evaluate((element) => ({
+      checkerboard: getComputedStyle(element.querySelector("div")!).zIndex,
+      fill: getComputedStyle(element, "::before").zIndex,
+      border: getComputedStyle(element, "::after").zIndex,
+    }));
+    expect(layers).toEqual({
+      checkerboard: "0",
+      fill: "1",
+      border: "2",
+    });
+  });
+
   test("fig-preview defaults and updates its aspect ratio", async ({
     page,
   }) => {
@@ -16700,8 +16737,8 @@ test.describe("media accessibility", () => {
       const root = document.querySelector("#fixture-root");
       if (!root) throw new Error("Missing #fixture-root");
       root.innerHTML = `
-        <fig-image id="loading-image" src="/slow-loading-image.gif" aspect-ratio="4/3" full></fig-image>
-        <fig-media id="loading-media" type="image" src="/slow-loading-media.gif" aspect-ratio="4/3" full></fig-media>
+        <fig-image id="loading-image" src="/slow-loading-image.gif" aspect-ratio="4/3" full style="display:flex"></fig-image>
+        <fig-media id="loading-media" type="image" src="/slow-loading-media.gif" aspect-ratio="4/3" full style="display:flex"></fig-media>
       `;
     });
 
@@ -16711,13 +16748,15 @@ test.describe("media accessibility", () => {
     for (const selector of ["#loading-image", "#loading-media"]) {
       await expect(page.locator(selector)).toHaveAttribute("aria-busy", "true");
       const spinner = page.locator(
-        `${selector} > fig-spinner[slot="overlay"][data-loading-indicator][data-generated]`,
+        `${selector} > fig-preview > fig-spinner[slot="overlay"][data-loading-indicator][data-generated]`,
       );
       await expect(spinner).toHaveCount(1);
       await expect(spinner).toHaveAttribute("size", "small");
       const centerOffset = await spinner.evaluate((element) => {
-        const preview = element.parentElement?.querySelector("fig-preview");
-        if (!preview) throw new Error("Missing fig-preview");
+        const preview = element.parentElement;
+        if (preview?.tagName !== "FIG-PREVIEW") {
+          throw new Error("Missing fig-preview");
+        }
         const spinnerRect = element.getBoundingClientRect();
         const previewRect = preview.getBoundingClientRect();
         return {
@@ -16744,7 +16783,7 @@ test.describe("media accessibility", () => {
     );
     await expect(
       page.locator(
-        '#loading-image > fig-spinner[slot="overlay"][data-loading-indicator]',
+        '#loading-image > fig-preview > fig-spinner[slot="overlay"][data-loading-indicator]',
       ),
     ).toHaveCount(0);
 
@@ -16757,7 +16796,7 @@ test.describe("media accessibility", () => {
     );
     await expect(
       page.locator(
-        '#loading-media > fig-spinner[slot="overlay"][data-loading-indicator]',
+        '#loading-media > fig-preview > fig-spinner[slot="overlay"][data-loading-indicator]',
       ),
     ).toHaveCount(0);
   });

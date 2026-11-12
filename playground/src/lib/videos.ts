@@ -13,7 +13,7 @@ const TEST_VIDEO_BASE = "https://test-videos.co.uk";
 /** Stable clip + still for fill examples. Google's sample bucket is 403 now. */
 export const DEMO_FILL_VIDEO: DemoVideo = {
   src: `${MDN_VIDEO_BASE}/flower.mp4`,
-  poster: "https://picsum.photos/id/106/640/360.webp",
+  poster: landscapeUrl(),
 };
 
 const TEST_VIDEO_MOVIES = [

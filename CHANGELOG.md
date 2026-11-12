@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.12]
+
+### Changed
+
+- Expanded swatch playground controls with full-width, palette, image, and contextual alpha options.
+- Replaced Picsum playground assets with fixed Unsplash CDN images.
+
+### Fixed
+
+- Kept swatch checkerboards behind fills and limited split alpha previews to solid colors.
+- Centered image loading indicators within previews regardless of consumer layout.
+- Stretched fill-picker image previews to the available width.
+
 ## [11.11.11]
 
 ### Changed

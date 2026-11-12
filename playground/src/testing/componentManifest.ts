@@ -1,3 +1,5 @@
+import { imageUrl } from "../lib/images";
+
 export type ComponentKind = "autonomous" | "customized-built-in";
 
 export type ContractAction =
@@ -346,21 +348,21 @@ export const componentContracts: ComponentContract[] = [
     tag: "fig-media",
     title: "Media",
     group: "media",
-    markup: `<fig-media type="image" src="https://picsum.photos/320/180.webp?random=1" fit="cover" size="auto" checkerboard="true"></fig-media>`,
+    markup: `<fig-media type="image" src="${imageUrl(320, 180, 1)}" fit="cover" size="auto" checkerboard="true"></fig-media>`,
     attributes: [{ name: "fit", attribute: "fit", value: "contain" }],
   },
   {
     tag: "fig-image",
     title: "Image",
     group: "media",
-    markup: `<fig-image src="https://picsum.photos/320/180.webp?random=2" fit="cover" size="auto" checkerboard="true"></fig-image>`,
+    markup: `<fig-image src="${imageUrl(320, 180, 2)}" fit="cover" size="auto" checkerboard="true"></fig-image>`,
     attributes: [{ name: "fit", attribute: "fit", value: "contain" }],
   },
   {
     tag: "fig-carousel",
     title: "Carousel",
     group: "media",
-    markup: `<fig-carousel autoplay="false"><fig-image src="https://picsum.photos/320/180.webp?random=20" full></fig-image><fig-image src="https://picsum.photos/320/180.webp?random=21" full></fig-image></fig-carousel>`,
+    markup: `<fig-carousel autoplay="false"><fig-image src="${imageUrl(320, 180, 0)}" full></fig-image><fig-image src="${imageUrl(320, 180, 1)}" full></fig-image></fig-carousel>`,
     attributes: [
       { name: "duration", attribute: "duration", value: "8" },
       { name: "loop", attribute: "loop", value: "" },
@@ -375,7 +377,7 @@ export const componentContracts: ComponentContract[] = [
     tag: "fig-card",
     title: "Card",
     group: "media",
-    markup: `<fig-card src="https://picsum.photos/320/320.webp?random=12" label="Card label" aspect-ratio="1/1"></fig-card>`,
+    markup: `<fig-card src="${imageUrl(320, 320, 2)}" label="Card label" aspect-ratio="1/1"></fig-card>`,
     attributes: [
       { name: "selected", attribute: "selected", value: "" },
       { name: "large size", attribute: "size", value: "large" },
@@ -387,7 +389,7 @@ export const componentContracts: ComponentContract[] = [
     tag: "fig-video",
     title: "Video",
     group: "media",
-    markup: `<fig-video poster="https://picsum.photos/320/180.webp?random=3" muted fit="cover" size="auto" checkerboard="true"></fig-video>`,
+    markup: `<fig-video poster="${imageUrl(320, 180, 3)}" muted fit="cover" size="auto" checkerboard="true"></fig-video>`,
     attributes: [{ name: "fit", attribute: "fit", value: "contain" }],
   },
   {
@@ -527,7 +529,7 @@ export const componentContracts: ComponentContract[] = [
     tag: "fig-preview",
     title: "Preview",
     group: "display",
-    markup: `<fig-preview checkerboard><img src="https://picsum.photos/320/180.webp?random=4" alt=""></fig-preview>`,
+    markup: `<fig-preview checkerboard><img src="${imageUrl(320, 180, 4)}" alt=""></fig-preview>`,
     attributes: [{ name: "fit", attribute: "fit", value: "contain" }],
   },
   {

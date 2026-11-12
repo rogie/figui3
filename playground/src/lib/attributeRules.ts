@@ -388,6 +388,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     alpha: { label: "Alpha", type: "number", min: 0, max: 1, step: 0.05 },
+    full: { label: "Full", type: "boolean", boolMode: "presence" },
   },
   "fig-checkbox": {
     label: { label: "Label", type: "enum", options: ["none", "label"] },

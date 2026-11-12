@@ -1,4 +1,5 @@
 import {
+  imageUrl,
   portraitUrl,
   landscapeUrl,
   squareUrl,
@@ -1007,7 +1008,7 @@ export const legacyPropsKitSections: Section[] = [
     <label>Image</label>
     <fig-image
       full="true"
-      src="${portraitUrl().replace("320.webp", "1920.webp")}"
+      src="${portraitUrl(1920)}"
       alt="Image preview"
       fit="cover"
       size="auto"
@@ -3122,16 +3123,16 @@ export const legacyPropsKitSections: Section[] = [
   </fig-header>
   <fig-content>
     <fig-chooser layout="grid" columns="3" value="img-1" full>
-      <fig-choice value="img-1" aria-label="Image A" selected><fig-image src="https://picsum.photos/320.webp?random=41" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-2" aria-label="Image B"><fig-image src="https://picsum.photos/320.webp?random=42" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-3" aria-label="Image C"><fig-image src="https://picsum.photos/320.webp?random=43" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-4" aria-label="Image D"><fig-image src="https://picsum.photos/320.webp?random=44" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-5" aria-label="Image E"><fig-image src="https://picsum.photos/320.webp?random=45" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-6" aria-label="Image F"><fig-image src="https://picsum.photos/320.webp?random=46" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-7" aria-label="Image G"><fig-image src="https://picsum.photos/320.webp?random=47" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-8" aria-label="Image H"><fig-image src="https://picsum.photos/320.webp?random=48" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-9" aria-label="Image I"><fig-image src="https://picsum.photos/320.webp?random=49" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-      <fig-choice value="img-10" aria-label="Image J"><fig-image src="https://picsum.photos/320.webp?random=50" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-1" aria-label="Image A" selected><fig-image src="${imageUrl(320, 320, 0)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-2" aria-label="Image B"><fig-image src="${imageUrl(320, 320, 1)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-3" aria-label="Image C"><fig-image src="${imageUrl(320, 320, 2)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-4" aria-label="Image D"><fig-image src="${imageUrl(320, 320, 3)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-5" aria-label="Image E"><fig-image src="${imageUrl(320, 320, 4)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-6" aria-label="Image F"><fig-image src="${imageUrl(320, 320, 5)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-7" aria-label="Image G"><fig-image src="${imageUrl(320, 320, 6)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-8" aria-label="Image H"><fig-image src="${imageUrl(320, 320, 7)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-9" aria-label="Image I"><fig-image src="${imageUrl(320, 320, 8)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+      <fig-choice value="img-10" aria-label="Image J"><fig-image src="${imageUrl(320, 320, 9)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
     </fig-chooser>
   </fig-content>
 </div>`,
@@ -3149,16 +3150,16 @@ export const legacyPropsKitSections: Section[] = [
   <fig-content>
     <fig-skeleton duration="1.5s">
       <fig-chooser layout="grid" columns="3" value="img-1" full>
-        <fig-choice value="img-1" aria-label="Image A" selected><fig-image src="https://picsum.photos/320.webp?random=41" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-        <fig-choice value="img-2" aria-label="Image B"><fig-image src="https://picsum.photos/320.webp?random=42" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-        <fig-choice value="img-3" aria-label="Image C"><fig-image src="https://picsum.photos/320.webp?random=43" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-        <fig-choice value="img-4" aria-label="Image D"><fig-image src="https://picsum.photos/320.webp?random=44" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-        <fig-choice value="img-5" aria-label="Image E"><fig-image src="https://picsum.photos/320.webp?random=45" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-        <fig-choice value="img-6" aria-label="Image F"><fig-image src="https://picsum.photos/320.webp?random=46" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-        <fig-choice value="img-7" aria-label="Image G"><fig-image src="https://picsum.photos/320.webp?random=47" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-        <fig-choice value="img-8" aria-label="Image H"><fig-image src="https://picsum.photos/320.webp?random=48" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-        <fig-choice value="img-9" aria-label="Image I"><fig-image src="https://picsum.photos/320.webp?random=49" alt aspect-ratio="1/1" full></fig-image></fig-choice>
-        <fig-choice value="img-10" aria-label="Image J"><fig-image src="https://picsum.photos/320.webp?random=50" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-1" aria-label="Image A" selected><fig-image src="${imageUrl(320, 320, 0)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-2" aria-label="Image B"><fig-image src="${imageUrl(320, 320, 1)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-3" aria-label="Image C"><fig-image src="${imageUrl(320, 320, 2)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-4" aria-label="Image D"><fig-image src="${imageUrl(320, 320, 3)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-5" aria-label="Image E"><fig-image src="${imageUrl(320, 320, 4)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-6" aria-label="Image F"><fig-image src="${imageUrl(320, 320, 5)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-7" aria-label="Image G"><fig-image src="${imageUrl(320, 320, 6)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-8" aria-label="Image H"><fig-image src="${imageUrl(320, 320, 7)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-9" aria-label="Image I"><fig-image src="${imageUrl(320, 320, 8)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
+        <fig-choice value="img-10" aria-label="Image J"><fig-image src="${imageUrl(320, 320, 9)}" alt aspect-ratio="1/1" full></fig-image></fig-choice>
       </fig-chooser>
     </fig-skeleton>
   </fig-content>

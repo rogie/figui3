@@ -82,8 +82,11 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
     z-index: 0;
   }
 
-  > fig-spinner[slot="overlay"][data-loading-indicator][data-generated] {
-    place-self: center;
+  > fig-preview
+    > fig-spinner[slot="overlay"][data-loading-indicator][data-generated] {
+    position: absolute;
+    inset: 0;
+    margin: auto;
     max-width: none;
     z-index: 1;
     opacity: 1;
