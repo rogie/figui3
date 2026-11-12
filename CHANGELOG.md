@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.11]
+
+### Changed
+
+- Refined playground event-view spacing and offset number inputs.
+
 ## [11.11.10]
 
 ### Changed

@@ -358,8 +358,11 @@ code {
 .event-view-entry,
 .event-view-empty {
   margin-bottom: var(--spacer-2-5);
+  padding-inline: var(--spacer-3);
 }
 .event-view-editor {
+  padding-inline: var(--spacer-2-5);
+
   .cm-editor {
     background-color: var(--figma-color-bg);
   }
