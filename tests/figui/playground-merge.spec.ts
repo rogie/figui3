@@ -567,6 +567,14 @@ test("property exposes selected without experimental activation controls", () =>
   expect(controlAttributeRules["fig-property"]?.full).toBeUndefined();
 });
 
+test("group exposes a selector-based toggle target", () => {
+  expect(controlAttributeRules["fig-group"]?.["toggle-target"]).toEqual({
+    label: "Toggle target",
+    type: "string",
+    placeholder: ".group-toggle",
+  });
+});
+
 test("swatch exposes a full-width toggle", () => {
   expect(controlAttributeRules["fig-swatch"]?.full).toEqual({
     label: "Full",

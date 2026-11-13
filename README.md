@@ -1686,7 +1686,7 @@ Use `slot="leading"` for an accessory before the label, such as a disclosure or 
 
 `<fig-group>` — [demo](https://rog.ie/propskit/#group)
 
-A section group with an optional generated or authored header. In collapsible groups, the `h3` is the keyboard-accessible toggle and the chevron is clickable; controls placed beside the `h3` in an authored `fig-header` remain independent. Start chevrons use the compact 16px icon; end chevrons use the larger 24px icon.
+A section group with an optional generated or authored header. In collapsible groups, the `h3` is the keyboard-accessible toggle and the chevron is clickable; controls placed beside the `h3` in an authored `fig-header` remain independent. Set `toggle-target` to a CSS selector to replace both defaults with every matching element in the direct header. Start chevrons use the compact 16px icon; end chevrons use the larger 24px icon.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
@@ -1694,6 +1694,7 @@ A section group with an optional generated or authored header. In collapsible gr
 | `collapsible` | boolean | `false` | Enables collapse behavior |
 | `open` | boolean | `false` | Expanded state |
 | `chevron` | string | `"start"` | Chevron placement: `"start"` or `"end"` |
+| `toggle-target` | CSS selector | — | Every matching element in the direct header toggles the group instead of the default `h3` and chevron |
 | `compact` | boolean | `false` | Adds `compact` to the direct `fig-header` |
 
 ```html

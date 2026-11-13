@@ -10851,6 +10851,124 @@ test.describe("render timing composition", () => {
     await expect(group).toHaveAttribute("open", "true");
   });
 
+  test("fig-group toggle-target binds every match and replaces default toggles", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-group
+          id="group"
+          collapsible
+          open
+          toggle-target=".group-toggle"
+        >
+          <fig-header borderless>
+            <h3>Advanced</h3>
+            <span
+              id="toggle-text"
+              class="group-toggle"
+              role="note"
+              tabindex="-1"
+              aria-expanded="authored"
+            >Toggle text</span>
+            <button id="toggle-button" class="group-toggle" type="button">
+              Toggle button
+            </button>
+          </fig-header>
+          <p>Body</p>
+        </fig-group>
+      `;
+    });
+
+    const group = page.locator("#group");
+    const heading = group.locator(":scope > fig-header > h3");
+    const chevron = group.locator(
+      ":scope > fig-header > .fig-group-chevron",
+    );
+    const textToggle = page.locator("#toggle-text");
+    const buttonToggle = page.locator("#toggle-button");
+
+    await expect(heading).not.toHaveAttribute("data-fig-group-toggle");
+    await expect(heading).not.toHaveAttribute("role");
+    await expect(heading).not.toHaveAttribute("tabindex");
+    await expect(chevron).not.toHaveAttribute("data-fig-group-toggle");
+    await expect(textToggle).toHaveAttribute("data-fig-group-toggle", "");
+    await expect(textToggle).toHaveAttribute("role", "button");
+    await expect(textToggle).toHaveAttribute("tabindex", "0");
+    await expect(textToggle).toHaveAttribute("aria-expanded", "true");
+    await expect(buttonToggle).toHaveAttribute("data-fig-group-toggle", "");
+    await expect(buttonToggle).toHaveAttribute("aria-expanded", "true");
+
+    await heading.click();
+    await chevron.click();
+    await expect(group).toHaveAttribute("open", "");
+
+    await textToggle.click();
+    await expect(group).toHaveAttribute("open", "false");
+    await expect(textToggle).toHaveAttribute("aria-expanded", "false");
+    await expect(buttonToggle).toHaveAttribute("aria-expanded", "false");
+
+    await textToggle.press(" ");
+    await expect(group).toHaveAttribute("open", "true");
+    await buttonToggle.press("Enter");
+    await expect(group).toHaveAttribute("open", "false");
+
+    await group.evaluate((element) =>
+      element.setAttribute("toggle-target", "#toggle-button"),
+    );
+    await expect(textToggle).not.toHaveAttribute("data-fig-group-toggle");
+    await expect(textToggle).toHaveAttribute("role", "note");
+    await expect(textToggle).toHaveAttribute("tabindex", "-1");
+    await expect(textToggle).toHaveAttribute("aria-expanded", "authored");
+    await textToggle.click();
+    await expect(group).toHaveAttribute("open", "false");
+    await buttonToggle.click();
+    await expect(group).toHaveAttribute("open", "true");
+  });
+
+  test("fig-group toggle-target falls back for invalid or unmatched selectors", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-group
+          id="unmatched"
+          name="Unmatched"
+          collapsible
+          toggle-target=".missing"
+        >
+          <p>Body</p>
+        </fig-group>
+        <fig-group
+          id="invalid"
+          name="Invalid"
+          collapsible
+          toggle-target="["
+        >
+          <p>Body</p>
+        </fig-group>
+      `;
+    });
+
+    for (const id of ["unmatched", "invalid"]) {
+      const group = page.locator(`#${id}`);
+      const heading = group.locator(":scope > fig-header > h3");
+      const chevron = group.locator(
+        ":scope > fig-header > .fig-group-chevron",
+      );
+      await expect(heading).toHaveAttribute("data-fig-group-toggle", "");
+      await expect(chevron).toHaveAttribute("data-fig-group-toggle", "");
+      await heading.click();
+      await expect(group).toHaveAttribute("open", "true");
+      await chevron.click();
+      await expect(group).toHaveAttribute("open", "false");
+    }
+  });
+
   test("fig-group propagates compact to generated and custom headers", async ({
     page,
   }) => {

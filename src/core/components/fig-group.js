@@ -19,11 +19,12 @@ class FigGroup extends HTMLElement {
     "open",
     "compact",
     "chevron",
+    "toggle-target",
   ];
 
   #header = null;
   #chevron = null;
-  #toggle = null;
+  #toggleTargets = new Map();
   #compactHeader = null;
   #compactHeaderValue = null;
 
@@ -36,13 +37,15 @@ class FigGroup extends HTMLElement {
   }
 
   #removeToggleListeners() {
-    this.#chevron?.removeEventListener("click", this.#handleToggle);
-    this.#toggle?.removeEventListener("click", this.#handleToggle);
-    this.#toggle?.removeEventListener("keydown", this.#handleToggleKeyDown);
-    if (this.#header) {
-      this.#header.removeEventListener("click", this.#handleToggle);
-      this.#header.removeEventListener("keydown", this.#handleToggleKeyDown);
+    for (const [target, state] of this.#toggleTargets) {
+      target.removeEventListener("click", this.#handleToggle);
+      target.removeEventListener("keydown", this.#handleToggleKeyDown);
+      for (const [name, value] of Object.entries(state.attributes)) {
+        if (value === null) target.removeAttribute(name);
+        else target.setAttribute(name, value);
+      }
     }
+    this.#toggleTargets.clear();
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -79,10 +82,13 @@ class FigGroup extends HTMLElement {
   }
 
   #syncExpanded() {
-    if (this.hasAttribute("collapsible")) {
-      this.#toggle?.setAttribute("aria-expanded", String(this.open));
-    } else {
-      this.#toggle?.removeAttribute("aria-expanded");
+    for (const [target, state] of this.#toggleTargets) {
+      if (!state.syncExpanded) continue;
+      if (this.hasAttribute("collapsible")) {
+        target.setAttribute("aria-expanded", String(this.open));
+      } else {
+        target.removeAttribute("aria-expanded");
+      }
     }
   }
 
@@ -124,6 +130,68 @@ class FigGroup extends HTMLElement {
     this.open = !this.open;
   };
 
+  #hasNativeToggleKeyboard(element) {
+    return element.matches(
+      [
+        "button",
+        "input:not([type='hidden'])",
+        "select",
+        "textarea",
+        "summary",
+        "a[href]",
+        "fig-button",
+        "fig-checkbox",
+        "fig-radio",
+        "fig-switch",
+      ].join(","),
+    );
+  }
+
+  #bindToggleTarget(
+    target,
+    { keyboard = true, syncExpanded = true } = {},
+  ) {
+    if (!(target instanceof Element) || this.#toggleTargets.has(target)) return;
+    const attributes = {};
+    for (const name of [
+      "role",
+      "tabindex",
+      "aria-expanded",
+      "data-fig-group-toggle",
+    ]) {
+      attributes[name] = target.getAttribute(name);
+    }
+    this.#toggleTargets.set(target, { attributes, syncExpanded });
+    target.setAttribute("data-fig-group-toggle", "");
+    target.addEventListener("click", this.#handleToggle);
+
+    if (syncExpanded) {
+      target.setAttribute("aria-expanded", String(this.open));
+    }
+    if (keyboard && !this.#hasNativeToggleKeyboard(target)) {
+      if (target.getAttribute("role") !== "button") {
+        target.setAttribute("role", "button");
+      }
+      const tabIndex = target.getAttribute("tabindex");
+      if (tabIndex === null || Number(tabIndex) < 0) {
+        target.setAttribute("tabindex", "0");
+      }
+      target.addEventListener("keydown", this.#handleToggleKeyDown);
+    }
+  }
+
+  #customToggleTargets() {
+    const selector = (this.getAttribute("toggle-target") || "").trim();
+    if (!selector || !this.#header) return [];
+    try {
+      const matches = this.#header.matches(selector) ? [this.#header] : [];
+      matches.push(...this.#header.querySelectorAll(selector));
+      return [...new Set(matches)];
+    } catch {
+      return [];
+    }
+  }
+
   #render() {
     this.#removeToggleListeners();
     const isCollapsible = this.hasAttribute("collapsible");
@@ -141,7 +209,6 @@ class FigGroup extends HTMLElement {
         this.#header.remove();
         this.#header = null;
         this.#chevron = null;
-        this.#toggle = null;
       }
       return;
     }
@@ -165,7 +232,6 @@ class FigGroup extends HTMLElement {
       h3 = document.createElement("h3");
       this.#header.prepend(h3);
     }
-    this.#toggle = h3;
     if (!h3.id) h3.id = figUniqueId();
     if (this.#header.dataset.generated) {
       h3.textContent = label;
@@ -193,15 +259,23 @@ class FigGroup extends HTMLElement {
         this.#header.insertBefore(chevron, h3);
       }
       this.#chevron = chevron;
-      this.#header.removeAttribute("role");
-      this.#header.removeAttribute("tabindex");
-      this.#header.removeAttribute("aria-expanded");
-      h3.setAttribute("role", "button");
-      h3.setAttribute("tabindex", "0");
-      h3.setAttribute("aria-expanded", String(this.open));
-      h3.addEventListener("click", this.#handleToggle);
-      h3.addEventListener("keydown", this.#handleToggleKeyDown);
-      chevron.addEventListener("click", this.#handleToggle);
+      const customToggleTargets = this.#customToggleTargets();
+      if (!customToggleTargets.includes(this.#header)) {
+        this.#header.removeAttribute("role");
+        this.#header.removeAttribute("tabindex");
+        this.#header.removeAttribute("aria-expanded");
+      }
+      if (customToggleTargets.length > 0) {
+        for (const target of customToggleTargets) {
+          this.#bindToggleTarget(target);
+        }
+      } else {
+        this.#bindToggleTarget(h3);
+        this.#bindToggleTarget(chevron, {
+          keyboard: false,
+          syncExpanded: false,
+        });
+      }
 
       if (!this.hasAttribute("open")) {
         this.setAttribute("open", "false");

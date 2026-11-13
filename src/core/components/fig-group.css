@@ -36,7 +36,7 @@ fig-group {
     cursor: default;
     gap: 0;
 
-    &:has(> h3:focus-visible) {
+    &:has([data-fig-group-toggle]:focus-visible) {
       --figma-focus-outline-radius: var(--radius-medium);
       outline: var(--figma-focus-outline);
       outline-offset: var(--figma-focus-outline-offset);
@@ -72,7 +72,7 @@ fig-group {
     margin-inline-start: 0;
   }
 
-  &[collapsible] > fig-header h3 {
+  &[collapsible] > fig-header [data-fig-group-toggle] {
     user-select: none;
   }
 
@@ -83,7 +83,7 @@ fig-group {
     fig-header {
       color: var(--figma-color-text-secondary);
 
-      &:has(> h3:hover, > .fig-group-chevron:hover) {
+      &:has([data-fig-group-toggle]:hover) {
         color: var(--figma-color-text);
 
         .fig-group-chevron {

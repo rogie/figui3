@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.16]
+
+### Added
+
+- Added selector-based collapse toggle targets to `fig-group`, including multiple matches.
+
+### Changed
+
+- Increased the playground example width to 280px.
+
 ## [11.11.15]
 
 ### Added

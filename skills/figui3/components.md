@@ -378,9 +378,10 @@ Property-compatible controls expose `.default`, `.defaultValue`, `.isDefault`, a
 </fig-group>
 ```
 
-- Attrs: `name`, `collapsible`, `open`, `compact`, `chevron` (`start` default, 16px | `end`, 24px)
+- Attrs: `name`, `collapsible`, `open`, `compact`, `chevron` (`start` default, 16px | `end`, 24px), `toggle-target` (CSS selector)
 - Group `compact` is propagated to the direct `fig-header`.
 - In a collapsible group, the `h3` is the keyboard-accessible toggle and the chevron is clickable. For custom headers, place independent actions beside the `h3`, not inside it.
+- `toggle-target` replaces both default toggle targets with every selector match in the direct header. All matches receive synchronized `aria-expanded`; invalid or unmatched selectors fall back to the defaults.
 
 ### `fig-header`
 

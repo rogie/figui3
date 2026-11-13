@@ -1336,6 +1336,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "enum",
       options: ["start", "end"],
     },
+    "toggle-target": {
+      label: "Toggle target",
+      type: "string",
+      placeholder: ".group-toggle",
+    },
     compact: { label: "Compact", type: "boolean", boolMode: "string" },
   },
   "fig-handle": {
