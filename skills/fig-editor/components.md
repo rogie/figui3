@@ -160,7 +160,7 @@ Authored trailing accessory (`/propskit#property/custom-accessory`):
 - Authored accessory slots override generated shortcuts.
 - `selected` and `selected="true"` use the selected background; `selected="false"` does not.
 - Omitted or `"hover"` show attributes use hover visibility; `"false"` never shows the slot; an empty/present attribute always shows it.
-- Right-click opens a generated “Reset to default” menu. `resetToDefault()` delegates to the same method on the slotted control; the item stays synchronized while open and is disabled when unsupported, disabled, or already at its default.
+- Right-click opens a generated “Reset to default” menu and sets `selected` on the row until the menu closes. Authored `selected` is restored, including `selected="false"`. Set `context-menu="none"` to leave the native event untouched and disable the generated menu. `resetToDefault()` delegates to the same method on the slotted control; the item stays synchronized while open and is disabled when unsupported, disabled, or already at its default.
 - Generated trailing controls emit bubbling, composed `remove`, `add`, or `bind` events with the slotted control in `detail.input`.
 - Child input events bubble unchanged.
 

@@ -175,6 +175,65 @@ test.describe("fig-popup nested light dismissal", () => {
     await expect(none).toHaveAttribute("open", "true");
   });
 
+  test("lets a focused descendant prevent Escape dismissal", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <button id="anchor">Anchor</button>
+        <dialog id="popup" is="fig-popup" anchor="#anchor" closedby="any">
+          <input id="escape-input" aria-label="Value">
+        </dialog>
+      `;
+      const popup = root.querySelector("#popup") as HTMLElement & {
+        open: boolean;
+      };
+      const input = root.querySelector("#escape-input") as HTMLInputElement;
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") event.preventDefault();
+      });
+      popup.open = true;
+      input.focus();
+    });
+
+    await expect(page.locator("#escape-input")).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#popup")).toHaveAttribute("open", "true");
+  });
+
+  test("keeps the popup open when its cancel request is prevented", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <button id="anchor">Anchor</button>
+        <dialog id="popup" is="fig-popup" anchor="#anchor" closedby="any">
+          <button id="popup-action">Action</button>
+        </dialog>
+      `;
+      const popup = root.querySelector("#popup") as HTMLElement & {
+        open: boolean;
+      };
+      popup.addEventListener("cancel", (event) => {
+        event.preventDefault();
+        popup.dataset.cancelPrevented = "true";
+      });
+      popup.open = true;
+      (root.querySelector("#popup-action") as HTMLElement).focus();
+    });
+
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#popup")).toHaveAttribute(
+      "data-cancel-prevented",
+      "true",
+    );
+    await expect(page.locator("#popup")).toHaveAttribute("open", "true");
+  });
+
   test("closes a nested stack one level at a time and restores owned focus", async ({
     page,
   }) => {

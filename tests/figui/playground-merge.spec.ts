@@ -1220,6 +1220,87 @@ test.describe.serial("ExampleView DOM synchronization", () => {
     });
   });
 
+  test("property Combo input creates resettable X and Y number inputs", async ({
+    page,
+  }) => {
+    await page.goto(`${playgroundUrl}/propskit`);
+    const state = await page.evaluate(async () => {
+      const {
+        applyPropertyControlMutation,
+        getPropertyControlTag,
+      } = await import("/src/lib/attributeParser.ts");
+      const markup = `<fig-property label="Position">
+        <fig-input-number slot="input" value="16"></fig-input-number>
+      </fig-property>`;
+      const updated = applyPropertyControlMutation(
+        markup,
+        0,
+        "fig-input-combo",
+      );
+      const template = document.createElement("template");
+      template.innerHTML = updated;
+      const combo = template.content.querySelector("fig-input-combo");
+      return {
+        controlTag: getPropertyControlTag(updated, 0),
+        full: combo?.hasAttribute("full"),
+        slot: combo?.getAttribute("slot"),
+        inputs: Array.from(
+          combo?.querySelectorAll(":scope > fig-input-number") ?? [],
+          (input) => ({
+            axis: input.querySelector('fig-icon[slot="prepend"]')?.textContent,
+            defaultValue: input.getAttribute("default"),
+            label: input.getAttribute("aria-label"),
+            steppers: input.getAttribute("steppers"),
+            value: input.getAttribute("value"),
+          }),
+        ),
+      };
+    });
+
+    expect(state).toEqual({
+      controlTag: "fig-input-combo",
+      full: true,
+      slot: "input",
+      inputs: [
+        {
+          axis: "X",
+          defaultValue: "0",
+          label: "X",
+          steppers: "false",
+          value: "24",
+        },
+        {
+          axis: "Y",
+          defaultValue: "0",
+          label: "Y",
+          steppers: "false",
+          value: "16",
+        },
+      ],
+    });
+
+    await page.goto(`${playgroundUrl}/figui3#property/default`);
+    const control = page.getByRole("combobox", { name: "Control" });
+    await expect(
+      control.locator('option[value="fig-input-combo"]'),
+    ).toHaveText("Combo input");
+    await control.selectOption("fig-input-combo");
+
+    const combo = page.locator(
+      '.propkit-example fig-property > fig-input-combo[slot="input"]',
+    );
+    await expect(combo).toHaveAttribute("full", "");
+    await expect(
+      combo.locator(':scope > fig-input-number[aria-label="X"]'),
+    ).toHaveAttribute("default", "0");
+    await expect(
+      combo.locator(':scope > fig-input-number[aria-label="Y"]'),
+    ).toHaveAttribute("default", "0");
+    await expect(
+      combo.locator(':scope > fig-input-number[steppers="false"]'),
+    ).toHaveCount(2);
+  });
+
   test("swatch fill control creates a stepped palette gradient", async ({
     page,
   }) => {

@@ -752,7 +752,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
       <fig-input-gradient slot="input" edit="picker" value='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#9747FF","opacity":100}]}}' default='{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#D9D9D9","opacity":100},{"position":100,"color":"#737373","opacity":100}]}}' full></fig-input-gradient>
     </fig-property>
     <fig-property label="Palette">
-      <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' default='[]' full></fig-input-palette>
+      <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' default='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
     </fig-property>
     <fig-property label="Transform">
       <fig-input-rotate slot="input" default-x="0" default-y="0" default-z="0"></fig-input-rotate>

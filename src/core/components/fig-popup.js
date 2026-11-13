@@ -470,7 +470,7 @@ class FigPopup extends HTMLDialogElement {
       this._boundOutsidePointerDown,
       true,
     );
-    document.addEventListener("keydown", this._boundDocumentKeydown, true);
+    document.addEventListener("keydown", this._boundDocumentKeydown);
     document.addEventListener(
       "pointerup",
       this._boundDocumentPointerUp,
@@ -542,7 +542,7 @@ class FigPopup extends HTMLDialogElement {
       this._boundOutsidePointerDown,
       true,
     );
-    document.removeEventListener("keydown", this._boundDocumentKeydown, true);
+    document.removeEventListener("keydown", this._boundDocumentKeydown);
     document.removeEventListener(
       "pointerup",
       this._boundDocumentPointerUp,
@@ -892,7 +892,38 @@ class FigPopup extends HTMLDialogElement {
       )
       .at(-1)?.dialog;
     if (topDialog && topDialog !== this) return;
+    // This listener runs during document bubbling, after descendant handlers
+    // have had an opportunity to prevent dismissal.
     event.preventDefault();
+    const token = this._lifecycle.capture();
+    queueMicrotask(() => {
+      if (
+        !this.open ||
+        !this._lifecycle.isCurrent(token)
+      ) {
+        return;
+      }
+      this.requestEscapeClose();
+    });
+  }
+
+  requestEscapeClose() {
+    if (!this.open) return;
+    if (this.getAttribute("role") === "menu") return;
+    if (this.getAttribute("closedby") === "none") return;
+
+    if (
+      this.nativeDialogOpen() &&
+      typeof this.requestClose === "function"
+    ) {
+      try {
+        this.requestClose();
+        return;
+      } catch {}
+    }
+
+    const cancelEvent = new CustomEvent("cancel", { cancelable: true });
+    if (!this.dispatchEvent(cancelEvent)) return;
     this.open = false;
   }
 

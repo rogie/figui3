@@ -85,6 +85,9 @@ class FigProperty extends HTMLElement {
   #syncQueued = false;
   #resetMenu = null;
   #resetMenuItem = null;
+  #resetMenuOpenObserver = null;
+  #menuSelectedActive = false;
+  #menuSelectedPrevious = null;
   #resetInputObserver = null;
   #observedResetInputs = [];
   #pendingContextMenuCleanup = null;
@@ -95,6 +98,9 @@ class FigProperty extends HTMLElement {
     this.addEventListener("input", this.#handleInputStateChange);
     this.addEventListener("change", this.#handleInputStateChange);
     this.#sync();
+    if (this.querySelector(":scope > fig-menu[data-fig-property-reset-menu]")) {
+      this.#ensureResetMenu();
+    }
     this.#observer = new MutationObserver(() => this.#queueSync());
     this.#observer.observe(this, {
       childList: true,
@@ -109,6 +115,8 @@ class FigProperty extends HTMLElement {
     this.removeEventListener("input", this.#handleInputStateChange);
     this.removeEventListener("change", this.#handleInputStateChange);
     this.#cancelPendingContextMenu();
+    this.#resetMenuOpenObserver?.disconnect();
+    this.#clearMenuSelected();
     this.#observer?.disconnect();
     this.#observer = null;
     this.#resetInputObserver?.disconnect();
@@ -295,7 +303,52 @@ class FigProperty extends HTMLElement {
     this.#resetMenuItem = this.#resetMenu.querySelector(
       ':scope > fig-menu-item[value="reset-to-default"]',
     );
+    this.#observeResetMenuOpen();
     this.#syncResetMenuState();
+  }
+
+  #observeResetMenuOpen() {
+    const menu = this.#resetMenu;
+    if (!(menu instanceof HTMLElement)) return;
+    this.#resetMenuOpenObserver ??= new MutationObserver(() => {
+      this.#syncMenuSelected();
+    });
+    this.#resetMenuOpenObserver.disconnect();
+    this.#resetMenuOpenObserver.observe(menu, {
+      attributes: true,
+      attributeFilter: ["open"],
+    });
+    this.#syncMenuSelected();
+  }
+
+  #syncMenuSelected() {
+    const menu = this.#resetMenu;
+    const open =
+      menu instanceof HTMLElement &&
+      menu.hasAttribute("open") &&
+      menu.getAttribute("open") !== "false";
+    if (open) this.#applyMenuSelected();
+    else this.#clearMenuSelected();
+  }
+
+  #applyMenuSelected() {
+    if (this.#menuSelectedActive) return;
+    const current = this.hasAttribute("selected")
+      ? this.getAttribute("selected")
+      : null;
+    if (current !== null && current !== "false") return;
+    this.#menuSelectedActive = true;
+    this.#menuSelectedPrevious = current;
+    this.setAttribute("selected", "");
+  }
+
+  #clearMenuSelected() {
+    if (!this.#menuSelectedActive) return;
+    const previous = this.#menuSelectedPrevious;
+    this.#menuSelectedActive = false;
+    this.#menuSelectedPrevious = null;
+    if (previous === null) this.removeAttribute("selected");
+    else this.setAttribute("selected", previous);
   }
 
   #syncResetMenuState() {
@@ -359,6 +412,7 @@ class FigProperty extends HTMLElement {
 
   #openResetMenu = (event) => {
     if (
+      this.getAttribute("context-menu") === "none" ||
       event.defaultPrevented ||
       this.#resetMenu?.contains(event.target) ||
       event.composedPath().includes(this.#resetMenu)

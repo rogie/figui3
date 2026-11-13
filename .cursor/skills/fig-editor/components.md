@@ -165,7 +165,7 @@ Authored trailing accessory (`/propskit#property/custom-accessory`):
 - `activation="row"` activates from the label or unused row surface without intercepting direct input or accessory clicks; focus moves the shared outline to the row and applies the selected background. A slotted `fig-select` uses the property row as its menu anchor.
 - Row activation content-sizes slotted controls even when `full` is present; color, gradient, palette, and point inputs use the standard compact width.
 - `focus(options)` delegates focus to the slotted control; `activate(options)` delegates activation and falls back to focus.
-- Right-click opens a generated “Reset to default” menu. `resetToDefault()` delegates to the same method on the slotted control; the item stays synchronized while open and is disabled when unsupported, disabled, or already at its default.
+- Right-click opens a generated “Reset to default” menu and sets `selected` on the row until the menu closes. Authored `selected` is restored, including `selected="false"`. Set `context-menu="none"` to leave the native event untouched and disable the generated menu. `resetToDefault()` delegates to the same method on the slotted control; the item stays synchronized while open and is disabled when unsupported, disabled, or already at its default.
 - Generated trailing controls emit bubbling, composed `remove`, `add`, or `bind` events with the slotted control in `detail.input`.
 - Child input events bubble unchanged.
 

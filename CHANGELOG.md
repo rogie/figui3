@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.14]
+
+### Added
+
+- Added a `context-menu="none"` opt-out for property reset menus.
+- Added an X/Y number combo to the property control playground.
+
+### Changed
+
+- Selected property rows while their reset menus are open.
+- Aligned property palette examples with their authored defaults.
+
+### Fixed
+
+- Allowed focused descendants and cancel listeners to prevent popup Escape dismissal.
+
 ## [11.11.13]
 
 ### Added

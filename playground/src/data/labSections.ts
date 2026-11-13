@@ -106,7 +106,7 @@ const ungroupedLabSections: Section[] = [
         name: "Palette",
         markup: `<div class="prop-panel">
   <fig-property label="Palette" activation="row">
-    <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' default='[]' full></fig-input-palette>
+    <fig-input-palette slot="input" edit="picker" value='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' default='["#0D99FF","#14AE5C","#FFCD29","#FF7262","#9747FF"]' full></fig-input-palette>
   </fig-property>
 </div>`,
       },

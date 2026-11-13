@@ -49,6 +49,7 @@ export type GroupHeaderControl = "button" | "switch" | "select";
 
 export type PropertyControlTag =
   | "fig-input-number"
+  | "fig-input-combo"
   | "angle"
   | "audio"
   | "fig-input-slider"
@@ -68,6 +69,7 @@ export type PropertyControlTag =
 
 const PROPERTY_CONTROL_TAGS = new Set<PropertyControlTag>([
   "fig-input-number",
+  "fig-input-combo",
   "angle",
   "audio",
   "fig-input-slider",
@@ -159,6 +161,27 @@ function createDefaultFieldControl(
   doc: Document,
   controlTag: FieldControlMutation["controlTag"] | PropertyControlTag,
 ): Element {
+  if (controlTag === "fig-input-combo") {
+    const combo = doc.createElement("fig-input-combo");
+    combo.setAttribute("full", "");
+    [
+      { axis: "X", value: "24" },
+      { axis: "Y", value: "16" },
+    ].forEach(({ axis, value }) => {
+      const input = doc.createElement("fig-input-number");
+      input.setAttribute("value", value);
+      input.setAttribute("default", "0");
+      input.setAttribute("steppers", "false");
+      input.setAttribute("aria-label", axis);
+      const icon = doc.createElement("fig-icon");
+      icon.setAttribute("slot", "prepend");
+      icon.textContent = axis;
+      input.append(icon);
+      combo.append(input);
+    });
+    return combo;
+  }
+
   if (controlTag === "angle") {
     const input = doc.createElement("fig-input-number");
     input.setAttribute("value", "0");

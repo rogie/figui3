@@ -296,6 +296,7 @@ test.describe("fig-property", () => {
       clientY: 80,
     });
     await expect(menu).toHaveAttribute("open", "");
+    await expect(property).toHaveAttribute("selected", "");
     await expect(item).not.toHaveAttribute("disabled", "");
 
     await item.click();
@@ -311,6 +312,116 @@ test.describe("fig-property", () => {
     );
     await expect(item).toHaveAttribute("disabled", "");
     await expect(menu).not.toHaveAttribute("open", "");
+    await expect(property).not.toHaveAttribute("selected");
+  });
+
+  test('leaves contextmenu handling to the app with context-menu="none"', async ({
+    page,
+  }) => {
+    const result = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <div id="context-menu-owner">
+          <fig-property
+            id="custom-context-property"
+            label="Amount"
+            context-menu="none"
+          >
+            <fig-input-number
+              slot="input"
+              value="10"
+              default="0"
+            ></fig-input-number>
+          </fig-property>
+        </div>
+      `;
+
+      let bubbled = 0;
+      root.querySelector("#context-menu-owner")?.addEventListener(
+        "contextmenu",
+        () => {
+          bubbled += 1;
+        },
+      );
+      const property = root.querySelector("#custom-context-property");
+      if (!property) throw new Error("Missing property");
+      const event = new MouseEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 80,
+        clientY: 80,
+      });
+      const dispatchResult = property.dispatchEvent(event);
+      return {
+        bubbled,
+        defaultPrevented: event.defaultPrevented,
+        dispatchResult,
+      };
+    });
+
+    expect(result).toEqual({
+      bubbled: 1,
+      defaultPrevented: false,
+      dispatchResult: true,
+    });
+    const property = page.locator("#custom-context-property");
+    await expect(
+      property.locator(":scope > fig-menu[data-fig-property-reset-menu]"),
+    ).toHaveCount(0);
+    await expect(property).not.toHaveAttribute("selected");
+  });
+
+  test("selects the row while the context menu is open and restores authored selected", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="menu-selected" label="Amount">
+          <fig-input-number slot="input" value="10" default="0"></fig-input-number>
+        </fig-property>
+        <fig-property id="menu-authored" label="Amount" selected>
+          <fig-input-number slot="input" value="10" default="0"></fig-input-number>
+        </fig-property>
+        <fig-property id="menu-false" label="Amount" selected="false">
+          <fig-input-number slot="input" value="10" default="0"></fig-input-number>
+        </fig-property>
+      `;
+    });
+
+    const openMenu = async (id: string) => {
+      const property = page.locator(`#${id}`);
+      await property.dispatchEvent("contextmenu", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 80,
+        clientY: 80,
+      });
+      await expect(
+        property.locator(":scope > fig-menu[data-fig-property-reset-menu]"),
+      ).toHaveAttribute("open", "");
+      return property;
+    };
+
+    const plain = await openMenu("menu-selected");
+    await expect(plain).toHaveAttribute("selected", "");
+    await page.keyboard.press("Escape");
+    await expect(plain).not.toHaveAttribute("selected");
+    await expect(
+      plain.locator(":scope > fig-menu[data-fig-property-reset-menu]"),
+    ).not.toHaveAttribute("open");
+
+    const authored = await openMenu("menu-authored");
+    await expect(authored).toHaveAttribute("selected", "");
+    await page.keyboard.press("Escape");
+    await expect(authored).toHaveAttribute("selected", "");
+
+    const explicitOff = await openMenu("menu-false");
+    await expect(explicitOff).toHaveAttribute("selected", "");
+    await page.keyboard.press("Escape");
+    await expect(explicitOff).toHaveAttribute("selected", "false");
   });
 
   test("resets every reset-capable slotted input", async ({ page }) => {

@@ -188,6 +188,7 @@ const PROPERTY_CONTROL_OPTIONS: Array<{
   label: string;
 }> = [
   { tag: "fig-input-number", label: "Number" },
+  { tag: "fig-input-combo", label: "Combo input" },
   { tag: "angle", label: "Angle" },
   { tag: "fig-slider", label: "Slider" },
   { tag: "fig-input-text", label: "String" },
