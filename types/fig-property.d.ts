@@ -4,5 +4,6 @@ export declare class FigProperty extends HTMLElement {
   trailing: string;
   activation: string;
   ratio: string;
+  readonly isDefault: boolean;
   resetToDefault(): void;
 }

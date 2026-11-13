@@ -84,6 +84,7 @@ Events: `input`, `change`, `optionhover`, `optionfocus`.
 - `activation="row"` keeps content-sized tracks and ignores `ratio`.
 - Authored accessory slots override generated shortcuts.
 - `input` returns the direct `slot="input"` element.
+- `isDefault` is true only when at least one resettable slotted control exists and every resettable control reports `isDefault === true`.
 - `resetToDefault()` delegates to the slotted control's method. The generated right-click menu updates from control events, default/value attributes, and input replacement while keeping “Reset to default” disabled when unavailable, disabled, or `isDefault === true`. The row gets `selected` while that menu is open, then restores any authored `selected` value. `context-menu="none"` leaves the native event untouched and disables the generated menu.
 - Generated labels associate to the input with `aria-labelledby` unless it already has an accessible name.
 - Generated trailing events bubble across shadow roots with `detail: { input }`.

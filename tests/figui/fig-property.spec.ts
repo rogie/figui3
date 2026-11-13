@@ -475,6 +475,50 @@ test.describe("fig-property", () => {
     await expect(item).toHaveAttribute("disabled", "");
   });
 
+  test("isDefault requires every resettable input to be at its default", async ({
+    page,
+  }) => {
+    const state = await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="multi-default-property" label="Position">
+          <div slot="input">
+            <fig-input-number id="default-x" value="4" default="4"></fig-input-number>
+            <fig-input-number id="default-y" value="16" default="8"></fig-input-number>
+          </div>
+        </fig-property>
+        <fig-property id="unsupported-default-property" label="Action">
+          <fig-button slot="input">Action</fig-button>
+        </fig-property>
+      `;
+
+      const property = root.querySelector("#multi-default-property") as any;
+      const x = root.querySelector("#default-x") as HTMLElement;
+      const y = root.querySelector("#default-y") as HTMLElement;
+      const initial = property.isDefault;
+      y.setAttribute("value", "8");
+      const allDefault = property.isDefault;
+      x.setAttribute("value", "5");
+      const oneChanged = property.isDefault;
+      return {
+        allDefault,
+        initial,
+        oneChanged,
+        unsupported: (root.querySelector(
+          "#unsupported-default-property",
+        ) as any).isDefault,
+      };
+    });
+
+    expect(state).toEqual({
+      allDefault: true,
+      initial: false,
+      oneChanged: false,
+      unsupported: false,
+    });
+  });
+
   test("disables Reset to default when the input cannot reset", async ({
     page,
   }) => {

@@ -135,6 +135,14 @@ class FigProperty extends HTMLElement {
     return this.querySelector(':scope > [slot="input"]');
   }
 
+  get isDefault() {
+    const inputs = this.#resettableInputs();
+    return (
+      inputs.length > 0 &&
+      inputs.every((input) => input.isDefault === true)
+    );
+  }
+
   get ratio() {
     return parseFigPropertyRatio(this.getAttribute("ratio")).value;
   }

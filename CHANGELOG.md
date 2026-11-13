@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.15]
+
+### Added
+
+- Added an aggregate `isDefault` getter to property rows.
+
 ## [11.11.14]
 
 ### Added
