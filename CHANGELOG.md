@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.17]
+
+### Fixed
+
+- Removed steppers from fill picker color and gradient stop number inputs.
+- Kept gradient stop tips above gradient swatch highlight layers.
+
 ## [11.11.16]
 
 ### Added

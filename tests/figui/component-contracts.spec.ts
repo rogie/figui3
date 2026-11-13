@@ -11335,6 +11335,12 @@ test.describe("fill picker accessibility", () => {
       "open",
       "true",
     );
+    const numberInputs = page.locator(
+      "dialog.fig-fill-picker-dialog .fig-fill-picker-inputs fig-input-number",
+    );
+    await expect(numberInputs).toHaveCount(1);
+    await expect(numberInputs.first()).toHaveAttribute("steppers", "false");
+    await expect(numberInputs.locator(".fig-steppers")).toHaveCount(0);
 
     const state = await page.evaluate(() => {
       const dialog = document.querySelector("dialog.fig-fill-picker-dialog");
@@ -13496,6 +13502,32 @@ test.describe("remaining accessibility contracts", () => {
     await page.keyboard.press("ArrowRight");
     await expect(handle).not.toHaveAttribute("data-fig-pointer-focus");
     await expect(handle).toHaveCSS("outline-style", "none");
+  });
+
+  test("fig-input-gradient keeps swatch layers behind stop tips", async ({
+    page,
+  }) => {
+    const value =
+      '{"type":"gradient","gradient":{"type":"linear","angle":90,"stops":[{"position":0,"color":"#0D99FF","opacity":100},{"position":100,"color":"#14AE5C","opacity":100}]}}';
+    await page.evaluate((gradientValue) => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `<fig-input-gradient id="gradient" mode="tip" value='${gradientValue}'></fig-input-gradient>`;
+    }, value);
+
+    const gradient = page.locator("#gradient");
+    await expect(gradient.locator(":scope > fig-swatch")).toHaveCSS(
+      "position",
+      "relative",
+    );
+    await expect(gradient.locator(":scope > fig-swatch")).toHaveCSS(
+      "z-index",
+      "0",
+    );
+    await expect(gradient.locator(".fig-input-gradient-track")).toHaveCSS(
+      "z-index",
+      "1",
+    );
   });
 
   test("fig-input-gradient keeps only one tip handle selected inside a dialog", async ({

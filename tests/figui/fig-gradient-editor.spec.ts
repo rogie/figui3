@@ -441,6 +441,15 @@ test.describe("fig-gradient-editor", () => {
     await expect(
       editor.locator(".fig-fill-picker-stop-position").first(),
     ).toHaveAttribute("disabled");
+    const positionInputs = editor.locator(".fig-fill-picker-stop-position");
+    await expect(positionInputs).toHaveCount(2);
+    for (let index = 0; index < 2; index += 1) {
+      await expect(positionInputs.nth(index)).toHaveAttribute(
+        "steppers",
+        "false",
+      );
+    }
+    await expect(positionInputs.locator(".fig-steppers")).toHaveCount(0);
     await expect
       .poll(() => editor.evaluate((element: any) => element.value.type))
       .toBe("radial");

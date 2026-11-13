@@ -83,6 +83,8 @@ fig-input-gradient {
     --width: 100%;
     width: var(--width);
     --border-radius: var(--fig-input-gradient-swatch-border-radius);
+    position: relative;
+    z-index: 0;
   }
 
   &[size="large"] {

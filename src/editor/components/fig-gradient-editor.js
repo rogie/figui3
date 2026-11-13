@@ -546,6 +546,7 @@ class FigGradientEditor extends HTMLElement {
       min: "0",
       max: "100",
       units: "%",
+      steppers: "false",
     });
     const color = createElement("fig-input-color", {
       className: "fig-fill-picker-stop-color",

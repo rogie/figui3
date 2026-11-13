@@ -1729,7 +1729,7 @@ class FigFillPicker extends HTMLElement {
     const wrap = (tooltip, child) =>
       figEditorCreateElement("fig-tooltip", { text: tooltip }, child);
 
-    const num = (cls, label, min, max, step, units, steppers) =>
+    const num = (cls, label, min, max, step, units) =>
       figEditorCreateElement("fig-input-number", {
         className: cls,
         "aria-label": label,
@@ -1737,7 +1737,7 @@ class FigFillPicker extends HTMLElement {
         max,
         step,
         units,
-        steppers,
+        steppers: "false",
       });
 
     const showAlpha = this.getAttribute("alpha") !== "false";
@@ -1745,7 +1745,7 @@ class FigFillPicker extends HTMLElement {
       showAlpha
         ? wrap(
             "Alpha",
-            num("fig-fill-picker-ci-a", "Alpha", 0, 100, 0.1, "%", "false"),
+            num("fig-fill-picker-ci-a", "Alpha", 0, 100, 0.1, "%"),
           )
         : null;
     const combo = (children, extraClass = "") =>
