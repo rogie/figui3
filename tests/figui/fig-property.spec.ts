@@ -313,6 +313,57 @@ test.describe("fig-property", () => {
     await expect(menu).not.toHaveAttribute("open", "");
   });
 
+  test("resets every reset-capable slotted input", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="multi-reset-property" label="Position">
+          <div slot="input">
+            <fig-input-number
+              id="multi-reset-x"
+              value="24"
+              default="4">
+            </fig-input-number>
+            <fig-input-number
+              id="multi-reset-y"
+              value="16"
+              default="8">
+            </fig-input-number>
+          </div>
+        </fig-property>
+      `;
+    });
+
+    const property = page.locator("#multi-reset-property");
+    await property.dispatchEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      clientX: 80,
+      clientY: 80,
+    });
+    const item = property.locator(
+      ':scope > fig-menu > fig-menu-item[value="reset-to-default"]',
+    );
+    await expect(item).not.toHaveAttribute("disabled", "");
+
+    const values = await property.evaluate((element: any) => {
+      element.resetToDefault();
+      return Array.from(element.querySelectorAll("fig-input-number")).map(
+        (input: any) => ({
+          reset: typeof input.resetToDefault,
+          value: input.value,
+        }),
+      );
+    });
+
+    expect(values).toEqual([
+      { reset: "function", value: 4 },
+      { reset: "function", value: 8 },
+    ]);
+    await expect(item).toHaveAttribute("disabled", "");
+  });
+
   test("disables Reset to default when the input cannot reset", async ({
     page,
   }) => {
@@ -1756,6 +1807,35 @@ test.describe("fig-property", () => {
       "display",
       "none",
     );
+  });
+
+  test("keeps the drag handle aligned to the label height", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="tall-property" label="Description" leading="drag" show-leading>
+          <div slot="input" style="height: 80px"></div>
+        </fig-property>
+      `;
+    });
+
+    const dimensions = await page.locator("#tall-property").evaluate((property) => {
+      const handle = property.querySelector<HTMLElement>('[slot="leading"]');
+      const label = property.querySelector<HTMLElement>("label");
+      if (!handle || !label) throw new Error("Missing property label");
+      const handleRect = handle.getBoundingClientRect();
+      const labelRect = label.getBoundingClientRect();
+      return {
+        handleHeight: handleRect.height,
+        handleTop: handleRect.top,
+        labelHeight: labelRect.height,
+        labelTop: labelRect.top,
+      };
+    });
+
+    expect(dimensions.handleHeight).toBe(dimensions.labelHeight);
+    expect(dimensions.handleTop).toBe(dimensions.labelTop);
   });
 
   test("remaps logical colors when selected unless selected is false", async ({

@@ -690,6 +690,15 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "multiline",
+        name: "Multiline",
+        markup: `<div class="prop-panel">
+  <fig-property label="Description">
+    <fig-input-text slot="input" multiline autoresize value="Design systems help teams build consistent interfaces." default="" full></fig-input-text>
+  </fig-property>
+</div>`,
+      },
+      {
         id: "ratio",
         name: "Ratio",
         markup: `<div class="prop-panel">

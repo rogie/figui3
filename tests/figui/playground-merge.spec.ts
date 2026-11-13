@@ -722,6 +722,7 @@ test("property all-properties example covers every supported control", () => {
   );
   expect(section?.examples.map((entry) => entry.id)).toEqual([
     "default",
+    "multiline",
     "ratio",
     "all-properties",
     "custom-accessory",

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.13]
+
+### Added
+
+- Added a multiline text example for property rows.
+
+### Changed
+
+- Reset all eligible controls within a property row.
+
+### Fixed
+
+- Kept property drag handles aligned to the label height.
+
 ## [11.11.12]
 
 ### Changed

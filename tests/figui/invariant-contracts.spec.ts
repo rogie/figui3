@@ -231,7 +231,7 @@ test("malformed light-DOM composition is diagnosed", async ({ page }) => {
   expect(warnings).toEqual(
     expect.arrayContaining([
       expect.stringContaining("fig-field expects exactly one"),
-      expect.stringContaining("fig-property expects exactly one"),
+      expect.stringContaining("fig-property expects at least one"),
       expect.stringContaining("fig-layer requires a direct"),
       expect.stringContaining("fig-menu found 2 possible triggers"),
     ]),

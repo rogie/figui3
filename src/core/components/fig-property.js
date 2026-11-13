@@ -86,7 +86,7 @@ class FigProperty extends HTMLElement {
   #resetMenu = null;
   #resetMenuItem = null;
   #resetInputObserver = null;
-  #observedResetInput = null;
+  #observedResetInputs = [];
   #pendingContextMenuCleanup = null;
 
   connectedCallback() {
@@ -113,7 +113,7 @@ class FigProperty extends HTMLElement {
     this.#observer = null;
     this.#resetInputObserver?.disconnect();
     this.#resetInputObserver = null;
-    this.#observedResetInput = null;
+    this.#observedResetInputs = [];
     this.#restoreSelectMenuAnchor();
     this.#clearSliderOcclusionTarget();
     this.#clearLabelAssociation();
@@ -164,19 +164,31 @@ class FigProperty extends HTMLElement {
     this.focus();
   }
 
-  /** Reset the slotted input through its resetToDefault contract. */
+  /** Reset every slotted input that implements the resetToDefault contract. */
   resetToDefault() {
-    const input = this.input;
-    if (
-      !(input instanceof HTMLElement) ||
-      this.#inputIsDisabled(input) ||
-      typeof input.resetToDefault !== "function"
-    ) {
-      return;
+    const results = [];
+    for (const input of this.#resettableInputs()) {
+      if (this.#inputIsDisabled(input)) continue;
+      results.push(input.resetToDefault());
     }
-    const result = input.resetToDefault();
     queueMicrotask(() => this.#syncResetMenuState());
-    return result;
+    return results.length === 1 ? results[0] : results;
+  }
+
+  #resettableInputs() {
+    const inputs = [];
+    const visit = (element) => {
+      if (!(element instanceof HTMLElement)) return;
+      if (typeof element.resetToDefault === "function") {
+        inputs.push(element);
+        return;
+      }
+      for (const child of element.children) visit(child);
+    };
+    for (const input of this.querySelectorAll(':scope > [slot="input"]')) {
+      visit(input);
+    }
+    return inputs;
   }
 
   #queueSync() {
@@ -202,10 +214,10 @@ class FigProperty extends HTMLElement {
 
   #sync() {
     const inputs = this.querySelectorAll(':scope > [slot="input"]');
-    if (inputs.length !== 1) {
+    if (inputs.length === 0) {
       figWarnInvariant(
         `fig-property-inputs:${inputs.length}`,
-        `fig-property expects exactly one direct slot="input" child; found ${inputs.length}.`,
+        `fig-property expects at least one direct slot="input" child; found ${inputs.length}.`,
       );
     }
     this.#syncRatio();
@@ -287,46 +299,51 @@ class FigProperty extends HTMLElement {
   }
 
   #syncResetMenuState() {
-    const input = this.input;
-    const disabled =
-      !(input instanceof HTMLElement) ||
-      typeof input.resetToDefault !== "function" ||
-      this.#inputIsDisabled(input) ||
-      input.isDefault === true;
+    const disabled = !this.#resettableInputs().some(
+      (input) => !this.#inputIsDisabled(input) && input.isDefault !== true,
+    );
     this.#resetMenuItem?.toggleAttribute("disabled", disabled);
     this.#resetMenuItem?.setAttribute("aria-disabled", String(disabled));
   }
 
   #syncResetInputObserver() {
-    const input = this.input;
-    if (this.#observedResetInput === input) return;
+    const inputs = Array.from(
+      this.querySelectorAll(':scope > [slot="input"]'),
+    ).filter((input) => input instanceof HTMLElement);
+    if (
+      inputs.length === this.#observedResetInputs.length &&
+      inputs.every((input, index) => input === this.#observedResetInputs[index])
+    ) {
+      return;
+    }
     this.#resetInputObserver?.disconnect();
-    this.#observedResetInput =
-      input instanceof HTMLElement ? input : null;
-    if (!this.#observedResetInput) return;
+    this.#observedResetInputs = inputs;
+    if (inputs.length === 0) return;
     this.#resetInputObserver ??= new MutationObserver(() =>
       this.#syncResetMenuState(),
     );
-    this.#resetInputObserver.observe(this.#observedResetInput, {
-      attributes: true,
-      subtree: true,
-      attributeFilter: [
-        "disabled",
-        "default",
-        "default-checked",
-        "default-x",
-        "default-y",
-        "default-z",
-        "value",
-        "checked",
-        "indeterminate",
-        "url",
-        "filename",
-        "x",
-        "y",
-        "z",
-      ],
-    });
+    for (const input of inputs) {
+      this.#resetInputObserver.observe(input, {
+        attributes: true,
+        subtree: true,
+        attributeFilter: [
+          "disabled",
+          "default",
+          "default-checked",
+          "default-x",
+          "default-y",
+          "default-z",
+          "value",
+          "checked",
+          "indeterminate",
+          "url",
+          "filename",
+          "x",
+          "y",
+          "z",
+        ],
+      });
+    }
   }
 
   #handleInputStateChange = () => {

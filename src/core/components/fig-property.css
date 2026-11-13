@@ -69,7 +69,8 @@ fig-property {
 
   > [slot="leading"] {
     grid-area: leading;
-    height: 100%;
+    align-self: start;
+    min-height: var(--spacer-4);
     visibility: hidden;
     color: var(--figma-color-text-secondary);
   }
