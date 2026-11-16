@@ -19,7 +19,6 @@ import {
   applyParamsToMarkup,
 } from "./lib/urlState";
 import { figui3Sections } from "./data/figui3Sections";
-import { labSections } from "./data/labSections";
 import {
   propskitSections,
   type PropsKitExample,
@@ -68,11 +67,11 @@ function buildExampleDescription(
 }
 
 interface Props {
-  mode: "figui3" | "lab";
+  mode: "figui3";
 }
 
 function sectionsForMode(mode: Props["mode"]): Section[] {
-  if (mode === "lab") return labSections;
+  void mode;
   return [...propskitSections, ...figui3Sections];
 }
 
@@ -185,12 +184,12 @@ function filterAvailableSections(
 }
 
 function titleForMode(mode: Props["mode"]): string {
-  if (mode === "lab") return "PropsKit Lab";
+  void mode;
   return "Figma PropsKit";
 }
 
 function basePathForMode(mode: Props["mode"]): string {
-  if (mode === "lab") return "/propskit/lab";
+  void mode;
   return "/propskit";
 }
 
@@ -206,7 +205,7 @@ export default function App({ mode }: Props) {
   const [customElementsVersion, setCustomElementsVersion] = useState(0);
   const sections = useMemo(() => {
     const visible = filterAvailableSections(allSections, {
-      includeEditorControls: mode === "lab" || includeEditorControls,
+      includeEditorControls,
     });
     return mode === "figui3" ? sortSectionsWithinGroups(visible) : visible;
   }, [
@@ -421,7 +420,6 @@ export default function App({ mode }: Props) {
         navigateTo={navigateTo}
         sections={sections}
         appTitle={appTitle}
-        groupOrder={mode === "lab" ? ["Inputs", "AI", "Misc"] : undefined}
       />
       <main
         className={[

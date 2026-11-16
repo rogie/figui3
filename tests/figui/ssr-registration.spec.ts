@@ -11,10 +11,10 @@ const readWorkspaceFile = (path: string) =>
 
 test("public JavaScript bundles import without browser globals", async () => {
   const script = `
-    const bundles = ["fig.js", "fig-editor.js", "fig-lab.js"];
+    const bundles = ["fig.js"];
     await Promise.all(bundles.map((bundle) => import(\`./\${bundle}\`)));
     const { register } = await import("./register.js");
-    await register({ editor: true, lab: true });
+    await register();
     console.log("ssr-import-ok");
   `;
   const { stdout, stderr } = await execFileAsync(
@@ -33,39 +33,31 @@ test("explicit registration upgrades server markup and is idempotent", async ({
   await page.goto("/tests/figui/ssr-fixture.html");
   const before = await page.evaluate(() => ({
     core: !!customElements.get("fig-button"),
-    editor: !!customElements.get("fig-select"),
-    lab: !!customElements.get("fig-canvas-control"),
   }));
   expect(before).toEqual({
     core: false,
-    editor: false,
-    lab: false,
   });
 
   const state = await page.evaluate(async () => {
     const registration = await import("/register.js");
-    await registration.register({ editor: true, lab: true });
+    await registration.register();
     const constructors = {
       core: customElements.get("fig-button"),
-      editor: customElements.get("fig-select"),
-      lab: customElements.get("fig-canvas-control"),
     };
-    await registration.register({ editor: true, lab: true });
+    await registration.register();
     const button = document.querySelector("#server-button");
     return {
       registered: Object.fromEntries(
         Object.entries(constructors).map(([key, value]) => [key, !!value]),
       ),
       idempotent:
-        constructors.core === customElements.get("fig-button") &&
-        constructors.editor === customElements.get("fig-select") &&
-        constructors.lab === customElements.get("fig-canvas-control"),
+        constructors.core === customElements.get("fig-button"),
       upgraded: !!constructors.core && button instanceof constructors.core,
     };
   });
 
   expect(state).toEqual({
-    registered: { core: true, editor: true, lab: true },
+    registered: { core: true },
     idempotent: true,
     upgraded: true,
   });

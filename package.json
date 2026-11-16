@@ -1,9 +1,9 @@
 {
   "name": "@rogieking/figui3",
-  "version": "11.11.20",
+  "version": "12.0.0",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "MIT",
   "type": "module",
   "engines": {
     "bun": ">=1.3.0",
@@ -30,25 +30,9 @@
       "types": "./types/index.d.ts",
       "default": "./dist/fig-layer.js"
     },
-    "./fig-input-rotate.js": {
-      "types": "./types/fig-input-rotate.d.ts",
-      "default": "./dist/fig-input-rotate.js"
-    },
-    "./fig-input-slider.js": {
-      "types": "./types/fig-input-slider.d.ts",
-      "default": "./dist/fig-input-slider.js"
-    },
     "./fig-property.js": {
       "types": "./types/fig-property.d.ts",
       "default": "./dist/fig-property.js"
-    },
-    "./fig-editor.js": {
-      "types": "./types/index.d.ts",
-      "default": "./dist/fig-editor.js"
-    },
-    "./fig-lab.js": {
-      "types": "./types/index.d.ts",
-      "default": "./dist/fig-lab.js"
     },
     "./register.js": {
       "types": "./types/register.d.ts",
@@ -64,11 +48,7 @@
     },
     "./fig.css": "./dist/fig.css",
     "./fig-layer.css": "./dist/fig-layer.css",
-    "./fig-input-rotate.css": "./dist/fig-input-rotate.css",
-    "./fig-input-slider.css": "./dist/fig-input-slider.css",
     "./fig-property.css": "./dist/fig-property.css",
-    "./fig-editor.css": "./dist/fig-editor.css",
-    "./fig-lab.css": "./dist/fig-lab.css",
     "./base.css": "./dist/base.css",
     "./components.css": "./dist/components.css",
     "./icons.css": "./dist/icons.css",
@@ -76,20 +56,12 @@
     "./src/fig-color.js": "./fig-color.js",
     "./src/extended-runtime.js": "./src/core/entrypoints/extended-runtime.js",
     "./src/fig-layer.js": "./src/core/entrypoints/fig-layer.js",
-    "./src/fig-input-rotate.js": "./src/editor/entrypoints/fig-input-rotate.js",
-    "./src/fig-input-slider.js": "./src/lab/entrypoints/fig-input-slider.js",
     "./src/fig-property.js": "./src/core/entrypoints/fig-property.js",
-    "./src/fig-editor.js": "./fig-editor.js",
-    "./src/fig-lab.js": "./fig-lab.js",
     "./src/register.js": "./register.js",
     "./src/propskit.js": "./propskit.js",
     "./src/fig.css": "./fig.css",
     "./src/fig-layer.css": "./src/core/entrypoints/fig-layer.css",
-    "./src/fig-input-rotate.css": "./src/editor/entrypoints/fig-input-rotate.css",
-    "./src/fig-input-slider.css": "./src/lab/entrypoints/fig-input-slider.css",
     "./src/fig-property.css": "./src/core/entrypoints/fig-property.css",
-    "./src/fig-editor.css": "./fig-editor.css",
-    "./src/fig-lab.css": "./fig-lab.css",
     "./src/base.css": "./base.css",
     "./src/components.css": "./components.css",
     "./src/icons.css": "./icons.css"
@@ -97,13 +69,9 @@
   "files": [
     "fig.js",
     "fig-color.js",
-    "fig-editor.js",
-    "fig-lab.js",
     "register.js",
     "propskit.js",
     "fig.css",
-    "fig-editor.css",
-    "fig-lab.css",
     "base.css",
     "components.css",
     "icons.css",
@@ -117,7 +85,8 @@
     "BUNDLES.md",
     "README.md",
     "CHANGELOG.md",
-    "LICENSE"
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "sideEffects": [
     "**/*.js",
@@ -186,6 +155,7 @@
     "@playwright/test": "^1.60.0",
     "@types/bun": "1.3.10",
     "@types/react": "^19.3.0",
+    "@rogieking/figui3-extended": "^1.0.0",
     "lightningcss": "^1.32.0",
     "typescript": "^5.9.3"
   }

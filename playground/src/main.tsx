@@ -7,7 +7,6 @@ import "./App.css";
 
 type PlaygroundMode =
   | "figui3"
-  | "lab"
   | "sandbox"
   | "tests";
 
@@ -20,12 +19,6 @@ function normalizePathname(pathname: string): string {
 
 function resolveModeFromPath(pathname: string): PlaygroundMode {
   const normalized = normalizePathname(pathname);
-  if (
-    normalized === "/propskit/lab" ||
-    normalized.startsWith("/propskit/lab/")
-  ) {
-    return "lab";
-  }
   if (normalized === "/sandbox" || normalized.startsWith("/sandbox/")) {
     return "sandbox";
   }
@@ -36,10 +29,6 @@ function resolveModeFromPath(pathname: string): PlaygroundMode {
 }
 
 function applyTitleForMode(mode: PlaygroundMode) {
-  if (mode === "lab") {
-    document.title = "PropsKit Lab: Experimental FigUI3 components";
-    return;
-  }
   if (mode === "sandbox") {
     document.title = "Sandbox playground: Styled React sample app";
     return;
@@ -67,9 +56,11 @@ function ensureSupportedRoute() {
     normalized === "/figui3/lab" ||
     normalized.startsWith("/figui3/lab/") ||
     normalized === "/lab" ||
-    normalized.startsWith("/lab/")
+    normalized.startsWith("/lab/") ||
+    normalized === "/propskit/lab" ||
+    normalized.startsWith("/propskit/lab/")
   ) {
-    window.history.replaceState(null, "", `/propskit/lab${search}${hash}`);
+    window.history.replaceState(null, "", `/propskit${search}${hash}`);
     return;
   }
 
@@ -114,20 +105,11 @@ const bootstrap = async () => {
     // @ts-expect-error runtime side-effect import for layer navigation registration
     await import("../../src/core/entrypoints/fig-layer.js");
     if (
-      mode === "lab" ||
       localStorage.getItem("includeEditorControls") === "true" ||
       hashNeedsEditorControls
     ) {
-      await import("../../fig-editor.css");
-      // @ts-expect-error runtime side-effect import for optional editor component registration
-      await import("../../fig-editor.js");
-    }
-    if (mode === "lab") {
-      await import("../../fig-lab.css");
-    }
-    if (mode === "lab") {
-      // @ts-expect-error runtime side-effect import for lab component registration
-      await import("../../fig-lab.js");
+      await import("@rogieking/figui3-extended/fig-editor.css");
+      await import("@rogieking/figui3-extended/fig-editor.js");
     }
   }
 

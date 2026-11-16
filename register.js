@@ -5,8 +5,6 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 
 let coreRegistration;
-let editorRegistration;
-let labRegistration;
 
 function canRegister() {
   return (
@@ -22,27 +20,7 @@ export function registerFigUI() {
   return coreRegistration;
 }
 
-export function registerFigEditor() {
-  if (!canRegister()) return Promise.resolve();
-  editorRegistration ??= registerFigUI()
-    .then(() => import("./fig-editor.js"))
-    .then(() => {});
-  return editorRegistration;
-}
-
-export function registerFigLab() {
-  if (!canRegister()) return Promise.resolve();
-  labRegistration ??= registerFigUI()
-    .then(() => import("./fig-lab.js"))
-    .then(() => {});
-  return labRegistration;
-}
-
-export async function register(options = {}) {
+export async function register() {
   if (!canRegister()) return;
   await registerFigUI();
-  await Promise.all([
-    options.editor ? registerFigEditor() : null,
-    options.lab ? registerFigLab() : null,
-  ]);
 }

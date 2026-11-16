@@ -19,10 +19,6 @@ test("React event guidance documents the React 18 and 19 event contract", async 
     readWorkspaceFile("README.md"),
     readWorkspaceFile(".cursor/skills/figui3/components.md"),
     readWorkspaceFile("skills/figui3/components.md"),
-    readWorkspaceFile(".cursor/skills/fig-editor/components.md"),
-    readWorkspaceFile("skills/fig-editor/components.md"),
-    readWorkspaceFile(".cursor/skills/fig-lab/components.md"),
-    readWorkspaceFile("skills/fig-lab/components.md"),
   ]);
 
   for (const content of [guide, readme]) {

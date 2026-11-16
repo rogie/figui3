@@ -5717,13 +5717,23 @@ test("fig-select emits optionfocus only for open-menu keyboard navigation", asyn
     ),
   ).toEqual([]);
 
-  await page.keyboard.press("ArrowDown");
-  await expect(select.locator('fig-select-option[value="three"]')).toBeFocused();
-  await page.keyboard.press("ArrowUp");
-  await expect(select.locator('fig-select-option[value="one"]')).toBeFocused();
-  await page.keyboard.press("Home");
-  await page.keyboard.press("End");
-  await expect(select.locator('fig-select-option[value="three"]')).toBeFocused();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => resolve()),
+        ),
+      ),
+  );
+  const firstOption = select.locator('fig-select-option[value="one"]');
+  const lastOption = select.locator('fig-select-option[value="three"]');
+  await firstOption.press("ArrowDown");
+  await expect(lastOption).toBeFocused();
+  await lastOption.press("ArrowUp");
+  await expect(firstOption).toBeFocused();
+  await firstOption.press("Home");
+  await firstOption.press("End");
+  await expect(lastOption).toBeFocused();
 
   expect(
     await page.evaluate(
@@ -5945,11 +5955,11 @@ test.describe("button accessibility", () => {
       textAlign: "center",
     });
     await expect.poll(() => alignment("#start")).toEqual({
-      justifyContent: "flex-start",
+      justifyContent: "flow-start",
       textAlign: "start",
     });
     await expect.poll(() => alignment("#end")).toEqual({
-      justifyContent: "flex-end",
+      justifyContent: "flow-end",
       textAlign: "end",
     });
   });

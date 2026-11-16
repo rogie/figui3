@@ -1,15 +1,10 @@
 import type * as React from "react";
 import type {
   FigCarouselElement,
-  FigCustomEvent,
   FigSliderDetail,
   FigSliderElement,
 } from "@rogieking/figui3";
 import { figHexToRGB } from "@rogieking/figui3/fig-color.js";
-import {
-  FigInputSlider,
-  figInputSliderSchema,
-} from "@rogieking/figui3/fig-input-slider.js";
 import { register } from "@rogieking/figui3/register.js";
 import {
   figCreateProps,
@@ -24,11 +19,6 @@ if (slider) {
   slider.max = 100;
 }
 
-const inputSlider = document.createElement("fig-input-slider");
-inputSlider.setInteractionValue(42);
-inputSlider.commitInteractionChange(0);
-inputSlider.resetToDefault();
-
 const carousel = document.createElement("fig-carousel");
 carousel.goTo(2);
 carousel.first();
@@ -39,13 +29,9 @@ const canAdvanceCarousel: boolean = carousel.canGoNext;
 void currentCarouselItem;
 void canAdvanceCarousel;
 
-const SliderConstructor: typeof FigInputSlider = FigInputSlider;
-const schemaLabel: string = figInputSliderSchema.value.label;
 const red: number = figHexToRGB("#ff0000").r;
-void SliderConstructor;
-void schemaLabel;
 void red;
-void register({ editor: true, lab: true });
+void register();
 
 const props = figCreateProps("Typed", {
   opacity: 50,
@@ -86,11 +72,6 @@ const onSliderInput = (
   return detail.value;
 };
 
-const onReorder = (event: FigCustomEvent<"reorder">) => {
-  return event.detail.from;
-};
-void onReorder;
-
 const jsx = (
   <>
     <fig-slider
@@ -106,8 +87,6 @@ const jsx = (
       <fig-image src="cover.jpg" />
       <fig-video src="demo.mp4" muted />
     </fig-carousel>
-    <fig-input-slider-hue value="180" />
-    <fig-input-slider-wheel value="0" />
     <dialog is="fig-popup" position="bottom" />
     {/* @ts-expect-error fig-toast is a customized dialog, not an autonomous tag */}
     <fig-toast />

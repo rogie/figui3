@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.0.0]
+
+### Changed
+
+- Moved Editor and Lab components to `@rogieking/figui3-extended`.
+- Changed FigUI3 core to an MIT-only package.
+- Reduced `register.js` to core registration.
+
+### Removed
+
+- Removed legacy `fig-editor.*`, `fig-lab.*`, rotate input, and Lab slider
+  package exports. Use `@rogieking/figui3-extended` instead.
+- Removed the core playground `/propskit/lab` route.
+
 ## [11.11.20]
 
 ### Added

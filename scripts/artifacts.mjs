@@ -1,5 +1,4 @@
 export const LICENSE_MIT = "mit";
-export const LICENSE_POLYFORM = "polyform";
 
 export const rootArtifacts = [
   { file: "fig.js", license: LICENSE_MIT },
@@ -10,10 +9,6 @@ export const rootArtifacts = [
   { file: "base.css", license: LICENSE_MIT },
   { file: "components.css", license: LICENSE_MIT },
   { file: "icons.css", license: LICENSE_MIT },
-  { file: "fig-editor.js", license: LICENSE_POLYFORM },
-  { file: "fig-editor.css", license: LICENSE_POLYFORM },
-  { file: "fig-lab.js", license: LICENSE_POLYFORM },
-  { file: "fig-lab.css", license: LICENSE_POLYFORM },
 ];
 
 export const jsArtifacts = [
@@ -34,40 +29,16 @@ export const jsArtifacts = [
     license: LICENSE_MIT,
   },
   {
-    input: "src/editor/entrypoints/fig-input-rotate.js",
-    output: "fig-input-rotate.js",
-    license: LICENSE_POLYFORM,
-    external: ["fig.js"],
-  },
-  {
-    input: "src/lab/entrypoints/fig-input-slider.js",
-    output: "fig-input-slider.js",
-    license: LICENSE_POLYFORM,
-    external: ["fig.js"],
-  },
-  {
     input: "src/core/entrypoints/fig-property.js",
     output: "fig-property.js",
     license: LICENSE_MIT,
     external: ["fig.js"],
   },
   {
-    input: "fig-editor.js",
-    output: "fig-editor.js",
-    license: LICENSE_POLYFORM,
-    external: ["fig.js"],
-  },
-  {
-    input: "fig-lab.js",
-    output: "fig-lab.js",
-    license: LICENSE_POLYFORM,
-    external: ["fig.js"],
-  },
-  {
     input: "register.js",
     output: "register.js",
     license: LICENSE_MIT,
-    external: ["fig.js", "fig-editor.js", "fig-lab.js"],
+    external: ["fig.js"],
   },
   {
     input: "propskit.js",
@@ -87,33 +58,9 @@ export const cssArtifacts = [
   },
   {
     mode: "bundle",
-    input: "src/editor/entrypoints/fig-input-rotate.css",
-    output: "fig-input-rotate.css",
-    license: LICENSE_POLYFORM,
-  },
-  {
-    mode: "bundle",
-    input: "src/lab/entrypoints/fig-input-slider.css",
-    output: "fig-input-slider.css",
-    license: LICENSE_POLYFORM,
-  },
-  {
-    mode: "bundle",
     input: "src/core/entrypoints/fig-property.css",
     output: "fig-property.css",
     license: LICENSE_MIT,
-  },
-  {
-    mode: "bundle",
-    input: "fig-editor.css",
-    output: "fig-editor.css",
-    license: LICENSE_POLYFORM,
-  },
-  {
-    mode: "bundle",
-    input: "fig-lab.css",
-    output: "fig-lab.css",
-    license: LICENSE_POLYFORM,
   },
   {
     mode: "bundle",
@@ -139,15 +86,19 @@ export const publicAliases = {
   "extended-runtime.js": "src/core/entrypoints/extended-runtime.js",
   "fig-layer.js": "src/core/entrypoints/fig-layer.js",
   "fig-layer.css": "src/core/entrypoints/fig-layer.css",
-  "fig-input-rotate.js": "src/editor/entrypoints/fig-input-rotate.js",
-  "fig-input-rotate.css": "src/editor/entrypoints/fig-input-rotate.css",
-  "fig-input-slider.js": "src/lab/entrypoints/fig-input-slider.js",
-  "fig-input-slider.css": "src/lab/entrypoints/fig-input-slider.css",
   "fig-property.js": "src/core/entrypoints/fig-property.js",
   "fig-property.css": "src/core/entrypoints/fig-property.css",
 };
 
 export const obsoleteDistFiles = [
+  "fig-editor.js",
+  "fig-editor.css",
+  "fig-lab.js",
+  "fig-lab.css",
+  "fig-input-rotate.js",
+  "fig-input-rotate.css",
+  "fig-input-slider.js",
+  "fig-input-slider.css",
   "fig-gradient-editor.js",
   "fig-gradient-editor.css",
   "fig-palette-editor.js",

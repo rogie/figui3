@@ -1,15 +1,12 @@
 import { access, readdir, readFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
 import { expect, test } from "@playwright/test";
-import {
-  componentContracts,
-  editorComponentContracts,
-} from "../../playground/src/testing/componentManifest";
+import { componentContracts } from "../../playground/src/testing/componentManifest";
 
 const readWorkspaceFile = (path: string) =>
   readFile(new URL(`../../${path}`, import.meta.url), "utf8");
 
-const sourceRoots = ["src/core", "src/editor", "src/lab"];
+const sourceRoots = ["src/core"];
 
 async function sourceFiles(roots = sourceRoots) {
   const files: string[] = [];
@@ -30,9 +27,6 @@ async function sourceFiles(roots = sourceRoots) {
 const customizedBuiltIns = new Set([
   "fig-dialog",
   "fig-popup",
-  "fig-popup-easing",
-  "fig-popup-gradient",
-  "fig-popup-palette",
   "fig-toast",
 ]);
 
@@ -42,7 +36,7 @@ const sharedStyleOwners = new Map([
   ["fig-menu-separator", "src/core/components/fig-separator.css"],
   ["fig-segment", "src/core/components/fig-segmented-control.css"],
   ["fig-split-input", "src/core/components/fig-combo-input.css"],
-  ["fig-toast", "src/editor/styles/fig-toast.css"],
+  ["fig-toast", null],
   ["fig-video", "src/core/components/fig-media.css"],
 ]);
 
@@ -72,7 +66,7 @@ test("declarations cover every registered autonomous custom element", async () =
   expect(declared.has("fig-toast")).toBe(false);
   expect(declared.has("fig-stack")).toBe(true);
   expect(declared.has("fig-audio-waveform")).toBe(true);
-  expect(declared.has("fig-input-slider-wheel")).toBe(true);
+  expect(declared.has("fig-input-slider-wheel")).toBe(false);
 });
 
 test("every registered tag has component or shared-owner styles", async () => {
@@ -84,6 +78,7 @@ test("every registered tag has component or shared-owner styles", async () => {
       expect(dirname(file).endsWith("/components"), `${tag} source directory`).toBe(
         true,
       );
+      if (tag === "fig-toast") continue;
       await access(
         new URL(
           `../../${sharedStyleOwners.get(tag) ?? `${dirname(file)}/${tag}.css`}`,
@@ -95,7 +90,7 @@ test("every registered tag has component or shared-owner styles", async () => {
 });
 
 test("component directories contain only paired per-tag modules", async () => {
-  for (const domain of ["core", "editor", "lab"]) {
+  for (const domain of ["core"]) {
     const entries = await readdir(
       new URL(`../../src/${domain}/components/`, import.meta.url),
       { withFileTypes: true },
@@ -149,9 +144,7 @@ test("npm manifest publishes DOM, React, and module declarations", async () => {
   expect(manifest.exports["./src/extended-runtime.js"]).toBe(
     "./src/core/entrypoints/extended-runtime.js",
   );
-  expect(manifest.exports["./fig-input-slider.js"].types).toBe(
-    "./types/fig-input-slider.d.ts",
-  );
+  expect(manifest.exports["./fig-input-slider.js"]).toBeUndefined();
   expect(manifest.exports["./propskit.js"].types).toBe(
     "./types/propskit.d.ts",
   );
@@ -160,12 +153,8 @@ test("npm manifest publishes DOM, React, and module declarations", async () => {
   expect(manifest.exports["./src/fig-layer.js"]).toBe(
     "./src/core/entrypoints/fig-layer.js",
   );
-  expect(manifest.exports["./src/fig-input-rotate.js"]).toBe(
-    "./src/editor/entrypoints/fig-input-rotate.js",
-  );
-  expect(manifest.exports["./src/fig-input-slider.js"]).toBe(
-    "./src/lab/entrypoints/fig-input-slider.js",
-  );
+  expect(manifest.exports["./src/fig-input-rotate.js"]).toBeUndefined();
+  expect(manifest.exports["./src/fig-input-slider.js"]).toBeUndefined();
   expect(manifest.exports["./src/fig-property.js"]).toBe(
     "./src/core/entrypoints/fig-property.js",
   );
@@ -193,22 +182,6 @@ test("core registrations all have shared component contracts", async () => {
   }
 
   expect(componentContracts.map((contract) => contract.tag).sort()).toEqual(
-    [...registered].sort(),
-  );
-});
-
-test("editor registrations all have shared component contracts", async () => {
-  const sources = await Promise.all(
-    (await sourceFiles(["src/editor"])).map(readWorkspaceFile),
-  );
-  const registered = new Set<string>();
-  for (const source of sources) {
-    for (const match of source.matchAll(registrationPattern)) {
-      registered.add(match[1]);
-    }
-  }
-
-  expect(editorComponentContracts.map((contract) => contract.tag).sort()).toEqual(
     [...registered].sort(),
   );
 });

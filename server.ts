@@ -7,11 +7,35 @@ import {
 const repoRoot = resolve(import.meta.dir);
 const rootAssets = new Set(["index.html", ...rootAssetNames]);
 const allowedDirectories = ["dist", "icons", "polyfills", "src", "tests"];
+const extendedAssets = new Set([
+  "fig-editor.js",
+  "fig-editor.css",
+  "fig-lab.js",
+  "fig-lab.css",
+  "fig-input-rotate.js",
+  "fig-input-rotate.css",
+  "fig-input-slider.js",
+  "fig-input-slider.css",
+]);
+const packagePrefix = "@rogieking/figui3/";
 const requestedPort = Number.parseInt(process.env.FIGUI_PORT ?? "3000", 10);
 const port = Number.isFinite(requestedPort) ? requestedPort : 3000;
 
 function resolvePublicAsset(pathname: string) {
   const name = pathname.replace(/^\/+/, "");
+  if (extendedAssets.has(name)) {
+    return resolve(
+      repoRoot,
+      "node_modules",
+      "@rogieking",
+      "figui3-extended",
+      "dist",
+      name,
+    );
+  }
+  if (name.startsWith(packagePrefix)) {
+    return resolve(repoRoot, "dist", name.slice(packagePrefix.length));
+  }
   const allowed =
     rootAssets.has(name) ||
     allowedDirectories.some(

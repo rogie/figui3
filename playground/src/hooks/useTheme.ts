@@ -3,9 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 const INCLUDE_EDITOR_CONTROLS_KEY = "includeEditorControls";
 
 async function loadEditorControls() {
-  await import("../../../fig-editor.css");
-  // @ts-expect-error runtime side-effect import for optional editor control registration
-  await import("../../../fig-editor.js");
+  await import("@rogieking/figui3-extended/fig-editor.css");
+  await import("@rogieking/figui3-extended/fig-editor.js");
 }
 
 export function useTheme() {

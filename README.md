@@ -3,7 +3,7 @@
 A lightweight, zero-dependency web components library for building Figma plugin and widget UIs with native look and feel.
 
 [![npm version](https://img.shields.io/npm/v/@rogieking/figui3.svg)](https://www.npmjs.com/package/@rogieking/figui3)
-[![License](https://img.shields.io/badge/License-split-lightgrey.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **[Live Playground & Demos](https://rog.ie/propskit/)**
 
@@ -51,18 +51,13 @@ stylesheet when you need the layer-list presentation:
 import "@rogieking/figui3/fig-layer.css";
 ```
 
-Opt into editor components like `<fig-select>` and the full Figma-style fill picker when you need them:
+Editor and experimental Lab components are distributed separately under
+PolyForm Shield by
+[`@rogieking/figui3-extended`](https://github.com/rogie/figui3-extended):
 
 ```js
-import "@rogieking/figui3/fig-editor.css";
-import "@rogieking/figui3/fig-editor.js";
-```
-
-Opt into experimental Lab components after the core imports:
-
-```js
-import "@rogieking/figui3/fig-lab.css";
-import "@rogieking/figui3/fig-lab.js";
+import "@rogieking/figui3-extended/fig-editor.css";
+import "@rogieking/figui3-extended/fig-editor.js";
 ```
 
 For server-rendered apps, use the SSR-safe registration entry point. Call it
@@ -75,15 +70,15 @@ import { register } from "@rogieking/figui3/register.js";
 
 function RegisterFigUI() {
   useEffect(() => {
-    void register({ editor: true, lab: true });
+    void register();
   }, []);
   return null;
 }
 ```
 
-Render `<RegisterFigUI />` inside the hydrated root. The direct `fig.js`,
-`fig-editor.js`, and `fig-lab.js` imports remain convenient for client-only
-apps, but register immediately when evaluated in a browser.
+Render `<RegisterFigUI />` inside the hydrated root. Direct `fig.js` imports
+remain convenient for client-only apps, but register immediately when
+evaluated in a browser.
 
 Or use a CDN:
 
@@ -95,8 +90,6 @@ Or use a CDN:
 Agent skills ship in `.cursor/skills/` (included in the npm package):
 
 - `figui3` — core `fig.js` components
-- `fig-editor` — `fig-select` and `fig-fill-picker`
-- `fig-lab` — experimental audio, wheel, reorder, canvas, and AI components
 - `propskit` — declarative property panels; examples are included in `/propskit`
 
 Cursor discovers this repository's root `.cursor/skills/` automatically. In a
@@ -105,7 +98,7 @@ consuming project, npm installs the packaged copies under
 discover skills inside `node_modules`, but agents can read those files directly.
 
 See the generated [bundle registration inventory](BUNDLES.md) for the exact
-tags registered by Core, Editor, and Lab.
+tags registered by Core.
 
 Minimal example:
 
@@ -189,6 +182,9 @@ without echoing through those interaction callbacks.
 ---
 
 ## Components
+
+Editor and Lab entries below are cross-package references and require
+`@rogieking/figui3-extended`; they are not included in this MIT package.
 
 | Component | Tag | Description |
 |---|---|---|
@@ -2464,7 +2460,7 @@ git clone https://github.com/rogie/figui3.git
 cd figui3
 bun install
 bun dev                # Component docs at http://localhost:3000
-npm run dev:playground # Playground at http://localhost:6600 (/propskit, /propskit/lab, /sandbox)
+npm run dev:playground # Playground at http://localhost:6600 (/propskit, /sandbox)
 npm run build          # Build minified dist/ (JS + CSS)
 npm run build:icons    # Regenerate icons.css from icons/ SVG sources
 npm run check:icons    # Verify the manifest, SVGs, and generated CSS agree
@@ -2478,8 +2474,6 @@ and add the name, sizes, and optional `<fig-icon>` mapping to
 Component implementations live under `src/`:
 
 - `src/core/` — MIT core components and styles
-- `src/editor/` — PolyForm editor components and styles
-- `src/lab/` — PolyForm experimental components and styles
 - `src/shared/` — MIT runtime helpers shared across bundles
 
 Each registered custom element owns a matching
@@ -2487,11 +2481,9 @@ Each registered custom element owns a matching
 and selector primitives live outside `components/`; they must not register a
 tag themselves.
 
-The aggregate `fig.*`, `fig-editor.*`, and `fig-lab.*` barrels remain at the
-repository root. Standalone component source entrypoints live in each domain's
-`entrypoints/` directory; their npm and `dist/` import names remain unchanged.
-Add or edit component implementation in its `src/` domain; do not move
-consumer imports to internal paths.
+The aggregate `fig.*` barrels remain at the repository root. Standalone source
+entrypoints live in `src/core/entrypoints/`. Add or edit implementation in its
+`src/` domain; do not move consumer imports to internal paths.
 
 ### Build Output
 
@@ -2499,14 +2491,10 @@ consumer imports to internal paths.
 
 | Source | Minified | Tool |
 |---|---|---|
-| `fig.js` + `src/core/` | `dist/fig.js` (395 KB) | Bun `--minify` |
-| `fig-editor.js` + `src/editor/` | `dist/fig-editor.js` (154 KB) | Bun `--minify` |
-| `fig-lab.js` + `src/lab/` | `dist/fig-lab.js` (81 KB) | Bun `--minify` |
-| `fig.css` + imported source CSS | `dist/fig.css` (218 KB) | lightningcss `--minify --nesting --bundle` |
-| `components.css` + `src/core/` CSS | `dist/components.css` (216 KB) | lightningcss |
+| `fig.js` + `src/core/` | `dist/fig.js` | Bun `--minify` |
+| `fig.css` + imported source CSS | `dist/fig.css` | lightningcss `--minify --nesting --bundle` |
+| `components.css` + `src/core/` CSS | `dist/components.css` | lightningcss |
 | `icons.css` (generated) | `dist/icons.css` | `scripts/build-icons.mjs` + lightningcss |
-| `fig-editor.css` + `src/editor/` CSS | `dist/fig-editor.css` (24 KB) | lightningcss |
-| `fig-lab.css` + `src/lab/` CSS | `dist/fig-lab.css` (46 KB) | lightningcss |
 | `base.css` (2 KB) | `dist/base.css` (2 KB) | lightningcss |
 
 Default imports resolve to minified `dist/` files. Unminified source is available via `@rogieking/figui3/src/*`:
@@ -2521,7 +2509,6 @@ import "@rogieking/figui3/src/fig.css";  // unminified source
 The playground is the fastest way to explore and validate component markup:
 
 - **`/propskit`** — component examples and property panel patterns with attribute controls
-- **`/propskit/lab`** — experimental component examples
 - **`/sandbox`** — styled React sample app
 
 ---
@@ -2534,8 +2521,8 @@ The playground is the fastest way to explore and validate component markup:
 
 These floors match the modern CSS baseline used by the distributed styles,
 including CSS nesting, `:has()`, and `light-dark()`. Releases run the full
-suite in Playwright Chromium plus a core, editor, Lab, events, and customized
-built-ins smoke suite in current Playwright Firefox and WebKit. Older browser
+suite in Playwright Chromium plus core, events, and customized built-ins smoke
+coverage in current Playwright Firefox and WebKit. Older browser
 versions are not supported; FigUI3 does not transpile JavaScript or polyfill
 general platform features. Safari's customized built-in elements use the
 included WebKit polyfill.
@@ -2544,10 +2531,10 @@ included WebKit polyfill.
 
 ## License
 
-Split license. See [LICENSE](LICENSE).
+FigUI3 is [MIT licensed](LICENSE). The vendored WebKit polyfill retains its ISC
+license; see [third-party notices](THIRD_PARTY_NOTICES.md).
 
-- **MIT:** Core, including `fig.js`, `fig-layer.js`, `fig-color.js`, and core CSS
-- **PolyForm Shield 1.0.0 (not OSI open source):** Editor and Lab entry points, helper modules, CSS, and skill docs enumerated in `LICENSE`
-- **ISC:** Vendored `@ungap/custom-elements-builtin` WebKit polyfill
+Editor and Lab are distributed separately under PolyForm Shield from
+[`figui3-extended`](https://github.com/rogie/figui3-extended).
 
 &copy; Rogie King

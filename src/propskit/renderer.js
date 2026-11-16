@@ -21,7 +21,7 @@ function warnMissingRequirement(node) {
   }
   warnedRequirements.add(required);
   console.warn(
-    `[propskit] "${node.path}" uses edit="picker" and requires fig-editor.js (${required}).`,
+    `[propskit] "${node.path}" uses edit="picker" and requires @rogieking/figui3-extended/fig-editor.js (${required}).`,
   );
 }
 

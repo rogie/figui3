@@ -3,11 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { bootFigFixture, collectPageErrors } from "./helpers";
 
 async function sourceFiles() {
-  const files = [
-    "fig.js",
-    "fig-editor.js",
-    "fig-lab.js",
-  ];
+  const files = ["fig.js"];
   const visit = async (path: string) => {
     const entries = await readdir(path, { withFileTypes: true });
     for (const entry of entries) {

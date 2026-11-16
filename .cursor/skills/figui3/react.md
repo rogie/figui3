@@ -2,7 +2,8 @@
 
 FigUI3 is web components. Use the tags in JSX. There is no React wrapper package.
 
-Shared by `figui3`, `fig-editor`, and `fig-lab`. Per-tag recipes: [components.md](components.md).
+Extended Editor and Lab components ship from `@rogieking/figui3-extended`.
+Per-tag core recipes: [components.md](components.md).
 
 ## Bootstrap
 
@@ -25,9 +26,10 @@ bootstrap();
 Opt into editor and/or lab bundles:
 
 ```tsx
-import "@rogieking/figui3/fig-editor.css";
-import "@rogieking/figui3/fig-lab.css";
-await register({ editor: true, lab: true });
+import "@rogieking/figui3-extended/fig-editor.css";
+import "@rogieking/figui3-extended/fig-lab.css";
+await import("@rogieking/figui3-extended/fig-editor.js");
+await import("@rogieking/figui3-extended/fig-lab.js");
 ```
 
 ### SSR and hydration
@@ -59,10 +61,10 @@ hydrateRoot(
 );
 ```
 
-Do not statically import `fig.js`, `fig-editor.js`, or `fig-lab.js` in a
-hydrating client bundle. Those compatibility entry points still register at
-module evaluation time. Framework client-only boundaries are not enough when
-they evaluate before hydration; call `register()` from a post-hydration effect.
+Do not statically import registration bundles in a hydrating client bundle.
+They register at module evaluation time. Framework client-only boundaries are
+not enough when they evaluate before hydration; call `register()` from a
+post-hydration effect, then dynamically import Extended if needed.
 
 ## Bundler registration
 
@@ -71,7 +73,7 @@ custom elements even when they export no values, so bundlers must preserve
 their side effects.
 
 When core components work but an editor is missing, diagnose registration after
-importing `fig-editor.js`:
+importing `@rogieking/figui3-extended/fig-editor.js`:
 
 ```js
 customElements.get("fig-popup-palette");

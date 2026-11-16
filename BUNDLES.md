@@ -2,8 +2,8 @@
 # FigUI3 bundle registrations
 
 This inventory is generated from the custom-element registrations in the source bundles.
-Standalone entry points remain available for direct imports, but a tag listed under Core is
-already registered by `fig.js`.
+A tag listed under Core is registered by `fig.js`. Editor and Lab components ship from
+`@rogieking/figui3-extended`.
 
 ## Core
 
@@ -80,43 +80,3 @@ Core registrations, including `fig-layer`. 69 registrations:
 - `<fig-tooltip>`
 - `<fig-truncate>`
 - `<fig-video>`
-
-## Editor additions
-
-Import: `fig-editor.css` + `fig-editor.js`
-
-Editor registrations; JavaScript also imports Core. 13 registrations:
-
-- `<fig-fill-picker>`
-- `<fig-gradient-editor>`
-- `<fig-input-point>`
-- `<fig-input-rotate>`
-- `<fig-interpolation-swatch>`
-- `<fig-palette-editor>`
-- `<fig-popup-easing>`
-- `<fig-popup-gradient>`
-- `<fig-popup-palette>`
-- `<fig-reorder>`
-- `<fig-select>`
-- `<fig-select-option>`
-- `<fig-select-options>`
-
-## Lab additions
-
-Import: `fig-lab.css` + `fig-lab.js`
-
-Experimental registrations; JavaScript also imports Core. 13 registrations:
-
-- `<fig-ai-context>`
-- `<fig-ai-prompt>`
-- `<fig-attachment>`
-- `<fig-attachments>`
-- `<fig-canvas-control>`
-- `<fig-chat-message>`
-- `<fig-input-slider>`
-- `<fig-input-slider-delta>`
-- `<fig-input-slider-hue>`
-- `<fig-input-slider-opacity>`
-- `<fig-input-slider-stepper>`
-- `<fig-input-slider-wheel>`
-- `<fig-input-wheel>`

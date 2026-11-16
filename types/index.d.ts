@@ -24,12 +24,6 @@ export interface FigSliderDetail<T = string> extends FigValueDetail<T> {
   values?: number[];
 }
 
-export interface FigReorderDetail {
-  from: number;
-  to: number;
-  item?: Element;
-}
-
 export interface FigRemoveDetail {
   item?: Element;
   value?: unknown;
@@ -63,7 +57,6 @@ export interface FigEventDetailMap {
   loaded: { src?: string; media?: HTMLMediaElement; originalEvent?: Event };
   optionhover: { value?: string; option?: Element };
   optionschange: { value?: string; options?: Element[] };
-  reorder: FigReorderDetail;
   remove: FigRemoveDetail;
   modeready: { mode?: string };
   webcamstream: { stream: MediaStream };
@@ -178,42 +171,6 @@ export interface FigSliderElement extends FigValueElement<
   focus(options?: FocusOptions): void;
 }
 
-export interface FigInputSliderState {
-  values: number[];
-  min: number;
-  max: number;
-  step: number;
-  activeHandleIndex?: number;
-}
-
-export interface FigInputSliderElement extends FigValueElement<
-  string,
-  FigSliderDetail<string>
-> {
-  defaultValue: string;
-  isDefault: boolean;
-  occlusionTargets: Element[];
-  getSliderState(): FigInputSliderState;
-  setInteractionValue(
-    value: number,
-    options?: Record<string, unknown>,
-  ): boolean;
-  commitInteractionChange(handleIndex?: number): void;
-  requestRender(): void;
-  resetToDefault(): void;
-}
-
-export interface FigInputWheelElement extends FigValueElement<
-  string,
-  FigSliderDetail<string>
-> {
-  spinTo(value: number): void;
-  beginScrub(event?: PointerEvent): void;
-  updateScrub(value: number, event?: PointerEvent): void;
-  endScrub(commit?: boolean): void;
-  resetToDefault(): void;
-}
-
 export interface FigMenuElement extends FigValueElement<
   string,
   FigValueDetail<string>
@@ -314,36 +271,17 @@ export interface FigToastElement extends FigDialogElement {
   showToast(): void;
 }
 
-export interface FigSelectElement extends FigValueElement<
-  string,
-  FigValueDetail<string>
-> {
-  open?: boolean;
-  menuAnchor?: Element | null;
-}
-
-export interface FigFillPickerElement extends FigValueElement {
-  anchorElement?: Element | null;
-  activate?(options?: Record<string, unknown>): void;
-}
-
 export interface FigTagNameMap {
   "fig-3d-rotate": FigValueElement;
-  "fig-ai-context": FigHTMLElement;
-  "fig-ai-prompt": FigHTMLElement;
   "fig-angle": FigValueElement;
-  "fig-attachment": FigHTMLElement;
-  "fig-attachments": FigHTMLElement;
   "fig-audio": FigMediaElement;
   "fig-audio-waveform": FigAudioWaveformElement;
   "fig-avatar": FigHTMLElement;
   "fig-button": FigHTMLElement;
   "fig-button-play": FigButtonPlayElement;
   "fig-button-combo": FigHTMLElement;
-  "fig-canvas-control": FigValueElement;
   "fig-card": FigHTMLElement;
   "fig-carousel": FigCarouselElement;
-  "fig-chat-message": FigHTMLElement;
   "fig-checkbox": FigCheckedElement;
   "fig-chit": FigHTMLElement;
   "fig-choice": FigValueElement;
@@ -354,9 +292,7 @@ export interface FigTagNameMap {
   "fig-dropdown": FigValueElement;
   "fig-easing-curve": FigValueElement;
   "fig-field": FigHTMLElement;
-  "fig-fill-picker": FigFillPickerElement;
   "fig-footer": FigHTMLElement;
-  "fig-gradient-editor": FigValueElement;
   "fig-group": FigHTMLElement;
   "fig-handle": FigValueElement;
   "fig-header": FigHTMLElement;
@@ -369,17 +305,7 @@ export interface FigTagNameMap {
   "fig-input-gradient": FigValueElement;
   "fig-input-number": FigNumberInputElement;
   "fig-input-palette": FigValueElement;
-  "fig-input-point": FigValueElement;
-  "fig-input-rotate": FigValueElement;
-  "fig-input-slider": FigInputSliderElement;
-  "fig-input-slider-delta": FigInputSliderElement;
-  "fig-input-slider-hue": FigInputSliderElement;
-  "fig-input-slider-opacity": FigInputSliderElement;
-  "fig-input-slider-stepper": FigInputSliderElement;
-  "fig-input-slider-wheel": FigInputSliderElement;
   "fig-input-text": FigTextInputElement;
-  "fig-input-wheel": FigInputWheelElement;
-  "fig-interpolation-swatch": FigValueElement;
   "fig-joystick": FigValueElement;
   "fig-layer": FigLayerElement;
   "fig-media": FigMediaElement;
@@ -389,16 +315,11 @@ export interface FigTagNameMap {
   "fig-menu-separator": FigHTMLElement;
   "fig-options": FigOptionsElement;
   "fig-origin-grid": FigValueElement;
-  "fig-palette-editor": FigValueElement;
   "fig-preview": FigHTMLElement;
   "fig-property": FigHTMLElement;
   "fig-radio": FigCheckedElement;
-  "fig-reorder": FigValueElement;
   "fig-segment": FigValueElement;
   "fig-segmented-control": FigValueElement;
-  "fig-select": FigSelectElement;
-  "fig-select-option": FigValueElement;
-  "fig-select-options": FigHTMLElement;
   "fig-separator": FigHTMLElement;
   "fig-shimmer": FigHTMLElement;
   "fig-skeleton": FigHTMLElement;

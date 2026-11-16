@@ -27,11 +27,11 @@ import "@rogieking/figui3/fig.js";
 | Bundle | CSS + JS | Components |
 |---|---|---|
 | **Core** (this skill) | `fig.css` + `fig.js` | All `fig-*` in [components.md](components.md) |
-| **Editor** | `fig-editor.css` + `fig-editor.js` | `fig-select*`, `fig-fill-picker`, `fig-palette-editor`, `fig-reorder`, `fig-interpolation-swatch` |
+| **Extended** | `@rogieking/figui3-extended` | Editor and experimental Lab components |
 
 `fig.js` registers `fig-layer`; add `fig-layer.css` for its presentation.
-`fig-layer.js` remains a standalone registration entry. `fig-editor.js` also
-imports `fig.js`. Lab remains a separate JS/CSS bundle. See
+`fig-layer.js` remains a standalone registration entry. Extended components
+come from a separately licensed package. See
 [`BUNDLES.md`](../../BUNDLES.md) for the generated registration inventory.
 
 ## Principles

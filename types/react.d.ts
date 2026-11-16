@@ -5,8 +5,6 @@ import type {
   FigColorDetail,
   FigCustomEvent,
   FigEventDetailMap,
-  FigInputSliderElement,
-  FigInputWheelElement,
   FigSliderDetail,
   FigSliderElement,
   FigTagNameMap,
@@ -29,10 +27,7 @@ export type FigReactEvent<
 > = React.SyntheticEvent<TElement, TEvent>;
 
 type FigInputDetail<TElement extends HTMLElement> =
-  TElement extends
-    | FigSliderElement
-    | FigInputSliderElement
-    | FigInputWheelElement
+  TElement extends FigSliderElement
     ? FigSliderDetail<string>
     : TElement extends FigCheckedElement
       ? FigCheckedDetail

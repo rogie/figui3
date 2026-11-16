@@ -107,37 +107,3 @@ test("customized popup menus open and clean up across engines", async ({
     closedAfterDisconnect: true,
   });
 });
-
-test("editor and lab bundles register on every supported engine", async ({
-  page,
-}) => {
-  const state = await page.evaluate(async () => {
-    await Promise.all([import("/fig-editor.js"), import("/fig-lab.js")]);
-    await Promise.all([
-      customElements.whenDefined("fig-select"),
-      customElements.whenDefined("fig-input-wheel"),
-    ]);
-    const root = document.querySelector("#fixture-root")!;
-    root.innerHTML = `
-      <fig-select id="select" value="left">
-        <fig-select-options>
-          <fig-select-option value="left">Left</fig-select-option>
-          <fig-select-option value="right">Right</fig-select-option>
-        </fig-select-options>
-      </fig-select>
-      <fig-input-wheel id="wheel" value="50"></fig-input-wheel>
-    `;
-    await new Promise(requestAnimationFrame);
-    return {
-      select: root.querySelector("#select")?.constructor.name,
-      wheel: root.querySelector("#wheel")?.constructor.name,
-      wheelSurface: !!root.querySelector("#wheel svg"),
-    };
-  });
-
-  expect(state).toEqual({
-    select: "FigSelect",
-    wheel: "FigInputWheel",
-    wheelSurface: true,
-  });
-});
