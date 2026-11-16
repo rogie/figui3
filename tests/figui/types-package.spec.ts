@@ -143,6 +143,12 @@ test("npm manifest publishes DOM, React, and module declarations", async () => {
   expect(manifest.exports["./fig-color.js"].types).toBe(
     "./types/fig-color.d.ts",
   );
+  expect(manifest.exports["./extended-runtime.js"]).toBe(
+    "./dist/extended-runtime.js",
+  );
+  expect(manifest.exports["./src/extended-runtime.js"]).toBe(
+    "./src/core/entrypoints/extended-runtime.js",
+  );
   expect(manifest.exports["./fig-input-slider.js"].types).toBe(
     "./types/fig-input-slider.d.ts",
   );

@@ -1,6 +1,6 @@
 {
   "name": "@rogieking/figui3",
-  "version": "11.11.19",
+  "version": "11.11.20",
   "description": "A lightweight web components library for building Figma plugin and widget UIs with native look and feel",
   "author": "Rogie King",
   "license": "SEE LICENSE IN LICENSE",
@@ -25,6 +25,7 @@
       "types": "./types/fig-color.d.ts",
       "default": "./dist/fig-color.js"
     },
+    "./extended-runtime.js": "./dist/extended-runtime.js",
     "./fig-layer.js": {
       "types": "./types/index.d.ts",
       "default": "./dist/fig-layer.js"
@@ -73,6 +74,7 @@
     "./icons.css": "./dist/icons.css",
     "./src/fig.js": "./fig.js",
     "./src/fig-color.js": "./fig-color.js",
+    "./src/extended-runtime.js": "./src/core/entrypoints/extended-runtime.js",
     "./src/fig-layer.js": "./src/core/entrypoints/fig-layer.js",
     "./src/fig-input-rotate.js": "./src/editor/entrypoints/fig-input-rotate.js",
     "./src/fig-input-slider.js": "./src/lab/entrypoints/fig-input-slider.js",

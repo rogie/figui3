@@ -19,6 +19,11 @@ export const rootArtifacts = [
 export const jsArtifacts = [
   { input: "fig-color.js", output: "fig-color.js", license: LICENSE_MIT },
   {
+    input: "src/core/entrypoints/extended-runtime.js",
+    output: "extended-runtime.js",
+    license: LICENSE_MIT,
+  },
+  {
     input: "src/core/entrypoints/fig-layer.js",
     output: "fig-layer.js",
     license: LICENSE_MIT,
@@ -131,6 +136,7 @@ export const cssArtifacts = [
 ];
 
 export const publicAliases = {
+  "extended-runtime.js": "src/core/entrypoints/extended-runtime.js",
   "fig-layer.js": "src/core/entrypoints/fig-layer.js",
   "fig-layer.css": "src/core/entrypoints/fig-layer.css",
   "fig-input-rotate.js": "src/editor/entrypoints/fig-input-rotate.js",

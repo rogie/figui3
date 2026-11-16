@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.20]
+
+### Added
+
+- Added the MIT `extended-runtime.js` bridge for external FigUI3 extensions.
+
 ## [11.11.19]
 
 ### Changed
