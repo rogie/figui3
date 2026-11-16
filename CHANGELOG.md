@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.19]
+
+### Changed
+
+- Changed group header select examples to use regular styling with end spacing.
+
 ## [11.11.18]
 
 ### Changed

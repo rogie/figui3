@@ -1415,7 +1415,6 @@ export function applyGroupHeaderControlMutation(
     nextControl.setAttribute("aria-label", "Toggle fill visibility");
   } else if (control === "select") {
     nextControl = document.createElement("fig-select");
-    nextControl.setAttribute("variant", "ghost");
     nextControl.setAttribute("value", "Solid");
     nextControl.setAttribute("options", "Solid,Gradient,Image");
     nextControl.setAttribute("aria-label", "Fill type");

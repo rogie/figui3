@@ -1228,6 +1228,36 @@ test.describe.serial("ExampleView DOM synchronization", () => {
     });
   });
 
+  test("group header select mutation uses the regular variant", async ({
+    page,
+  }) => {
+    await page.goto(`${playgroundUrl}/propskit`);
+    const state = await page.evaluate(async () => {
+      const { applyGroupHeaderControlMutation } = await import(
+        "/src/lib/attributeParser.ts"
+      );
+      const markup = `<fig-group>
+        <fig-header>
+          <h3>Fill</h3>
+          <fig-button variant="ghost">Add</fig-button>
+        </fig-header>
+      </fig-group>`;
+      const updated = applyGroupHeaderControlMutation(markup, 0, "select");
+      const template = document.createElement("template");
+      template.innerHTML = updated;
+      const select = template.content.querySelector("fig-select");
+      return {
+        variant: select?.getAttribute("variant"),
+        value: select?.getAttribute("value"),
+      };
+    });
+
+    expect(state).toEqual({
+      variant: null,
+      value: "Solid",
+    });
+  });
+
   test("property Combo input creates resettable X and Y number inputs", async ({
     page,
   }) => {

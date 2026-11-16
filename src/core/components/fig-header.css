@@ -56,7 +56,7 @@ fig-header {
     box-shadow: none;
   }
 
-  & > fig-switch:last-child {
+  & > :is(fig-switch, fig-select:not([variant="ghost"])):last-child {
     margin-right: var(--spacer-2);
   }
 }
