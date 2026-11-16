@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [11.11.18]
+
+### Changed
+
+- Added end spacing to trailing switches in `fig-header`.
+
 ## [11.11.17]
 
 ### Fixed

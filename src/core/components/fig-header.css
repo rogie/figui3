@@ -55,4 +55,8 @@ fig-header {
   &[borderless]:not([borderless="false"]) {
     box-shadow: none;
   }
+
+  & > fig-switch:last-child {
+    margin-right: var(--spacer-2);
+  }
 }
