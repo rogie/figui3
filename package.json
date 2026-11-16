@@ -153,9 +153,9 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.60.0",
+    "@rogieking/figui3-extended": "https://codeload.github.com/rogie/figui3-extended/tar.gz/refs/tags/v1.0.0",
     "@types/bun": "1.3.10",
     "@types/react": "^19.3.0",
-    "@rogieking/figui3-extended": "^1.0.0",
     "lightningcss": "^1.32.0",
     "typescript": "^5.9.3"
   }
