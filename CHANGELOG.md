@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.0.4]
+
+### Added
+
+- Added menu shortcut and property trailing-space playground examples.
+
+### Changed
+
+- Improved menu item slot spacing and keyboard shortcut typography.
+- Changed the large toolbelt example to use `fig-select` menus.
+
 ## [12.0.3]
 
 ### Fixed

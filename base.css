@@ -160,3 +160,8 @@ a{
     text-decoration: underline;
   }
 }
+
+kbd{
+  font-family: var(--font-family-monospace);
+  color: var(--figma-color-text-secondary);
+}

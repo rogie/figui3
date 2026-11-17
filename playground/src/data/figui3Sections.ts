@@ -107,17 +107,18 @@ function toolbeltSplitTool(
   const items = options
     .map(
       ([optionValue, optionLabel]) =>
-        `        <fig-menu-item value="${optionValue}">${optionLabel}</fig-menu-item>`,
+        `          <fig-select-option value="${optionValue}">${optionLabel}</fig-select-option>`,
     )
     .join("\n");
   return `    <fig-toolbelt-item value="${value}" aria-label="${label}"${selectedAttr}>
       <fig-tooltip text="${label}">
         <fig-button value="${value}" size="large" variant="ghost" icon aria-label="${label}" tabindex="-1"><fig-icon name="${icon}"></fig-icon></fig-button>
       </fig-tooltip>
-      <fig-menu position="bottom left">
-        <fig-button icon="compact" aria-label="${label} menu" variant="ghost" size="large" fig-menu-trigger tabindex="-1"><fig-icon name="chevron" size="small"></fig-icon></fig-button>
+      <fig-select value="${options[0]?.[0] ?? ""}" icon aria-label="${label} menu" variant="ghost" size="large" tabindex="-1">
+        <fig-select-options>
 ${items}
-      </fig-menu>
+        </fig-select-options>
+      </fig-select>
     </fig-toolbelt-item>`;
 }
 
@@ -713,6 +714,20 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
       <fig-input-number slot="input" value="40" units="%" full></fig-input-number>
     </fig-property>
     <fig-property>
+      <fig-tooltip text="Font weight">
+        <fig-select slot="input" value="regular" aria-label="Font weight">
+          <fig-select-options>
+            <fig-select-option value="regular">Regular</fig-select-option>
+            <fig-select-option value="medium">Medium</fig-select-option>
+            <fig-select-option value="bold">Bold</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      </fig-tooltip>
+      <fig-tooltip text="Font size">
+        <fig-input-number slot="input" value="16" default="16" units="px" aria-label="Font size"></fig-input-number>
+      </fig-tooltip>
+    </fig-property>
+    <fig-property trailing="space" show-trailing>
       <fig-tooltip text="Font weight">
         <fig-select slot="input" value="regular" aria-label="Font weight">
           <fig-select-options>
@@ -2805,6 +2820,27 @@ ${toolbeltSplitTool("settings", "settings", "Settings", [
     <fig-menu-item value="paste">Paste</fig-menu-item>
     <fig-separator></fig-separator>
     <fig-menu-item value="delete">Delete</fig-menu-item>
+  </fig-menu>
+</div>`,
+      },
+      {
+        id: "append-slot",
+        name: "Append slot",
+        markup: `<div class="prop-panel">
+  <fig-menu position="bottom left">
+    <fig-button variant="secondary" fig-menu-trigger>Edit</fig-button>
+    <fig-menu-item value="cut">
+      Cut
+      <kbd slot="append">⌘X</kbd>
+    </fig-menu-item>
+    <fig-menu-item value="copy">
+      Copy
+      <kbd slot="append">⌘C</kbd>
+    </fig-menu-item>
+    <fig-menu-item value="paste">
+      Paste
+      <kbd slot="append">⌘V</kbd>
+    </fig-menu-item>
   </fig-menu>
 </div>`,
       },

@@ -2865,19 +2865,23 @@ export const legacyPropsKitSections: Section[] = [
     <fig-menu-item value="duplicate">
       <fig-icon name="copy" slot="prepend"></fig-icon>
       Duplicate
+      <kbd slot="append">⌘D</kbd>
     </fig-menu-item>
     <fig-menu-item value="rename">
       <fig-icon name="edit" slot="prepend"></fig-icon>
       Rename
+      <kbd slot="append">⌘R</kbd>
     </fig-menu-item>
     <fig-menu-item value="settings">
       <fig-icon name="settings" slot="prepend"></fig-icon>
       Settings
+      <kbd slot="append">⌘,</kbd>
     </fig-menu-item>
     <fig-separator></fig-separator>
     <fig-menu-item value="delete">
       <fig-icon name="trash" slot="prepend"></fig-icon>
       Delete
+      <kbd slot="append">⌫</kbd>
     </fig-menu-item>
   </fig-menu>
 </div>`,

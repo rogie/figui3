@@ -10,7 +10,7 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
   flex-shrink: 0;
   align-items: center;
   text-align: left;
-  gap: 0;
+  gap: var(--spacer-1);
   width: 100%;
   padding: var(--fig-menu-item-padding);
   min-height: var(--spacer-4);
@@ -76,6 +76,7 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
   }
   & > [slot="append"] {
     margin-left: auto;
+    padding-left: var(--spacer-2);
     flex: 0 0 auto;
   }
 
