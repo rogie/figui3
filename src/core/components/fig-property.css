@@ -46,11 +46,6 @@ fig-property {
     background-color: var(--figma-color-bg-selected);
   }
 
-  &[show-trailing]:not([show-trailing="hover"]):has(> fig-button[slot="trailing"][variant="ghost"]),
-  &[show-trailing]:not([show-trailing="hover"]):has(> [slot="trailing"] fig-button[variant="ghost"]) {
-    --fig-property-right-padding: var(--spacer-2);
-  }
-
   > :is(label, [slot="label"]) {
     grid-area: label;
     display: block;
@@ -120,6 +115,19 @@ fig-property {
     min-width: 0;
     overflow: hidden;
     visibility: hidden;
+  }
+
+  &:has(> [slot="trailing"][data-fig-property-action="space"]):not(
+      [show-trailing="false"]
+    ) {
+    --fig-property-trailing-gap: var(--fig-property-gap);
+    --fig-property-trailing-size: var(--spacer-4);
+  }
+
+  > [slot="trailing"][data-fig-property-action="space"] {
+    width: var(--spacer-4);
+    height: var(--spacer-4);
+    pointer-events: none;
   }
 
   &:is(:hover) > [slot="leading"],

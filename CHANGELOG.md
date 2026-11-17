@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.0.2]
+
+### Added
+
+- Added `trailing="space"` to reserve icon-button space in `fig-property`.
+
+### Fixed
+
+- Aligned always-visible ghost trailing actions with property row padding.
+
 ## [12.0.1]
 
 ### Added

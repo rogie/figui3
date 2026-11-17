@@ -651,7 +651,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     trailing: {
       label: "Trailing",
       type: "enum",
-      options: ["", "remove", "add", "bind"],
+      options: ["", "remove", "add", "bind", "space"],
     },
     "show-trailing": {
       label: "Show trailing",

@@ -856,7 +856,7 @@ class FigProperty extends HTMLElement {
     const generated = this.#generatedSlot("trailing");
     const value = (this.getAttribute("trailing") || "").trim().toLowerCase();
 
-    if (authored || !["remove", "add", "bind"].includes(value)) {
+    if (authored || !["remove", "add", "bind", "space"].includes(value)) {
       generated?.remove();
       return;
     }
@@ -864,6 +864,16 @@ class FigProperty extends HTMLElement {
     if (generated?.getAttribute("data-fig-property-action") === value) return;
 
     generated?.remove();
+    if (value === "space") {
+      const spacer = document.createElement("span");
+      spacer.setAttribute("slot", "trailing");
+      spacer.setAttribute("aria-hidden", "true");
+      spacer.setAttribute("data-fig-property-generated", "");
+      spacer.setAttribute("data-fig-property-action", value);
+      this.append(spacer);
+      return;
+    }
+
     const button = document.createElement("fig-button");
     button.setAttribute("slot", "trailing");
     button.setAttribute("variant", "ghost");

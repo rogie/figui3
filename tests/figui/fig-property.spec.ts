@@ -2121,6 +2121,18 @@ test.describe("fig-property", () => {
     await expect(
       page.locator('#always > [slot="trailing"]'),
     ).toHaveCSS("visibility", "visible");
+    const trailingRightEdges = await page.evaluate(() => {
+      const right = (selector: string) =>
+        document.querySelector(selector)?.getBoundingClientRect().right;
+      return {
+        hover: right('#hover > [slot="trailing"]'),
+        always: right('#always > [slot="trailing"]'),
+      };
+    });
+    expect(trailingRightEdges.always ?? 0).toBeCloseTo(
+      trailingRightEdges.hover ?? 0,
+      1,
+    );
 
     await page.locator("#never").hover();
     await expect(page.locator('#never > [slot="leading"]')).toHaveCSS(
@@ -2279,6 +2291,22 @@ test.describe("fig-property", () => {
         "true",
       );
     }
+
+    await property.evaluate((element) => {
+      element.setAttribute("trailing", "space");
+    });
+    const spacer = property.locator(
+      ':scope > span[slot="trailing"][data-fig-property-action="space"]',
+    );
+    await expect(spacer).toHaveCount(1);
+    await expect(spacer).toHaveAttribute("aria-hidden", "true");
+    await expect(
+      property.locator(':scope > fig-button[slot="trailing"]'),
+    ).toHaveCount(0);
+    const spacerWidth = await spacer.evaluate(
+      (element) => element.getBoundingClientRect().width,
+    );
+    expect(spacerWidth).toBe(24);
   });
 
   test("preserves authored accessories and native child event bubbling", async ({
