@@ -36,6 +36,7 @@ class FigTooltip extends HTMLElement {
   #boundHidePopupOutsideClick;
   #boundShowDelayedPopup;
   #boundHandlePointerLeave;
+  #boundHandleTriggerPopupLifecycle;
   #boundHandleFocus;
   #boundHandleBlur;
   #boundHandleTouchStart;
@@ -49,6 +50,7 @@ class FigTooltip extends HTMLElement {
   #triggerEl = null;
   #childObserver = null;
   #suppressFocusOpen = false;
+  #interactiveOverlayOpen = false;
   #touchTimeout;
   #isTouching = false;
   #requestGeneration = 0;
@@ -62,11 +64,13 @@ class FigTooltip extends HTMLElement {
     this.#boundHidePopupOutsideClick = this.hidePopupOutsideClick.bind(this);
     this.#boundShowDelayedPopup = this.showDelayedPopup.bind(this);
     this.#boundHandlePointerLeave = this.#handlePointerLeave.bind(this);
+    this.#boundHandleTriggerPopupLifecycle =
+      this.#handleTriggerPopupLifecycle.bind(this);
     this.#boundHandleFocus = () => {
       if (!this.#suppressFocusOpen) this.showDelayedPopup();
     };
     this.#boundHandleBlur = () => {
-      this.#suppressFocusOpen = false;
+      if (!this.#interactiveOverlayOpen) this.#suppressFocusOpen = false;
       this.hidePopup();
     };
     this.#boundHandleTouchStart = this.#handleTouchStart.bind(this);
@@ -158,6 +162,10 @@ class FigTooltip extends HTMLElement {
         trigger.addEventListener("pointerenter", this.#boundShowDelayedPopup);
         trigger.addEventListener("pointerleave", this.#boundHandlePointerLeave);
       }
+      trigger.addEventListener(
+        "fig-popup-lifecycle",
+        this.#boundHandleTriggerPopupLifecycle,
+      );
       trigger.addEventListener("touchstart", this.#boundHandleTouchStart, {
         passive: true,
       });
@@ -186,6 +194,10 @@ class FigTooltip extends HTMLElement {
     if (this.action === "hover") {
       trigger.removeEventListener("pointerenter", this.#boundShowDelayedPopup);
       trigger.removeEventListener("pointerleave", this.#boundHandlePointerLeave);
+      trigger.removeEventListener(
+        "fig-popup-lifecycle",
+        this.#boundHandleTriggerPopupLifecycle,
+      );
       trigger.removeEventListener("touchstart", this.#boundHandleTouchStart);
       trigger.removeEventListener("touchmove", this.#boundHandleTouchMove);
       trigger.removeEventListener("touchend", this.#boundHandleTouchEnd);
@@ -197,6 +209,8 @@ class FigTooltip extends HTMLElement {
       trigger.removeEventListener("touchstart", this.#boundShowDelayedPopup);
     }
     this.#triggerEl = null;
+    this.#interactiveOverlayOpen = false;
+    this.#suppressFocusOpen = false;
   }
 
   setup() {
@@ -401,6 +415,33 @@ class FigTooltip extends HTMLElement {
     if (!this.#isTouching) {
       this.hidePopup();
     }
+  }
+
+  #handleTriggerPopupLifecycle(event) {
+    const state = event.detail?.state;
+    if (state === "opening" || state === "open") {
+      this.#interactiveOverlayOpen = true;
+      this.#suppressFocusOpen = true;
+      this.hidePopup();
+      return;
+    }
+    if (state === "closing") {
+      this.#interactiveOverlayOpen = true;
+      return;
+    }
+    if (state !== "closed") return;
+
+    this.#interactiveOverlayOpen = false;
+    requestAnimationFrame(() => {
+      const trigger = this.#triggerEl;
+      if (
+        !this.#interactiveOverlayOpen &&
+        trigger !== document.activeElement &&
+        !trigger?.matches?.(":focus, :focus-within")
+      ) {
+        this.#suppressFocusOpen = false;
+      }
+    });
   }
 
   // Touch event handlers for mobile support
@@ -627,6 +668,7 @@ class FigTooltip extends HTMLElement {
       setTimeout(() => {
         const trigger = node.#triggerEl;
         if (
+          !node.#interactiveOverlayOpen &&
           trigger !== document.activeElement &&
           !trigger?.matches?.(":focus, :focus-within")
         ) {

@@ -15297,14 +15297,26 @@ test.describe("remaining accessibility contracts", () => {
     });
 
     const select = page.locator("fig-tooltip > fig-select");
+    const tooltip = page.locator(
+      'dialog[is="fig-popup"][data-tooltip-managed]',
+    );
+    await select.hover();
+    await expect(tooltip).toHaveCount(1);
     await select.locator("fig-button.fig-select-trigger").click();
     await expect(select).toHaveAttribute("open", "");
+    await expect(tooltip).toHaveCount(0);
     await select.locator('fig-select-option[value="two"]').hover();
     await page.waitForTimeout(100);
+    await expect(tooltip).toHaveCount(0);
 
-    await expect(
-      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
-    ).toHaveCount(0);
+    await select.locator('fig-select-option[value="two"]').click();
+    await expect(select).not.toHaveAttribute("open");
+    await page.waitForTimeout(100);
+    await expect(tooltip).toHaveCount(0);
+
+    await page.mouse.move(0, 0);
+    await select.hover();
+    await expect(tooltip).toHaveCount(1);
   });
 
   test("tooltips dismiss when their scroll context moves", async ({

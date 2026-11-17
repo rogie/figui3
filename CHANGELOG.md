@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.0.3]
+
+### Fixed
+
+- Prevented wrapped select tooltips from reopening after choosing an option.
+
 ## [12.0.2]
 
 ### Added
