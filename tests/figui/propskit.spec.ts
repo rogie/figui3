@@ -277,6 +277,57 @@ test.describe("PropsKit", () => {
     expect(result.reflected).toBe(true);
   });
 
+  test("emits option hover interactions without changing values", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const { figCreateProps, figCreatePropsRoot } = await import(
+        "/propskit.js"
+      );
+      const hovers: unknown[] = [];
+      const kit = figCreateProps(
+        "Alignment",
+        {
+          alignment: {
+            type: "options",
+            default: "center",
+            options: ["left", "center", "right"],
+          },
+        },
+        {
+          onOptionHover: (
+            path: string,
+            value: unknown,
+            interaction: { sourceEvent: Event },
+          ) =>
+            hovers.push({
+              path,
+              value,
+              eventType: interaction.sourceEvent.type,
+            }),
+        },
+      );
+      const root = figCreatePropsRoot({
+        target: document.querySelector("#fixture-root"),
+        panelIds: [kit.id],
+      });
+      const option = root.element.querySelector(
+        'fig-segment[value="right"]',
+      ) as HTMLElement;
+      option.dispatchEvent(
+        new PointerEvent("pointerover", { bubbles: true }),
+      );
+      return { hovers, values: kit.values };
+    });
+
+    expect(result).toEqual({
+      hovers: [
+        { path: "alignment", value: "right", eventType: "optionhover" },
+      ],
+      values: { alignment: "center" },
+    });
+  });
+
   test("renders selectable image and video options in choosers", async ({
     page,
   }) => {

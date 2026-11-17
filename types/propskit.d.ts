@@ -256,6 +256,13 @@ export interface PropsKitInteraction extends PropsKitChangeRecord {
   readonly sourceEvent?: Event;
 }
 
+export interface PropsKitOptionHoverInteraction {
+  readonly path: string;
+  readonly value: unknown;
+  readonly panelId: string;
+  readonly sourceEvent: CustomEvent;
+}
+
 export interface CreatePropsKitOptions {
   id?: string;
   /** Called only for live user input, never for programmatic setters. */
@@ -269,6 +276,12 @@ export interface CreatePropsKitOptions {
     path: string,
     value: unknown,
     interaction: PropsKitInteraction,
+  ) => void;
+  /** Called when the user points at an option without changing the value. */
+  onOptionHover?: (
+    path: string,
+    value: unknown,
+    interaction: PropsKitOptionHoverInteraction,
   ) => void;
 }
 

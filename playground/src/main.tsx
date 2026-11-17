@@ -98,12 +98,10 @@ const bootstrap = async () => {
   }
 
   if (mode !== "sandbox") {
-    await import("../../fig.css");
-    // @ts-expect-error runtime side-effect import for custom element registration
-    await import("../../fig.js");
-    await import("../../src/core/entrypoints/fig-layer.css");
-    // @ts-expect-error runtime side-effect import for layer navigation registration
-    await import("../../src/core/entrypoints/fig-layer.js");
+    await import("@rogieking/figui3/fig.css");
+    await import("@rogieking/figui3/fig.js");
+    await import("@rogieking/figui3/fig-layer.css");
+    await import("@rogieking/figui3/fig-layer.js");
     if (
       localStorage.getItem("includeEditorControls") === "true" ||
       hashNeedsEditorControls

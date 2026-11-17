@@ -44,6 +44,39 @@ class FigOptions extends HTMLElement {
     return String(fallbackValue);
   }
 
+  #emitOptionHover(e, control) {
+    const option =
+      e.target instanceof Element
+        ? e.target.closest("fig-segment, option")
+        : null;
+    if (
+      !option ||
+      !control.contains(option) ||
+      option.hasAttribute("disabled") ||
+      option.getAttribute("aria-disabled") === "true"
+    ) {
+      return;
+    }
+    if (
+      e.relatedTarget instanceof Node &&
+      option.contains(e.relatedTarget)
+    ) {
+      return;
+    }
+    const value =
+      option instanceof HTMLOptionElement
+        ? option.value
+        : option.getAttribute("value");
+    if (value === null) return;
+    this.dispatchEvent(
+      new CustomEvent("optionhover", {
+        detail: value,
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   #canReuseControl() {
     if (this.#parsedOptions.length === 0) return false;
     const segments = this.querySelector(":scope > fig-segmented-control");
@@ -266,6 +299,9 @@ class FigOptions extends HTMLElement {
         }),
       );
     });
+    sc.addEventListener("pointerover", (e) =>
+      this.#emitOptionHover(e, sc),
+    );
 
     this.appendChild(sc);
     this.#childControl = sc;
@@ -320,6 +356,9 @@ class FigOptions extends HTMLElement {
         }),
       );
     });
+    dd.addEventListener("pointerover", (e) =>
+      this.#emitOptionHover(e, dd),
+    );
 
     this.appendChild(dd);
     this.#childControl = dd;

@@ -33,20 +33,30 @@ const red: number = figHexToRGB("#ff0000").r;
 void red;
 void register();
 
-const props = figCreateProps("Typed", {
-  opacity: 50,
-  columns: { type: "number", control: "number", stepper: true, default: 3 },
-  width: { type: "number", control: "number", default: 320 },
-  gallery: {
-    type: "image",
-    options: [
-      "one.webp",
-      { value: "two.webp", label: "Two" },
-    ],
+const props = figCreateProps(
+  "Typed",
+  {
+    opacity: 50,
+    columns: { type: "number", control: "number", stepper: true, default: 3 },
+    width: { type: "number", control: "number", default: 320 },
+    gallery: {
+      type: "image",
+      options: [
+        "one.webp",
+        { value: "two.webp", label: "Two" },
+      ],
+    },
+    joystick: { type: "joystick", unitScale: 1 },
+    save: { type: "action", onClick: ({ values }) => void values.opacity },
   },
-  joystick: { type: "joystick", unitScale: 1 },
-  save: { type: "action", onClick: ({ values }) => void values.opacity },
-});
+  {
+    onOptionHover: (path, value, interaction) => {
+      void path;
+      void value;
+      void interaction.sourceEvent;
+    },
+  },
+);
 const opacity: number = props.values.opacity;
 const columns: number = props.values.columns;
 const gallery: string = props.values.gallery;

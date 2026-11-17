@@ -71,6 +71,94 @@ test.describe("fig-property", () => {
     expect(result.labelId).toBeTruthy();
   });
 
+  test("supports a fig-tooltip as a transparent input wrapper", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="wrapped-property" label="Width">
+          <fig-tooltip text="Width control" delay="0">
+            <fig-input-number id="wrapped-input" slot="input" value="16" default="8"></fig-input-number>
+          </fig-tooltip>
+        </fig-property>
+        <fig-property id="wrapped-multiple">
+          <fig-tooltip text="First input" delay="0">
+            <fig-input-text id="wrapped-first" slot="input" value="First"></fig-input-text>
+          </fig-tooltip>
+          <fig-tooltip text="Second input" delay="0">
+            <fig-input-number id="wrapped-second" slot="input" value="2"></fig-input-number>
+          </fig-tooltip>
+        </fig-property>
+      `;
+    });
+
+    const result = await page.locator("#wrapped-property").evaluate(
+      (property: any) => {
+        const label = property.querySelector(":scope > label");
+        const input = property.querySelector(
+          ":scope > fig-tooltip > [slot='input']",
+        );
+        return {
+          inputMatches: property.input === input,
+          labelledBy: input?.getAttribute("aria-labelledby"),
+          labelId: label?.id,
+          inputArea: getComputedStyle(input).gridArea,
+        };
+      },
+    );
+    expect(result).toEqual({
+      inputMatches: true,
+      labelledBy: result.labelId,
+      labelId: result.labelId,
+      inputArea: "input",
+    });
+
+    await page.locator("#wrapped-input").hover();
+    await expect(
+      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
+    ).toHaveText("Width control");
+
+    await page.locator("#wrapped-property > label").click();
+    await expect(page.locator("#wrapped-input input")).toBeFocused();
+
+    const resetValue = await page.locator("#wrapped-property").evaluate((property: any) => {
+      property.resetToDefault();
+      return property.input.value;
+    });
+    expect(resetValue).toBe(8);
+
+    const multipleLayout = await page
+      .locator("#wrapped-multiple")
+      .evaluate((property) => {
+        const first = property.querySelector("#wrapped-first");
+        const second = property.querySelector("#wrapped-second");
+        const firstRect = first?.getBoundingClientRect();
+        const secondRect = second?.getBoundingClientRect();
+        return {
+          count: property.querySelectorAll(
+            ":scope > fig-tooltip > [slot='input']",
+          ).length,
+          firstRight: firstRect?.right,
+          secondLeft: secondRect?.left,
+        };
+      });
+    expect(multipleLayout.count).toBe(2);
+    expect(multipleLayout.firstRight).toBeLessThanOrEqual(
+      multipleLayout.secondLeft ?? 0,
+    );
+
+    await page.locator("#wrapped-first").hover();
+    await expect(
+      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
+    ).toHaveText("First input");
+    await page.locator("#wrapped-second").hover();
+    await expect(
+      page.locator('dialog[is="fig-popup"][data-tooltip-managed]'),
+    ).toHaveText("Second input");
+  });
+
   test("applies reflected label-to-input ratios with stable fallbacks and overrides", async ({
     page,
   }) => {
@@ -1915,6 +2003,87 @@ test.describe("fig-property", () => {
     await expect(tooltip).toHaveText(replacementText);
 
     await page.locator("#truncated").evaluate((property) => property.remove());
+    await expect(tooltip).toHaveCount(0);
+  });
+
+  test("tooltips unlabeled inputs from data-tooltip or aria-label", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing fixture root");
+      root.innerHTML = `
+        <fig-property id="aria-property">
+          <fig-input-number id="aria-input" slot="input" aria-label="Width"></fig-input-number>
+        </fig-property>
+        <fig-property id="explicit-property">
+          <fig-input-number id="explicit-input" slot="input" data-tooltip="Custom width" aria-label="Width"></fig-input-number>
+        </fig-property>
+        <fig-property id="labeled-property" label="Height">
+          <fig-input-number id="labeled-input" slot="input" aria-label="Height input"></fig-input-number>
+        </fig-property>
+        <fig-property id="dynamic-property">
+          <fig-input-number id="dynamic-input" slot="input"></fig-input-number>
+        </fig-property>
+        <fig-property id="multiple-property">
+          <select id="multiple-select" slot="input" aria-label="Sizing">
+            <option>Fixed</option>
+            <option>Hug</option>
+          </select>
+          <fig-input-text id="multiple-text" slot="input" aria-label="Name"></fig-input-text>
+        </fig-property>
+      `;
+    });
+
+    const tooltip = page.locator(
+      'dialog[is="fig-popup"][data-tooltip-managed]',
+    );
+
+    await page.locator("#aria-input").hover();
+    await expect(tooltip).toHaveText("Width");
+
+    await page.locator("#explicit-input").hover();
+    await expect(tooltip).toHaveText("Custom width");
+
+    await page.locator("#multiple-select").hover();
+    await expect(tooltip).toHaveText("Sizing");
+    await page.locator("#multiple-text").hover();
+    await expect(tooltip).toHaveText("Name");
+    const multipleLayout = await page
+      .locator("#multiple-property")
+      .evaluate((property) => {
+        const first = property.querySelector("#multiple-select");
+        const second = property.querySelector("#multiple-text");
+        const firstRect = first?.getBoundingClientRect();
+        const secondRect = second?.getBoundingClientRect();
+        return {
+          firstRight: firstRect?.right,
+          secondLeft: secondRect?.left,
+        };
+      });
+    expect(multipleLayout.firstRight).toBeLessThanOrEqual(
+      multipleLayout.secondLeft ?? 0,
+    );
+
+    await page.locator("#labeled-input").hover();
+    await page.waitForTimeout(550);
+    await expect(tooltip).toHaveCount(0);
+
+    await page.locator("#dynamic-input").evaluate((input) => {
+      input.setAttribute("aria-label", "Dynamic width");
+    });
+    await page.locator("#dynamic-input input").focus();
+    await expect(tooltip).toHaveText("Dynamic width");
+
+    await page.locator("#dynamic-input input").blur();
+    await page.locator("#aria-input").hover();
+    await expect(tooltip).toHaveText("Width");
+    await page.locator("#aria-property").evaluate((property) => {
+      property.setAttribute("label", "Width");
+    });
+    await expect(tooltip).toHaveCount(0);
+    await page.locator("#aria-input").hover();
+    await page.waitForTimeout(550);
     await expect(tooltip).toHaveCount(0);
   });
 

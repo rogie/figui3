@@ -91,10 +91,28 @@ fig-property {
     );
   }
 
-  > [slot="input"] {
+  > [slot="input"],
+  > fig-tooltip > [slot="input"] {
     grid-area: input;
     width: 100%;
     min-width: 0;
+  }
+
+  > [slot="input"][data-fig-property-input-count="2"],
+  > fig-tooltip > [slot="input"][data-fig-property-input-count="2"] {
+    width: calc(50% - var(--fig-property-gap) / 2);
+  }
+
+  > [slot="input"][data-fig-property-input-count="2"][data-fig-property-input-index="0"],
+  > fig-tooltip
+    > [slot="input"][data-fig-property-input-count="2"][data-fig-property-input-index="0"] {
+    justify-self: start;
+  }
+
+  > [slot="input"][data-fig-property-input-count="2"][data-fig-property-input-index="1"],
+  > fig-tooltip
+    > [slot="input"][data-fig-property-input-count="2"][data-fig-property-input-index="1"] {
+    justify-self: end;
   }
 
   > [slot="trailing"] {
@@ -131,8 +149,11 @@ fig-property {
     display: none;
   }
 
-  &:not(:has(> :is(label, [slot="label"]))) > [slot="input"] {
-    grid-column: label-start / input-end;
+  &:not(:has(> :is(label, [slot="label"]))) {
+    > [slot="input"],
+    > fig-tooltip > [slot="input"] {
+      grid-column: label-start / input-end;
+    }
   }
 }
 
@@ -182,7 +203,9 @@ fig-property[activation="row"] {
   }
 
   > [slot="input"],
-  > [slot="input"][full]:not([full="false"]) {
+  > [slot="input"][full]:not([full="false"]),
+  > fig-tooltip > [slot="input"],
+  > fig-tooltip > [slot="input"][full]:not([full="false"]) {
     width: fit-content;
     flex: 0 0 auto;
     justify-self: end;
@@ -193,6 +216,9 @@ fig-property[activation="row"] {
   }
 
   > :is(fig-input-number, fig-input-text)[slot="input"]
+    > :is(input, textarea),
+  > fig-tooltip
+    > :is(fig-input-number, fig-input-text)[slot="input"]
     > :is(input, textarea) {
     field-sizing: content;
     flex: 0 1 auto;
@@ -204,11 +230,21 @@ fig-property[activation="row"] {
     --figma-color-bg-transparent-pressed: transparent;
   }
 
-  > fig-switch[slot="input"] {
+  > fig-switch[slot="input"],
+  > fig-tooltip > fig-switch[slot="input"] {
     margin-right: var(--spacer-1);
   }
 
   > :is(
+      fig-input-color,
+      .fig-input-slider,
+      fig-input-point,
+      fig-input-file,
+      fig-input-rotate,
+      fig-button
+    )[slot="input"],
+  > fig-tooltip
+    > :is(
       fig-input-color,
       .fig-input-slider,
       fig-input-point,
@@ -223,6 +259,15 @@ fig-property[activation="row"] {
       fig-input-file,
       fig-input-rotate,
       fig-button
+    )[slot="input"][full]:not([full="false"]),
+  > fig-tooltip
+    > :is(
+      fig-input-color,
+      .fig-input-slider,
+      fig-input-point,
+      fig-input-file,
+      fig-input-rotate,
+      fig-button
     )[slot="input"][full]:not([full="false"]) {
     min-width: 0;
     width: min-content;
@@ -231,6 +276,11 @@ fig-property[activation="row"] {
   > :is(fig-input-gradient, fig-input-palette)[slot="input"],
   > :is(fig-input-gradient, fig-input-palette)[slot="input"][full]:not(
       [full="false"]
+    ),
+  > fig-tooltip > :is(fig-input-gradient, fig-input-palette)[slot="input"],
+  > fig-tooltip
+    > :is(fig-input-gradient, fig-input-palette)[slot="input"][full]:not(
+      [full="false"]
     ) {
     width: 4rem;
     max-width: 8rem;
@@ -238,6 +288,11 @@ fig-property[activation="row"] {
 
   > fig-input-file[slot="input"][preview][accepts="audio/*"],
   > fig-input-file[slot="input"][preview][accepts="audio/*"][full]:not(
+      [full="false"]
+    ),
+  > fig-tooltip > fig-input-file[slot="input"][preview][accepts="audio/*"],
+  > fig-tooltip
+    > fig-input-file[slot="input"][preview][accepts="audio/*"][full]:not(
       [full="false"]
     ) {
     width: min(8rem, 100%);
@@ -320,18 +375,26 @@ fig-property[activation="row"]{
     }
   }
 
-  > :where(.fig-input-slider[slot="input"]) {
+  > :where(.fig-input-slider[slot="input"]),
+  > fig-tooltip > :where(.fig-input-slider[slot="input"]) {
     --fig-input-slider-tray-background: transparent;
     --fig-input-slider-tray-background-hover: var(--figma-color-bg-hover);
   }
 
-  > fig-input-slider-wheel[slot="input"] {
+  > fig-input-slider-wheel[slot="input"],
+  > fig-tooltip > fig-input-slider-wheel[slot="input"] {
     --fig-input-slider-ticks-inset-inline: calc(var(--spacer-4) * 2);
   }
 
   &:is(:hover, :focus-within, :active)
     > .fig-input-slider[slot="input"],
+  &:is(:hover, :focus-within, :active)
+    > fig-tooltip
+    > .fig-input-slider[slot="input"],
   &:has(> .fig-input-slider[slot="input"][data-dragging])
+    > .fig-input-slider[slot="input"],
+  &:has(> fig-tooltip > .fig-input-slider[slot="input"][data-dragging])
+    > fig-tooltip
     > .fig-input-slider[slot="input"] {
     .fig-input-slider-tray{
       visibility: visible;
@@ -343,7 +406,11 @@ fig-property[activation="row"]{
     outline: none;
   }
 
-  &:has(> .fig-input-slider[slot="input"]) > :is(label, [slot="label"]) {
+  &:is(
+      :has(> .fig-input-slider[slot="input"]),
+      :has(> fig-tooltip > .fig-input-slider[slot="input"])
+    )
+    > :is(label, [slot="label"]) {
     position: relative;
     z-index: 1;
     pointer-events: none;

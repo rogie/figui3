@@ -5955,11 +5955,11 @@ test.describe("button accessibility", () => {
       textAlign: "center",
     });
     await expect.poll(() => alignment("#start")).toEqual({
-      justifyContent: "flow-start",
+      justifyContent: "flex-start",
       textAlign: "start",
     });
     await expect.poll(() => alignment("#end")).toEqual({
-      justifyContent: "flow-end",
+      justifyContent: "flex-end",
       textAlign: "end",
     });
   });

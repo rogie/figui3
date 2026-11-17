@@ -94,6 +94,16 @@ test.describe.serial("core playground package split", () => {
   });
 
   test("loads Full editor from the Extended dependency", async ({ page }) => {
+    const duplicateRegistrations: string[] = [];
+    page.on("console", (message) => {
+      if (
+        message
+          .text()
+          .includes("is already registered with a different constructor")
+      ) {
+        duplicateRegistrations.push(message.text());
+      }
+    });
     await page.addInitScript(() => {
       localStorage.setItem("includeEditorControls", "true");
     });
@@ -102,5 +112,6 @@ test.describe.serial("core playground package split", () => {
     expect(
       await page.evaluate(() => Boolean(customElements.get("fig-fill-picker"))),
     ).toBe(true);
+    expect(duplicateRegistrations).toEqual([]);
   });
 });

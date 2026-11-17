@@ -91,6 +91,8 @@ class FigProperty extends HTMLElement {
   #resetInputObserver = null;
   #observedResetInputs = [];
   #pendingContextMenuCleanup = null;
+  #tooltipInputs = new Set();
+  #layoutInputs = [];
 
   connectedCallback() {
     this.addEventListener("click", this.#activateFromRow);
@@ -125,6 +127,8 @@ class FigProperty extends HTMLElement {
     this.#restoreSelectMenuAnchor();
     this.#clearSliderOcclusionTarget();
     this.#clearLabelAssociation();
+    this.#clearInputTooltips();
+    this.#clearInputLayoutMetadata();
   }
 
   attributeChangedCallback() {
@@ -132,7 +136,22 @@ class FigProperty extends HTMLElement {
   }
 
   get input() {
-    return this.querySelector(':scope > [slot="input"]');
+    return this.#inputs()[0] ?? null;
+  }
+
+  #inputs() {
+    return Array.from(
+      this.querySelectorAll(
+        ':scope > [slot="input"], :scope > fig-tooltip > [slot="input"]',
+      ),
+    );
+  }
+
+  #inputRoot(input) {
+    const parent = input?.parentElement;
+    return parent?.localName === "fig-tooltip" && parent.parentElement === this
+      ? parent
+      : input;
   }
 
   get isDefault() {
@@ -201,9 +220,7 @@ class FigProperty extends HTMLElement {
       }
       for (const child of element.children) visit(child);
     };
-    for (const input of this.querySelectorAll(':scope > [slot="input"]')) {
-      visit(input);
-    }
+    for (const input of this.#inputs()) visit(input);
     return inputs;
   }
 
@@ -229,21 +246,44 @@ class FigProperty extends HTMLElement {
   }
 
   #sync() {
-    const inputs = this.querySelectorAll(':scope > [slot="input"]');
+    const inputs = this.#inputs();
     if (inputs.length === 0) {
       figWarnInvariant(
         `fig-property-inputs:${inputs.length}`,
-        `fig-property expects at least one direct slot="input" child; found ${inputs.length}.`,
+        `fig-property expects at least one direct or tooltip-wrapped slot="input" child; found ${inputs.length}.`,
       );
     }
+    this.#syncInputLayoutMetadata(inputs);
     this.#syncRatio();
     this.#syncLabel();
+    this.#syncInputTooltips();
     this.#syncLeading();
     this.#syncTrailing();
     this.#syncSelectMenuAnchor();
     this.#syncSliderOcclusionTarget();
     this.#syncResetInputObserver();
     this.#syncResetMenuState();
+  }
+
+  #syncInputLayoutMetadata(inputs) {
+    for (const input of this.#layoutInputs) {
+      if (inputs.includes(input)) continue;
+      input.removeAttribute("data-fig-property-input-count");
+      input.removeAttribute("data-fig-property-input-index");
+    }
+    inputs.forEach((input, index) => {
+      input.setAttribute("data-fig-property-input-count", String(inputs.length));
+      input.setAttribute("data-fig-property-input-index", String(index));
+    });
+    this.#layoutInputs = inputs;
+  }
+
+  #clearInputLayoutMetadata() {
+    for (const input of this.#layoutInputs) {
+      input.removeAttribute("data-fig-property-input-count");
+      input.removeAttribute("data-fig-property-input-index");
+    }
+    this.#layoutInputs = [];
   }
 
   #syncRatio() {
@@ -369,7 +409,7 @@ class FigProperty extends HTMLElement {
 
   #syncResetInputObserver() {
     const inputs = Array.from(
-      this.querySelectorAll(':scope > [slot="input"]'),
+      this.#inputs(),
     ).filter((input) => input instanceof HTMLElement);
     if (
       inputs.length === this.#observedResetInputs.length &&
@@ -380,9 +420,10 @@ class FigProperty extends HTMLElement {
     this.#resetInputObserver?.disconnect();
     this.#observedResetInputs = inputs;
     if (inputs.length === 0) return;
-    this.#resetInputObserver ??= new MutationObserver(() =>
-      this.#syncResetMenuState(),
-    );
+    this.#resetInputObserver ??= new MutationObserver(() => {
+      this.#syncResetMenuState();
+      this.#syncInputTooltips();
+    });
     for (const input of inputs) {
       this.#resetInputObserver.observe(input, {
         attributes: true,
@@ -397,6 +438,8 @@ class FigProperty extends HTMLElement {
           "value",
           "checked",
           "indeterminate",
+          "aria-label",
+          "data-tooltip",
           "url",
           "filename",
           "x",
@@ -586,7 +629,7 @@ class FigProperty extends HTMLElement {
         generatedLabel = document.createElement("label");
         generatedLabel.setAttribute("slot", "label");
         generatedLabel.setAttribute("data-fig-property-generated", "");
-        this.insertBefore(generatedLabel, this.input);
+        this.insertBefore(generatedLabel, this.#inputRoot(this.input));
       }
       generatedLabel.textContent = labelText;
     }
@@ -660,6 +703,82 @@ class FigProperty extends HTMLElement {
     }
   };
 
+  #inputTooltipText(input) {
+    const tooltip = input?.getAttribute?.("data-tooltip")?.trim();
+    if (tooltip) return tooltip;
+    return input?.getAttribute?.("aria-label")?.trim() || "";
+  }
+
+  #syncInputTooltips() {
+    const inputs = new Set(
+      this.#labelElement
+        ? []
+        : this.#inputs().filter(
+            (input) =>
+              input.parentElement === this &&
+              input instanceof HTMLElement && this.#inputTooltipText(input),
+          ),
+    );
+
+    for (const input of this.#tooltipInputs) {
+      if (!inputs.has(input)) this.#unbindInputTooltip(input);
+    }
+    for (const input of inputs) {
+      if (this.#tooltipInputs.has(input)) continue;
+      input.addEventListener("pointerenter", this.#showInputTooltip);
+      input.addEventListener("pointerleave", this.#hideInputTooltip);
+      input.addEventListener("focusin", this.#showInputTooltip);
+      input.addEventListener("focusout", this.#hideInputTooltip);
+      this.#tooltipInputs.add(input);
+    }
+  }
+
+  #unbindInputTooltip(input) {
+    input.removeEventListener("pointerenter", this.#showInputTooltip);
+    input.removeEventListener("pointerleave", this.#hideInputTooltip);
+    input.removeEventListener("focusin", this.#showInputTooltip);
+    input.removeEventListener("focusout", this.#hideInputTooltip);
+    const Tooltip = customElements.get("fig-tooltip");
+    if (typeof Tooltip?.hide === "function") Tooltip.hide(input);
+    this.#tooltipInputs.delete(input);
+  }
+
+  #clearInputTooltips() {
+    for (const input of Array.from(this.#tooltipInputs)) {
+      this.#unbindInputTooltip(input);
+    }
+  }
+
+  #showInputTooltip = (event) => {
+    const input = event.currentTarget;
+    if (
+      !(input instanceof HTMLElement) ||
+      this.#labelElement ||
+      !this.contains(input)
+    ) {
+      return;
+    }
+    const text = this.#inputTooltipText(input);
+    const Tooltip = customElements.get("fig-tooltip");
+    if (text && typeof Tooltip?.show === "function") {
+      Tooltip.show(input, text);
+    }
+  };
+
+  #hideInputTooltip = (event) => {
+    const input = event.currentTarget;
+    if (!(input instanceof HTMLElement)) return;
+    if (
+      event.type === "focusout" &&
+      event.relatedTarget instanceof Node &&
+      input.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+    const Tooltip = customElements.get("fig-tooltip");
+    if (typeof Tooltip?.hide === "function") Tooltip.hide(input);
+  };
+
   #focusInput = () => {
     if (this.getAttribute("activation") === "row") return;
     this.focus();
@@ -699,8 +818,11 @@ class FigProperty extends HTMLElement {
     const fromBlockedSlot = event.composedPath().some(
       (node) =>
         node instanceof Element &&
-        node.parentElement === this &&
-        blockedSlots.has(node.getAttribute("slot")),
+        ((node.parentElement === this &&
+          blockedSlots.has(node.getAttribute("slot"))) ||
+          (node.getAttribute("slot") === "input" &&
+            node.parentElement?.localName === "fig-tooltip" &&
+            node.parentElement.parentElement === this)),
     );
     if (fromBlockedSlot) return;
 

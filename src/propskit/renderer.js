@@ -647,6 +647,19 @@ export function mountPropsKitPanel(panel, target) {
     );
   };
 
+  const handleOptionHover = (event) => {
+    if (!eventBelongsToPanel(event)) return;
+    const host = event.target;
+    if (!(host instanceof HTMLElement)) return;
+    const path = host.dataset.propskitPath;
+    if (!path) return;
+    const detail = event instanceof CustomEvent ? event.detail : undefined;
+    const value =
+      isRecord(detail) && "value" in detail ? detail.value : detail;
+    if (value === undefined || value === null) return;
+    panel.emitOptionHover?.(path, value, event);
+  };
+
   const handleClick = (event) => {
     if (!eventBelongsToPanel(event)) return;
     const targetElement = event.target instanceof Element
@@ -667,6 +680,7 @@ export function mountPropsKitPanel(panel, target) {
   eventTarget.addEventListener("input", handleInteractionEvent);
   eventTarget.addEventListener("change", handleInteractionEvent);
   eventTarget.addEventListener("loaded", handleInteractionEvent);
+  eventTarget.addEventListener("optionhover", handleOptionHover);
   eventTarget.addEventListener("click", handleClick);
   target.append(...elements);
 
@@ -722,6 +736,7 @@ export function mountPropsKitPanel(panel, target) {
       eventTarget.removeEventListener("input", handleInteractionEvent);
       eventTarget.removeEventListener("change", handleInteractionEvent);
       eventTarget.removeEventListener("loaded", handleInteractionEvent);
+      eventTarget.removeEventListener("optionhover", handleOptionHover);
       eventTarget.removeEventListener("click", handleClick);
       elements.forEach((element) => element.remove());
     },

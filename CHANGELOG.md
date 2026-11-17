@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.0.1]
+
+### Added
+
+- Added automatic tooltips for unlabeled property inputs using `data-tooltip`
+  or `aria-label`.
+- Added transparent `fig-tooltip` wrappers and paired-input layouts to
+  `fig-property`.
+- Added option hover events and the PropsKit `onOptionHover` callback.
+
+### Fixed
+
+- Prevented duplicate core custom-element registration when loading Extended
+  controls in the playground.
+- Prevented programmatic tooltips from covering open `fig-select` menus.
+
 ## [12.0.0]
 
 ### Changed

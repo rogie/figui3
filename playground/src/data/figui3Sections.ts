@@ -712,6 +712,20 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     <fig-property label="Custom 2:3" ratio="2:3">
       <fig-input-number slot="input" value="40" units="%" full></fig-input-number>
     </fig-property>
+    <fig-property>
+      <fig-tooltip text="Font weight">
+        <fig-select slot="input" value="regular" aria-label="Font weight">
+          <fig-select-options>
+            <fig-select-option value="regular">Regular</fig-select-option>
+            <fig-select-option value="medium">Medium</fig-select-option>
+            <fig-select-option value="bold">Bold</fig-select-option>
+          </fig-select-options>
+        </fig-select>
+      </fig-tooltip>
+      <fig-tooltip text="Font size">
+        <fig-input-number slot="input" value="16" default="16" units="px" aria-label="Font size"></fig-input-number>
+      </fig-tooltip>
+    </fig-property>
   </fig-group>
 </div>`,
       },

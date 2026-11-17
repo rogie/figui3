@@ -31,6 +31,15 @@ export function figCreateProps(name, config, options = {}) {
   const getValues = () =>
     resolvePropsKitValues(panel.config, PropsKitStore.getValues(id));
 
+  panel.emitOptionHover = (path, value, sourceEvent) => {
+    options.onOptionHover?.(path, value, {
+      path,
+      value,
+      panelId: id,
+      sourceEvent,
+    });
+  };
+
   const stopInteractions = PropsKitStore.subscribe(id, (update) => {
     if (!update.phase || !update.records?.length) return;
     const callback =

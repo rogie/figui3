@@ -84,7 +84,7 @@ test("generates ordered bottom controls and selects one item", async ({ page }) 
         icon: "pause",
       },
     ],
-    controlsAlignment: "flow-end",
+    controlsAlignment: "flex-end",
     controlsBelow: true,
     selected: 1,
     hidden: 1,

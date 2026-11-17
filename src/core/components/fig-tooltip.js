@@ -656,6 +656,10 @@ class FigTooltip extends HTMLElement {
   static show(anchor, text, options = {}) {
     FigTooltip.#ensureDocumentExitListeners();
     FigTooltip.hide(anchor);
+    const openSelect =
+      anchor?.matches?.("fig-select[open]") ||
+      anchor?.querySelector?.("fig-select[open]");
+    if (openSelect) return;
     const delay = options.delay ?? 500;
     const warm =
       Date.now() - FigTooltip.#lastShownAt < FigTooltip.#warmupWindow;
