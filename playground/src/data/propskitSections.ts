@@ -64,6 +64,12 @@ const kit = figCreateProps("Appearance", {
     type: "options",
     default: "Center",
     options: ["Left", "Center", "Right"]
+  },
+  save: {
+    type: "action",
+    label: "Save",
+    variant: "primary",
+    onClick: ({ values }) => console.log("Save", values)
   }
 })
 
@@ -217,6 +223,12 @@ const kit = figCreateProps("Transform", {
       type: "easing",
       default: "0.42, 0, 0.58, 1"
     }
+  },
+  save: {
+    type: "action",
+    label: "Save",
+    variant: "primary",
+    onClick: ({ values }) => console.log("Save", values)
   }
 })
 
@@ -345,6 +357,12 @@ export const propskitSections: PropsKitSection[] = [
             type: "options",
             default: "Center",
             options: ["Left", "Center", "Right"],
+          },
+          save: {
+            type: "action",
+            label: "Save",
+            variant: "primary",
+            onClick: ({ values }) => console.log("Save", values),
           },
         }),
       },
@@ -535,6 +553,12 @@ export const propskitSections: PropsKitSection[] = [
               type: "easing",
               default: "0.42, 0, 0.58, 1",
             },
+          },
+          save: {
+            type: "action",
+            label: "Save",
+            variant: "primary",
+            onClick: ({ values }) => console.log("Save", values),
           },
         }),
       },

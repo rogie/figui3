@@ -435,7 +435,9 @@ export function mountPropsKitPanel(panel, target) {
         continue;
       }
       const property = document.createElement("fig-property");
-      property.setAttribute("label", node.label);
+      if (node.controlType !== "action") {
+        property.setAttribute("label", node.label);
+      }
       property.dataset.propskitPath = node.path;
       const value = panel.values[node.path] ?? node.defaultValue;
       const uploadedOptions = uploadedMediaOptions.get(node.path) ?? [];

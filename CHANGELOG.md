@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.0.5]
+
+### Added
+
+- Added action controls to the PropsKit quick-start and nested-group examples.
+
+### Fixed
+
+- Rendered PropsKit action labels only on their buttons, without row labels.
+
 ## [12.0.4]
 
 ### Added

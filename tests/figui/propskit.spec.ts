@@ -361,11 +361,11 @@ test.describe("PropsKit", () => {
         },
       });
       const root = figCreatePropsRoot({ target, panelIds: [kit.id] });
-      (
-        root.element.querySelector(
-          '[data-propskit-action="save"]',
-        ) as HTMLElement
-      ).click();
+      const action = root.element.querySelector(
+        '[data-propskit-action="save"]',
+      ) as HTMLElement;
+      const actionProperty = action.closest("fig-property");
+      action.click();
       const gallery = root.element.querySelector(
         '[data-propskit-media-choice="gallery"]',
       ) as HTMLElement;
@@ -391,6 +391,14 @@ test.describe("PropsKit", () => {
       ) as HTMLElement;
       return {
         actionValues,
+        action: {
+          text: action.textContent,
+          propertyLabel: actionProperty?.getAttribute("label"),
+          generatedLabels:
+            actionProperty?.querySelectorAll(
+              ":scope > label[data-fig-property-generated]",
+            ).length,
+        },
         chooserCount: root.element.querySelectorAll(
           ".propskit-media-chooser",
         ).length,
@@ -503,6 +511,11 @@ test.describe("PropsKit", () => {
     });
 
     expect(result.actionValues).toHaveLength(1);
+    expect(result.action).toEqual({
+      text: "Save",
+      propertyLabel: null,
+      generatedLabels: 0,
+    });
     expect(result.chooserCount).toBe(4);
     expect(result.galleryStructure).toEqual({
       layout: "grid",
