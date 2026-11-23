@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.1]
+
+### Fixed
+
+- Removed chip label vertical alignment that interfered with inline layout.
+
 ## [12.1.0]
 
 ### Added

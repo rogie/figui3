@@ -19,7 +19,6 @@ fig-chip {
     display: inline-block;
     padding-block: var(--spacer-half);
     padding-inline: var(--spacer-1);
-    vertical-align: middle;
   }
 
   &:has(> :is(fig-icon, fig-swatch)[slot="leading"])::part(label) {
