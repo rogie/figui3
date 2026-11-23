@@ -338,6 +338,14 @@ export const componentContracts: ComponentContract[] = [
     attributes: [{ name: "selected", attribute: "selected", value: "" }],
   },
   {
+    tag: "fig-chip",
+    title: "Chip",
+    group: "display",
+    markup: `<fig-chip label="Reference"></fig-chip>`,
+    properties: [{ name: "selected property", property: "selected", value: true, expected: true }],
+    attributes: [{ name: "removable", attribute: "removable", value: "" }],
+  },
+  {
     tag: "fig-chit",
     title: "Chit (legacy alias)",
     group: "display",

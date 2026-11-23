@@ -1257,6 +1257,48 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     ],
   },
   {
+    id: "chip",
+    name: "Chip",
+    group: "Core components",
+    description: "Inline references for chat and other text.",
+    examples: [
+      {
+        id: "default",
+        name: "Inline",
+        markup: `<div class="prop-panel">
+  <span>Use <fig-chip label="Brand guidelines"></fig-chip> as context.</span>
+</div>`,
+      },
+      {
+        id: "icon",
+        name: "Icon",
+        markup: `<div class="prop-panel">
+  <fig-chip label="Reference" removable>
+    <fig-icon slot="leading" name="image" aria-hidden="true"></fig-icon>
+  </fig-chip>
+</div>`,
+      },
+      {
+        id: "color",
+        name: "Color",
+        markup: `<div class="prop-panel">
+  <fig-chip label="Ocean blue" selected>
+    <fig-swatch slot="leading" size="extra-small" padding="false" background="#0D99FF" disabled aria-hidden="true"></fig-swatch>
+  </fig-chip>
+</div>`,
+      },
+      {
+        id: "image",
+        name: "Image",
+        markup: `<div class="prop-panel">
+  <fig-chip label="Landscape" removable>
+    <fig-swatch slot="leading" size="extra-small" padding="false" background="url(${imageUrl(64, 64, 3)})" disabled aria-hidden="true"></fig-swatch>
+  </fig-chip>
+</div>`,
+      },
+    ],
+  },
+  {
     id: "swatch",
     name: "Swatch",
     group: "Core components",
@@ -1266,7 +1308,19 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-swatch background="linear-gradient(135deg, rgba(0, 229, 255, 0.5), #7A00FF 50%, #FF007A)" alpha="0.8"></fig-swatch>
+  <fig-swatch size="small" background="linear-gradient(135deg, rgba(0, 229, 255, 0.5), #7A00FF 50%, #FF007A)" alpha="0.8"></fig-swatch>
+</div>`,
+      },
+      {
+        id: "all-sizes",
+        name: "All sizes",
+        markup: `<div class="prop-panel">
+  <fig-stack data-playground-layout>
+    <fig-swatch size="extra-small" background="#0D99FF" aria-label="Extra small" data-playground-shared-swatch-fill data-playground-hide-attrs="size,padding,selected,disabled,full"></fig-swatch>
+    <fig-swatch size="small" background="#0D99FF" aria-label="Small"></fig-swatch>
+    <fig-swatch size="medium" background="#0D99FF" aria-label="Medium"></fig-swatch>
+    <fig-swatch size="large" background="#0D99FF" aria-label="Large"></fig-swatch>
+  </fig-stack>
 </div>`,
       },
     ],

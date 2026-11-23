@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.0]
+
+### Added
+
+- Added inline `fig-chip` with leading and trailing slots, selection, and removal.
+- Added a `padding` override for swatch previews at every size.
+
+### Changed
+
+- Tightened chip label spacing beside leading icons and swatches.
+
 ## [12.0.5]
 
 ### Added

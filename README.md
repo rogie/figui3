@@ -208,6 +208,7 @@ Editor and Lab entries below are cross-package references and require
 | [Input Point](#input-point) | `<fig-input-point>` | Paired X/Y numeric input |
 | [File Input](#file-input) | `<fig-input-file>` | File upload with image previews and audio playback waveforms |
 | [Angle](#angle) | `<fig-angle>` | Instrument-style angle/rotation dial |
+| [Chip](#chip) | `<fig-chip>` | Inline label with optional content and removal |
 | [Swatch](#swatch) | `<fig-swatch>` | Color/gradient/image swatch |
 | [Color Tip](#color-tip) | `<fig-color-tip>` | Compact color tip with picker |
 | [Color Input](#color-input) | `<fig-input-color>` | Color picker with hex/alpha |
@@ -824,7 +825,25 @@ The `defaultValue` property returns the resolved numeric default in the active u
 
 ### Color & Fill
 
-#### Swatch
+#### Chip
+
+`<fig-chip>` displays an inline reference with a `label` and optional
+`leading` and `trailing` slots. Use `selected` for a selection outline
+and selected text. Use `removable` to add a ghost remove button after
+the trailing content. Both attributes accept `"false"` to turn them off.
+
+```html
+Use <fig-chip label="Landscape" removable>
+  <fig-icon slot="leading" name="image" aria-hidden="true"></fig-icon>
+</fig-chip> as context.
+```
+
+Activating the chip toggles `selected` and dispatches a bubbling `change`
+event with `event.detail.selected`. The remove button shows a “Remove”
+tooltip and dispatches a bubbling, cancelable `remove` event before removing
+the chip. Call `event.preventDefault()` to handle removal in app state.
+
+### Swatch
 
 `<fig-swatch>` — [demo](https://rog.ie/propskit/#swatch)
 
@@ -833,7 +852,8 @@ A color/gradient/image swatch element with checkerboard background for alpha.
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `background` | string | — | CSS background value |
-| `size` | string | `"small"` | `"small"` or `"large"` |
+| `size` | string | `"extra-small"` | Paint size: `"extra-small"` (14 px), `"small"` (16 px), `"medium"` (24 px), or `"large"` (32 px). |
+| `padding` | boolean | On for extra-small and small | Extra-small stays 20 × 20 px and small stays 24 × 24 px. Setting `padding="false"` hides their secondary background. For medium and large, enabling padding adds 5 px per side. |
 | `selected` | boolean | `false` | Selection ring |
 | `disabled` | boolean | `false` | Disabled state |
 | `alpha` | number | — | Opacity (0-1) |

@@ -73,10 +73,11 @@ input[type="color"] {
 }
 
 :is(fig-swatch, fig-chit) {
-  --size: 1.5rem;
-  --padding: 5px;
-  --width: var(--size);
-  --height: var(--size);
+  --paint-size: 0.875rem;
+  --swatch-inset: 3px;
+  --padding: var(--swatch-inset);
+  --width: calc(var(--paint-size) + var(--padding) * 2);
+  --height: calc(var(--paint-size) + var(--padding) * 2);
   --border-radius: var(--radius-medium);
   --swatch-background: linear-gradient(#d9d9d9, #d9d9d9);
   --swatch-bg-size: cover;
@@ -107,13 +108,15 @@ input[type="color"] {
     z-index: 0;
   }
 
+  &[size="small"] {
+    --paint-size: 1rem;
+    --swatch-inset: var(--spacer-1);
+  }
+
   &[size="medium"],
   &[size="large"] {
+    --swatch-inset: 5px;
     --padding: 0px;
-
-    &[selected]:not([selected="false"]) {
-      --padding: 3px;
-    }
 
     & > div {
       background: var(--checkerboard);
@@ -121,13 +124,23 @@ input[type="color"] {
   }
 
   &[size="medium"] {
-    --size: 1.5rem;
-    --padding: 0px;
+    --paint-size: 1.5rem;
   }
 
   &[size="large"] {
-    --size: 2rem;
-    --padding: 0px;
+    --paint-size: 2rem;
+  }
+
+  &[padding]:not([padding="false"]) {
+    --padding: var(--swatch-inset);
+
+    & > div {
+      background: var(--checkerboard-swatch);
+    }
+  }
+
+  &[padding="false"]:not(:is([size="medium"], [size="large"])) {
+    background-color: transparent;
   }
 
   &[disabled]:not([disabled="false"]) {
@@ -176,14 +189,6 @@ input[type="color"] {
       black 0%,
       black 50%,
       rgba(0, 0, 0, var(--alpha)) 50%
-    );
-  }
-
-  &[size="medium"]::before,
-  &[size="large"]::before {
-    border-radius: var(
-      --fig-swatch-border-radius,
-      calc(var(--border-radius) - var(--padding))
     );
   }
 

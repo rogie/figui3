@@ -188,6 +188,23 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
+  "fig-chip": {
+    label: { label: "Label", type: "string" },
+    removable: {
+      label: "Removable",
+      type: "boolean",
+      boolMode: "custom",
+      trueValue: "",
+      falseValue: "false",
+    },
+    selected: {
+      label: "Selected",
+      type: "boolean",
+      boolMode: "custom",
+      trueValue: "",
+      falseValue: "false",
+    },
+  },
   "fig-button": {
     variant: {
       label: "Variant",
@@ -384,7 +401,14 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-swatch": {
-    size: { label: "Size", type: "enum", options: ["small", "medium", "large"] },
+    size: { label: "Size", type: "enum", options: ["extra-small", "small", "medium", "large"] },
+    padding: {
+      label: "Padding",
+      type: "boolean",
+      boolMode: "custom",
+      trueValue: "",
+      falseValue: "false",
+    },
     selected: { label: "Selected", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
     alpha: { label: "Alpha", type: "number", min: 0, max: 1, step: 0.05 },

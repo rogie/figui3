@@ -9,7 +9,7 @@ A tag listed under Core is registered by `fig.js`. Editor and Lab components shi
 
 Import: `fig.css` + `fig.js`
 
-Core registrations, including `fig-layer`. 69 registrations:
+Core registrations, including `fig-layer`. 70 registrations:
 
 - `<fig-3d-rotate>`
 - `<fig-angle>`
@@ -22,6 +22,7 @@ Core registrations, including `fig-layer`. 69 registrations:
 - `<fig-card>`
 - `<fig-carousel>`
 - `<fig-checkbox>`
+- `<fig-chip>`
 - `<fig-chit>`
 - `<fig-choice>`
 - `<fig-chooser>`

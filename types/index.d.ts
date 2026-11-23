@@ -271,6 +271,12 @@ export interface FigToastElement extends FigDialogElement {
   showToast(): void;
 }
 
+export interface FigChipElement extends FigHTMLElement {
+  label: string;
+  removable: boolean;
+  selected: boolean;
+}
+
 export interface FigTagNameMap {
   "fig-3d-rotate": FigValueElement;
   "fig-angle": FigValueElement;
@@ -278,6 +284,7 @@ export interface FigTagNameMap {
   "fig-audio-waveform": FigAudioWaveformElement;
   "fig-avatar": FigHTMLElement;
   "fig-button": FigHTMLElement;
+  "fig-chip": FigChipElement;
   "fig-button-play": FigButtonPlayElement;
   "fig-button-combo": FigHTMLElement;
   "fig-card": FigHTMLElement;

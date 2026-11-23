@@ -307,6 +307,7 @@ function readColorInputEventValue(event: unknown): string | undefined {
 
 function getInputPanelTitle(controlTag: string): string {
   const titles: Record<string, string> = {
+    "fig-chip": "Chip",
     "fig-button": "Button",
     "fig-avatar": "Avatar",
     "fig-tooltip": "Tooltip",
@@ -518,6 +519,11 @@ export default function AttributesView({
   resetKey = "",
 }: Props) {
   const targets = useMemo(() => parseAttributeTargets(markup), [markup]);
+  const sharedSwatch = targets.find(
+    (target) =>
+      target.controlTag === "fig-swatch" &&
+      "data-playground-shared-swatch-fill" in target.controlAttributes,
+  );
   const labelMemoryRef = useRef<Record<number, string>>({});
   const audioObjectUrlRef = useRef<string | null>(null);
 
@@ -540,6 +546,22 @@ export default function AttributesView({
       const currentTarget = targets.find(
         (entry) => entry.fieldIndex === fieldIndex,
       );
+      if (
+        sharedSwatch &&
+        currentTarget === sharedSwatch &&
+        target === "control" &&
+        (name === "background" || name === "alpha")
+      ) {
+        onMarkupChange(
+          applyAttributeMutationToMatchingControls(
+            markup,
+            "fig-swatch",
+            name,
+            value,
+          ),
+        );
+        return;
+      }
       if (
         currentTarget?.controlTag === "fig-group" &&
         target === "control" &&
@@ -646,7 +668,7 @@ export default function AttributesView({
         }),
       );
     },
-    [markup, onMarkupChange, targets],
+    [markup, onMarkupChange, sharedSwatch, targets],
   );
 
   const applyLabelChange = useCallback(
@@ -687,6 +709,13 @@ export default function AttributesView({
   return (
     <>
       {targets.map((target) => {
+        if (
+          sharedSwatch &&
+          target.controlTag === "fig-swatch" &&
+          target !== sharedSwatch
+        ) {
+          return null;
+        }
         const fieldRules = getRuleSetForTarget("field", target.controlTag);
         const controlRules = getRuleSetForTarget("control", target.controlTag);
         const fullSupportedTags = new Set([
@@ -954,7 +983,9 @@ export default function AttributesView({
                       : readBooleanValue(
                           value,
                           mode,
-                          rule.defaultChecked ?? false,
+                          target.controlTag === "fig-swatch" && name === "padding"
+                            ? !["medium", "large"].includes(target.controlAttributes.size)
+                            : rule.defaultChecked ?? false,
                           rule.falseValue,
                         );
             return (
@@ -2182,6 +2213,7 @@ export default function AttributesView({
             )}
 
             {(visibleControlEntries.length > 0 ||
+              target === sharedSwatch ||
               target.controlTag === "fig-interpolation-swatch" ||
               target.controlTag === "fig-overflow-fade" ||
               (target.controlTag === "fig-icon" &&

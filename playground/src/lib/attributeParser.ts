@@ -403,6 +403,7 @@ function isFigTag(element: Element): boolean {
 }
 
 function isSupportedControl(element: Element): boolean {
+  if (element.hasAttribute("data-playground-layout")) return false;
   return (
     isFigTag(element) ||
     element.tagName.toLowerCase() === "progress" ||
