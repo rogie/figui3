@@ -26,7 +26,7 @@ test("keeps inline sizing and responds to selection state changes", async ({ pag
   await expect(label).toHaveCSS("padding-inline-start", "4px");
   await expect(label).toHaveCSS("padding-inline-end", "4px");
   await expect(chip).toHaveCSS("outline-style", "solid");
-  await expect(chip).toHaveCSS("outline-offset", "1px");
+  await expect(chip).toHaveCSS("outline-offset", "-1px");
   await chip.evaluate((element) => element.setAttribute("selected", "false"));
   await expect(chip).toHaveCSS("outline-style", "none");
 });

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.2]
+
+### Changed
+
+- Added hover and pressed colors to chips, inset the selected outline, and disabled text selection.
+- Expanded the inline chip playground example with color and image swatches.
+
+### Fixed
+
+- Kept inline chips sized to their content under larger paragraph line heights and centered labels beside icons and swatches.
+
 ## [12.1.1]
 
 ### Fixed

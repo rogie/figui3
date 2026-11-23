@@ -1266,7 +1266,12 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "default",
         name: "Inline",
         markup: `<div class="prop-panel">
-  <span>Use <fig-chip label="Brand guidelines"></fig-chip> as context.</span>
+  <p style="font-size: var(--text-body-large-font-size); line-height: 1.65em;">Use <fig-chip label="Brand guidelines"></fig-chip> as context.
+    Emphasize <fig-chip label="Ocean blue">
+      <fig-swatch slot="leading" size="extra-small" padding="false" background="#0D99FF" disabled aria-hidden="true"></fig-swatch>
+    </fig-chip> from <fig-chip label="Mood board">
+      <fig-swatch slot="leading" size="extra-small" padding="false" background="url(${imageUrl(64, 64, 3)})" disabled aria-hidden="true"></fig-swatch>
+    </fig-chip>.</p>
 </div>`,
       },
       {
