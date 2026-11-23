@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.4]
+
+### Added
+
+- Added a ghost plus button and a trailing reset action to the All properties example, plus a trailing alignment comparison.
+
+### Fixed
+
+- Aligned hover-only and always-visible trailing ghost icon buttons with the same compact right padding in `fig-property`.
+
 ## [12.1.3]
 
 ### Changed

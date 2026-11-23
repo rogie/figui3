@@ -749,8 +749,17 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         name: "All properties",
         markup: `<div class="prop-panel">
   <fig-group name="Values">
-    <fig-property label="Number">
+    <fig-header borderless>
+      <h3>Values</h3>
+      <fig-button slot="trailing" variant="ghost" icon aria-label="Add value">
+        <fig-icon name="add"></fig-icon>
+      </fig-button>
+    </fig-header>
+    <fig-property label="Number" show-trailing>
       <fig-input-number slot="input" value="16" default="0" units="px" steppers="true" full></fig-input-number>
+      <fig-button slot="trailing" variant="ghost" icon aria-label="Reset number" onclick="this.previousElementSibling.resetToDefault()">
+        <fig-icon name="reset"></fig-icon>
+      </fig-button>
     </fig-property>
     <fig-property label="Slider">
       <fig-slider slot="input" value="75" default="0" min="0" max="100" units="%" text="true" full></fig-slider>
@@ -788,6 +797,21 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
     </fig-property>
     <fig-property label="File">
       <fig-input-file slot="input" label="Choose file" full></fig-input-file>
+    </fig-property>
+  </fig-group>
+</div>`,
+      },
+      {
+        id: "trailing-alignment",
+        name: "Trailing alignment",
+        description: "Hover the first row to reveal its remove button. Compare it with the always-visible remove button below.",
+        markup: `<div class="prop-panel">
+  <fig-group name="Remove buttons">
+    <fig-property label="Hover to show" trailing="remove">
+      <fig-input-number slot="input" value="16" units="px" full></fig-input-number>
+    </fig-property>
+    <fig-property label="Always visible" trailing="remove" show-trailing>
+      <fig-input-number slot="input" value="16" units="px" full></fig-input-number>
     </fig-property>
   </fig-group>
 </div>`,

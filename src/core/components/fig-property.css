@@ -8,6 +8,7 @@ fig-property {
   --fig-property-gap: var(--spacer-2);
   --fig-property-left-padding: var(--spacer-3);
   --fig-property-right-padding: var(--spacer-3);
+  --fig-property-end-track: var(--fig-property-right-padding);
   --fig-property-top-padding: var(--spacer-1);
   --fig-property-bottom-padding: var(--spacer-1);
   --fig-property-label-ratio: var(
@@ -33,7 +34,7 @@ fig-property {
     minmax(0, var(--fig-property-input-ratio))
     var(--fig-property-trailing-gap)
     var(--fig-property-trailing-size)
-    var(--fig-property-right-padding);
+    var(--fig-property-end-track);
   grid-template-areas: "leading label input . trailing pad";
   align-items: start;
   width: 100%;
@@ -44,6 +45,13 @@ fig-property {
 
   &[selected]:not([selected="false"]) {
     background-color: var(--figma-color-bg-selected);
+  }
+
+  &:is(:hover, [show-trailing]:not([show-trailing="hover"])):not([show-trailing="false"]):has(
+    > fig-button[slot="trailing"][variant="ghost"][icon]:not([icon="false"]),
+    > [slot="trailing"] fig-button[variant="ghost"][icon]:not([icon="false"])
+  ) {
+    --fig-property-end-track: var(--spacer-2);
   }
 
   > :is(label, [slot="label"]) {
