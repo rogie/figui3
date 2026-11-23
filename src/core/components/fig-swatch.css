@@ -108,6 +108,7 @@ input[type="color"] {
     z-index: 0;
   }
 
+  &:not([size]),
   &[size="small"] {
     --paint-size: 1rem;
     --swatch-inset: var(--spacer-1);

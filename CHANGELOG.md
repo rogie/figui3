@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.3]
+
+### Changed
+
+- Changed the default `fig-swatch` size to small and labeled it as the default in the playground.
+
 ## [12.1.2]
 
 ### Changed

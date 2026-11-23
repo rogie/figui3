@@ -1304,7 +1304,7 @@ export default function AttributesView({
                 : (value ??
                   (name === "variant" && target.controlTag === "fig-slider"
                     ? "default"
-                    : (options[0] ?? "")));
+                    : (rule.defaultValue ?? options[0] ?? "")));
             const current =
               typeof currentRaw === "string"
                 ? resolveEnumOption(options, currentRaw)
@@ -1555,6 +1555,16 @@ export default function AttributesView({
               (target.controlTag === "fig-handle" && name === "tip") ||
               (target.controlTag === "fig-color-tip" && name === "control") ||
               options.includes("");
+            const enumOptionDisplayLabel = (option: string): string => {
+              if (
+                target.controlTag === "fig-swatch" &&
+                name === "size" &&
+                option === "small"
+              ) {
+                return "Small (default)";
+              }
+              return toSentenceCaseLabel(option);
+            };
 
             if (needsCustomHandler) {
               const enumOptionLabel = (option: string): string => {
@@ -1634,7 +1644,7 @@ export default function AttributesView({
                 }
                 if (name === "units") return option;
                 if (name === "fields") return toFieldsLabel(option);
-                return toSentenceCaseLabel(option);
+                return enumOptionDisplayLabel(option);
               };
 
               return (
@@ -1839,17 +1849,17 @@ export default function AttributesView({
               );
             }
 
-            const optionsStr = options.map((o) => toSentenceCaseLabel(o)).join(",");
+            const optionsStr = options.map(enumOptionDisplayLabel).join(",");
             return (
               <fig-options
                 full
                 options={optionsStr}
-                value={toSentenceCaseLabel(current)}
+                value={enumOptionDisplayLabel(current)}
                 onChange={(e: any) => {
                   const nextLabel = (e as CustomEvent).detail ?? e.target?.value;
                   if (typeof nextLabel !== "string") return;
                   const match = options.find(
-                    (o) => toSentenceCaseLabel(o) === nextLabel,
+                    (o) => enumOptionDisplayLabel(o) === nextLabel,
                   );
                   if (
                     target.controlTag === "fig-truncate" &&
@@ -1882,6 +1892,10 @@ export default function AttributesView({
                         name === "theme")) &&
                       (match ?? nextLabel) === "default"
                       ? null
+                      : target.controlTag === "fig-swatch" &&
+                          name === "size" &&
+                          (match ?? nextLabel) === "small"
+                        ? null
                       : match ?? nextLabel,
                   );
                 }}

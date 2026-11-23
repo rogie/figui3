@@ -9731,6 +9731,34 @@ test.describe("reconnect resilience", () => {
     });
   });
 
+  test("fig-swatch defaults to the small internal size", async ({ page }) => {
+    await page.evaluate(() => {
+      const root = document.querySelector("#fixture-root");
+      if (!root) throw new Error("Missing #fixture-root");
+      root.innerHTML = `
+        <fig-swatch id="default-swatch"></fig-swatch>
+        <fig-swatch id="small-swatch" size="small"></fig-swatch>
+        <fig-swatch id="extra-small-swatch" size="extra-small"></fig-swatch>
+      `;
+    });
+
+    const size = async (selector: string) =>
+      page.locator(selector).evaluate((element) => {
+        const style = getComputedStyle(element);
+        return { width: style.width, height: style.height };
+      });
+
+    expect(await size("#default-swatch")).toEqual(await size("#small-swatch"));
+    expect(await size("#default-swatch")).toEqual({
+      width: "24px",
+      height: "24px",
+    });
+    expect(await size("#extra-small-swatch")).toEqual({
+      width: "20px",
+      height: "20px",
+    });
+  });
+
   test("fig-chit remains a backwards-compatible fig-swatch alias", async ({
     page,
   }) => {

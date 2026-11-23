@@ -14,7 +14,7 @@ import {
 /**
  * A color/gradient/image swatch element.
  * @attr {string} background - Any CSS background value: color (#FF0000, rgba(...)), gradient (linear-gradient(...)), or image (url(...))
- * @attr {string} size - Paint size: "extra-small" (default, 14px), "small" (16px), "medium" (24px), or "large" (32px)
+ * @attr {string} size - Paint size: "extra-small" (14px), "small" (default, 16px), "medium" (24px), or "large" (32px)
  * @attr {boolean} padding - Show space around the paint. Extra-small and small keep their outer size when false.
  * @attr {boolean} selected - Whether the chip shows a selection ring
  * @attr {boolean} disabled - Whether the chip is disabled

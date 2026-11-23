@@ -1313,7 +1313,7 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "default",
         name: "Default",
         markup: `<div class="prop-panel">
-  <fig-swatch size="small" background="linear-gradient(135deg, rgba(0, 229, 255, 0.5), #7A00FF 50%, #FF007A)" alpha="0.8"></fig-swatch>
+  <fig-swatch background="linear-gradient(135deg, rgba(0, 229, 255, 0.5), #7A00FF 50%, #FF007A)" alpha="0.8"></fig-swatch>
 </div>`,
       },
       {

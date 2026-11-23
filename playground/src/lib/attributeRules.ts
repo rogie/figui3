@@ -26,6 +26,7 @@ export interface NumberAttributeRule extends BaseAttributeRule {
 export interface EnumAttributeRule extends BaseAttributeRule {
   type: "enum";
   options: string[];
+  defaultValue?: string;
 }
 
 export interface StringAttributeRule extends BaseAttributeRule {
@@ -401,7 +402,12 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-swatch": {
-    size: { label: "Size", type: "enum", options: ["extra-small", "small", "medium", "large"] },
+    size: {
+      label: "Size",
+      type: "enum",
+      options: ["extra-small", "small", "medium", "large"],
+      defaultValue: "small",
+    },
     padding: {
       label: "Padding",
       type: "boolean",

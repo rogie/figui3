@@ -852,7 +852,7 @@ A color/gradient/image swatch element with checkerboard background for alpha.
 | Attribute | Type | Default | Description |
 |---|---|---|---|
 | `background` | string | — | CSS background value |
-| `size` | string | `"extra-small"` | Paint size: `"extra-small"` (14 px), `"small"` (16 px), `"medium"` (24 px), or `"large"` (32 px). |
+| `size` | string | `"small"` | Paint size: `"extra-small"` (14 px), `"small"` (16 px), `"medium"` (24 px), or `"large"` (32 px). |
 | `padding` | boolean | On for extra-small and small | Extra-small stays 20 × 20 px and small stays 24 × 24 px. Setting `padding="false"` hides their secondary background. For medium and large, enabling padding adds 5 px per side. |
 | `selected` | boolean | `false` | Selection ring |
 | `disabled` | boolean | `false` | Disabled state |
