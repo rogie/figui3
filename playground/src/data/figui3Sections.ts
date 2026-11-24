@@ -1292,36 +1292,20 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         markup: `<div class="prop-panel">
   <p style="font-size: var(--text-body-large-font-size); line-height: 1.65em;">Use <fig-chip label="Brand guidelines"></fig-chip> as context.
     Emphasize <fig-chip label="Ocean blue">
-      <fig-swatch slot="leading" size="extra-small" padding="false" background="#0D99FF" disabled aria-hidden="true"></fig-swatch>
+      <fig-swatch slot="leading" padding="false" background="#0D99FF" disabled aria-hidden="true"></fig-swatch>
     </fig-chip> from <fig-chip label="Mood board">
-      <fig-swatch slot="leading" size="extra-small" padding="false" background="url(${imageUrl(64, 64, 3)})" disabled aria-hidden="true"></fig-swatch>
+      <fig-swatch slot="leading" padding="false" background="url(${imageUrl(64, 64, 3)})" disabled aria-hidden="true"></fig-swatch>
     </fig-chip>.</p>
 </div>`,
       },
       {
-        id: "icon",
-        name: "Icon",
-        markup: `<div class="prop-panel">
-  <fig-chip label="Reference" removable>
-    <fig-icon slot="leading" name="image" aria-hidden="true"></fig-icon>
-  </fig-chip>
-</div>`,
-      },
-      {
         id: "color",
-        name: "Color",
+        name: "Chip",
+        title: "Chip",
+        description: "Switch the leading content or use a text-only chip.",
         markup: `<div class="prop-panel">
-  <fig-chip label="Ocean blue" selected>
-    <fig-swatch slot="leading" size="extra-small" padding="false" background="#0D99FF" disabled aria-hidden="true"></fig-swatch>
-  </fig-chip>
-</div>`,
-      },
-      {
-        id: "image",
-        name: "Image",
-        markup: `<div class="prop-panel">
-  <fig-chip label="Landscape" removable>
-    <fig-swatch slot="leading" size="extra-small" padding="false" background="url(${imageUrl(64, 64, 3)})" disabled aria-hidden="true"></fig-swatch>
+  <fig-chip label="Ocean blue" selected data-playground-chip-type>
+    <fig-swatch slot="leading" padding="false" background="#0D99FF" disabled aria-hidden="true"></fig-swatch>
   </fig-chip>
 </div>`,
       },

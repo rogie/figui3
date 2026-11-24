@@ -5,6 +5,7 @@ import {
   applyButtonTypeMutation,
   applyButtonComboVariantMutation,
   applyButtonVariantMutation,
+  applyChipTypeMutation,
   applyChooserContentMutation,
   applyChooserMaxSizeMutation,
   applyAppendSlotMutation,
@@ -13,6 +14,7 @@ import {
   applyPrependSlotMutation,
   applySelectSeparatorStickyMutation,
   getChooserContentMode,
+  getChipType,
   getAppendSlotMode,
   getPrependSlotMode,
   getPropertyControlTag,
@@ -138,6 +140,16 @@ export function diffFromDefault(
       }
     }
 
+    if (
+      cur.controlTag === "fig-chip" &&
+      "data-playground-chip-type" in cur.controlAttributes
+    ) {
+      const type = getChipType(currentMarkup, cur.fieldIndex);
+      if (type !== getChipType(defaultMarkup, def.fieldIndex)) {
+        params[`${idx}${SPECIAL_PREFIX}chip-type`] = type;
+      }
+    }
+
     if (cur.hasLabel !== def.hasLabel) {
       params[`${idx}${SPECIAL_PREFIX}label`] = cur.hasLabel ? "1" : "0";
     }
@@ -234,6 +246,8 @@ export function applyParamsToMarkup(
       markup = applyPrependSlotMutation(markup, idx, val as PrependSlotMode);
     } else if (key === "_append" && val) {
       markup = applyAppendSlotMutation(markup, idx, val as AppendSlotMode);
+    } else if (key === "_chip-type") {
+      markup = applyChipTypeMutation(markup, idx, val);
     } else if (key === "_sticky") {
       markup = applySelectSeparatorStickyMutation(markup, idx, val !== "0");
     } else if (key === "_label") {

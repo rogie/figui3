@@ -103,6 +103,27 @@ class FigInputFill extends HTMLElement {
     this.#hexInput = null;
   }
 
+  #setSolid(
+    { color, alpha, opacity },
+    fallbackAlpha = color ? 1 : this.#solid.alpha,
+  ) {
+    const hex = typeof color === "string" ? color.trim() : "";
+    const hasHexAlpha = /^#[\da-f]{8}$/i.test(hex);
+    if (hex) this.#solid.color = hasHexAlpha ? hex.slice(0, 7) : hex;
+
+    const nextAlpha = alpha != null
+      ? Number(alpha)
+      : opacity != null
+        ? Number(opacity) / 100
+        : hasHexAlpha
+          ? parseInt(hex.slice(7), 16) / 255
+          : fallbackAlpha;
+    this.#solid.alpha = Number.isFinite(nextAlpha)
+      ? Math.max(0, Math.min(1, nextAlpha))
+      : fallbackAlpha;
+    return hasHexAlpha;
+  }
+
   #parseValue() {
     const valueAttr = this.getAttribute("value");
     if (!valueAttr) return;
@@ -113,10 +134,7 @@ class FigInputFill extends HTMLElement {
 
       switch (this.#fillType) {
         case "solid":
-          if (parsed.color) this.#solid.color = parsed.color;
-          if (parsed.alpha !== undefined) this.#solid.alpha = parsed.alpha;
-          if (parsed.opacity !== undefined)
-            this.#solid.alpha = parsed.opacity / 100;
+          this.#setSolid(parsed);
           break;
         case "gradient":
           if (parsed.gradient) {
@@ -168,13 +186,9 @@ class FigInputFill extends HTMLElement {
         }
       }
     } catch (e) {
-      if (valueAttr.startsWith("#")) {
+      if (valueAttr.trimStart().startsWith("#")) {
         this.#fillType = "solid";
-        this.#solid.color = valueAttr.slice(0, 7);
-        if (valueAttr.length > 7) {
-          const alphaHex = valueAttr.slice(7, 9);
-          this.#solid.alpha = parseInt(alphaHex, 16) / 255;
-        }
+        this.#setSolid({ color: valueAttr });
         return;
       }
       if (figLooksLikeVideoUrl(valueAttr)) {
@@ -502,8 +516,7 @@ class FigInputFill extends HTMLElement {
         this.#fillType = newType;
         switch (newType) {
           case "solid":
-            this.#solid.color = detail.color;
-            this.#solid.alpha = detail.alpha;
+            this.#setSolid(detail);
             break;
           case "gradient":
             if (detail.gradient) {
@@ -577,12 +590,17 @@ class FigInputFill extends HTMLElement {
       });
     }
 
-    // Hex input (solid only)
+    this.#bindFieldEvents();
+  }
+
+  #bindFieldEvents() {
     if (this.#hexInput) {
       this.#hexInput.addEventListener("input", (e) => {
         e.stopPropagation();
-        const hex = "#" + e.target.value.replace("#", "");
-        this.#solid.color = hex;
+        const color = "#" + e.target.value.trim().replace(/^#/, "");
+        if (this.#setSolid({ color }, this.#solid.alpha)) {
+          this.#updateControls();
+        }
         this.#updateFillPicker();
         this.#emitInput();
       });
@@ -597,8 +615,9 @@ class FigInputFill extends HTMLElement {
       this.#opacityInput.addEventListener("input", (e) => {
         e.stopPropagation();
         const parsed = parseFloat(e.target.value);
-        const opacity = isNaN(parsed) ? 100 : parsed;
-        const alpha = opacity / 100;
+        const alpha = Number.isFinite(parsed)
+          ? Math.max(0, Math.min(100, parsed)) / 100
+          : 1;
         switch (this.#fillType) {
           case "solid":
             this.#solid.alpha = alpha;
@@ -620,7 +639,6 @@ class FigInputFill extends HTMLElement {
             break;
         }
         this.#updateFillPicker();
-        this.#syncSwatch();
         this.#emitInput();
       });
       this.#opacityInput.addEventListener("change", (e) => {
@@ -716,7 +734,6 @@ class FigInputFill extends HTMLElement {
     // Remove old controls (keep the fill picker)
     const oldLabel = combo.querySelector(".fig-input-fill-label");
     const oldHex = combo.querySelector(".fig-input-fill-hex");
-    const oldOpacity = combo.querySelector(".fig-input-fill-opacity");
     const oldTooltips = combo.querySelectorAll("fig-tooltip");
 
     oldLabel?.remove();
@@ -742,57 +759,7 @@ class FigInputFill extends HTMLElement {
       });
     }
 
-    // Hex input (solid only)
-    if (this.#hexInput) {
-      this.#hexInput.addEventListener("input", (e) => {
-        e.stopPropagation();
-        const hex = "#" + e.target.value.replace("#", "");
-        this.#solid.color = hex;
-        this.#updateFillPicker();
-        this.#emitInput();
-      });
-      this.#hexInput.addEventListener("change", (e) => {
-        e.stopPropagation();
-        this.#emitChange();
-      });
-    }
-
-    // Opacity input
-    if (this.#opacityInput) {
-      this.#opacityInput.addEventListener("input", (e) => {
-        e.stopPropagation();
-        const parsed = parseFloat(e.target.value);
-        const opacity = isNaN(parsed) ? 100 : parsed;
-        const alpha = opacity / 100;
-        switch (this.#fillType) {
-          case "solid":
-            this.#solid.alpha = alpha;
-            break;
-          case "gradient":
-            this.#gradient.opacity = alpha;
-            break;
-          case "image":
-            this.#image.opacity = alpha;
-            break;
-          case "video":
-            this.#video.opacity = alpha;
-            break;
-          case "webcam":
-            this.#webcam.opacity = alpha;
-            break;
-          default:
-            this.#custom.opacity = alpha;
-            break;
-        }
-        this.#updateFillPicker();
-        this.#updateSwatchAlpha(alpha);
-        this.#emitInput();
-      });
-      this.#opacityInput.addEventListener("change", (e) => {
-        e.stopPropagation();
-        this.#emitChange();
-      });
-    }
+    this.#bindFieldEvents();
   }
 
   #updateFillPicker() {
@@ -806,20 +773,17 @@ class FigInputFill extends HTMLElement {
     const swatch = this.#fillPicker?.querySelector("fig-swatch");
     if (!swatch) return;
     const background = this.#fillPickerSwatchBackground();
-    if (this.#fillType === "webcam" && !background) {
-      const current = swatch.getAttribute("background") || "";
-      if (current.startsWith("url(")) {
-        swatch.setAttribute("alpha", this.#fillPickerSwatchAlpha());
-        return;
-      }
+    const currentBackground = swatch.getAttribute("background");
+    if (
+      currentBackground !== background &&
+      !(this.#fillType === "webcam" && !background && currentBackground?.startsWith("url("))
+    ) {
+      swatch.setAttribute("background", background);
     }
-    swatch.setAttribute("background", background);
-    swatch.setAttribute("alpha", this.#fillPickerSwatchAlpha());
-  }
-
-  #updateSwatchAlpha(alpha) {
-    const swatch = this.#fillPicker?.querySelector("fig-swatch");
-    if (swatch) swatch.setAttribute("alpha", alpha);
+    const alpha = String(this.#fillPickerSwatchAlpha());
+    if (swatch.getAttribute("alpha") !== alpha) {
+      swatch.setAttribute("alpha", alpha);
+    }
   }
 
   #emitInput() {
@@ -882,7 +846,7 @@ class FigInputFill extends HTMLElement {
           colorSpace: "srgb",
           color: this.#solid.color,
           alpha: this.#solid.alpha,
-          opacity: Math.round(this.#solid.alpha * 100), // FigFillPicker expects opacity 0-100
+          opacity: Math.round(this.#solid.alpha * 100),
         };
       case "gradient":
         return {

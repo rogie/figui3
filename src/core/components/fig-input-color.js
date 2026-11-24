@@ -259,7 +259,7 @@ class FigInputColor extends HTMLElement {
       JSON.stringify({
         type: "solid",
         color: this.hexOpaque,
-        opacity: this.#alphaPercent,
+        alpha: this.rgba.a,
       }),
     );
   }
@@ -355,8 +355,8 @@ class FigInputColor extends HTMLElement {
     return this.rgbAlphaToHex(normalized, normalized.a);
   }
 
-  #setValues(hexValue) {
-    let colorValue =
+  #setValues(hexValue, alpha) {
+    const colorValue =
       typeof hexValue === "string" && hexValue.trim()
         ? hexValue.trim()
         : "#D9D9D9";
@@ -368,9 +368,9 @@ class FigInputColor extends HTMLElement {
       !Number.isFinite(rgba.b) ||
       !Number.isFinite(rgba.a)
     ) {
-      colorValue = "#D9D9D9";
       rgba = { r: 217, g: 217, b: 217, a: 1 };
     }
+    if (Number.isFinite(alpha)) rgba.a = Math.max(0, Math.min(1, alpha));
     this.rgba = rgba;
     this.value = this.rgbAlphaToHex(
       {
@@ -382,7 +382,7 @@ class FigInputColor extends HTMLElement {
     );
     this.hexWithAlpha = this.value.toUpperCase();
     this.hexOpaque = this.hexWithAlpha.slice(0, 7);
-    this.#alphaPercent = colorValue.length > 7 ? (this.rgba.a * 100).toFixed(0) : 100;
+    this.#alphaPercent = Math.round(this.rgba.a * 100);
     this.style.setProperty("--alpha", this.rgba.a);
   }
 
@@ -401,9 +401,7 @@ class FigInputColor extends HTMLElement {
     if (this.#alphaInput) {
       this.#alphaInput.setAttribute("value", this.#alphaPercent);
     }
-    if (this.#swatch) {
-      this.#swatch.setAttribute("background", this.hexOpaque);
-    }
+    this.#syncColorPreview();
     this.#emitInputEvent();
   }
 
@@ -411,24 +409,22 @@ class FigInputColor extends HTMLElement {
     //do not propagate to onInput handler for web component
     event.stopPropagation();
     // fig-input-number stores numeric value internally, ensure it's a number
-    const alphaValue = Number(event.target.value) || 0;
-    const alpha = Math.round((alphaValue / 100) * 255);
-    const alphaHex = alpha.toString(16).padStart(2, "0");
-    this.#setValues(this.hexOpaque + alphaHex);
-    if (this.#swatch) {
-      this.#swatch.setAttribute("alpha", this.rgba.a);
-    }
-    if (this.#fillPicker) {
-      this.#fillPicker.setAttribute(
-        "value",
-        JSON.stringify({
-          type: "solid",
-          color: this.hexOpaque,
-          opacity: this.#alphaPercent,
-        }),
-      );
-    }
+    const alpha = (Number(event.target.value) || 0) / 100;
+    this.#setValues(this.hexOpaque, alpha);
+    this.#syncColorPreview();
     this.#emitInputEvent();
+  }
+
+  #syncColorPreview() {
+    this.#syncFillPicker();
+    if (!this.#swatch) return;
+    if (this.#swatch.getAttribute("background") !== this.hexOpaque) {
+      this.#swatch.setAttribute("background", this.hexOpaque);
+    }
+    const alpha = String(this.rgba.a);
+    if (this.#swatch.getAttribute("alpha") !== alpha) {
+      this.#swatch.setAttribute("alpha", alpha);
+    }
   }
 
   #handleChange(event) {
@@ -512,23 +508,15 @@ class FigInputColor extends HTMLElement {
     event.stopPropagation();
     const detail = event.detail;
     if (detail && detail.color) {
-      // Build hex value with alpha included
-      let hexValue = detail.color;
-      if (detail.alpha !== undefined) {
-        const alphaHex = Math.round(detail.alpha * 255)
-          .toString(16)
-          .padStart(2, "0");
-        hexValue = detail.color + alphaHex;
-      }
-      this.#setValues(hexValue);
+      this.#setValues(detail.color, detail.alpha);
       if (this.#textInput) {
         this.#textInput.setAttribute(
           "value",
           this.hexOpaque.slice(1).toUpperCase(),
         );
       }
-      if (this.#alphaInput && detail.alpha !== undefined) {
-        this.#alphaInput.setAttribute("value", Math.round(detail.alpha * 100));
+      if (this.#alphaInput) {
+        this.#alphaInput.setAttribute("value", this.#alphaPercent);
       }
       if (this.#swatch) {
         this.#swatch.setAttribute("background", this.hexOpaque);
@@ -640,20 +628,7 @@ class FigInputColor extends HTMLElement {
             this.hexOpaque.slice(1).toUpperCase(),
           );
         }
-        if (this.#swatch) {
-          this.#swatch.setAttribute("background", this.hexOpaque);
-          this.#swatch.setAttribute("alpha", this.rgba.a);
-        }
-        if (this.#fillPicker) {
-          this.#fillPicker.setAttribute(
-            "value",
-            JSON.stringify({
-              type: "solid",
-              color: this.hexOpaque,
-              opacity: this.#alphaPercent,
-            }),
-          );
-        }
+        this.#syncColorPreview();
         if (this.#alphaInput) {
           this.#alphaInput.setAttribute("value", this.#alphaPercent);
         }

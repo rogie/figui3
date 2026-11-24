@@ -4,21 +4,29 @@ Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
 fig-chip {
+  --fig-chip-size: var(--spacer-4);
+  --fig-chip-bg: var(--figma-color-bg-selected);
+  --fig-chip-bg-hover: var(--figma-color-bg-selected-hover);
+  --fig-chip-bg-pressed: var(--figma-color-bg-selected-pressed);
   display: inline-block;
   line-height: var(--text-body-medium-line-height);
   white-space: nowrap;
   user-select: none;
-  background-color: var(--figma-color-bg-selected);
+  background-color: var(--fig-chip-bg);
   border-radius: var(--radius-medium);
   color: var(--figma-color-text-selected);
 
+  &[size="small"] {
+    --fig-chip-size: calc(var(--spacer-3) + var(--spacer-1));
+  }
+
   &:not(:has(> fig-tooltip[slot="remove-button"]:hover)) {
     &:hover {
-      background-color: var(--figma-color-bg-selected-hover);
+      background-color: var(--fig-chip-bg-hover);
     }
 
     &:active {
-      background-color: var(--figma-color-bg-selected-pressed);
+      background-color: var(--fig-chip-bg-pressed);
     }
   }
 
@@ -27,11 +35,23 @@ fig-chip {
     outline-offset: calc(-1 * var(--figma-focus-outline-width));
   }
 
+  &[variant="variable"]:not([selected]:not([selected="false"])) {
+    --fig-chip-bg: var(--figma-color-bg);
+    --fig-chip-bg-hover: var(--figma-color-bg-hover);
+    --fig-chip-bg-pressed: var(--figma-color-bg-pressed);
+    box-shadow: inset 0 0 0 1px var(--figma-color-bordertranslucent);
+    color: var(--figma-color-text);
+  }
+
   &::part(label) {
     display: inline-block;
     font-size: var(--text-body-medium-font-size);
     line-height: var(--text-body-medium-line-height);
-    padding-block: var(--spacer-half);
+    padding-block: calc((var(--fig-chip-size) - var(--text-body-medium-line-height)) / 2);
+    padding-inline: var(--spacer-2);
+  }
+
+  &[size="small"]::part(label) {
     padding-inline: var(--spacer-1);
   }
 
@@ -52,14 +72,18 @@ fig-chip {
     vertical-align: middle;
   }
 
-  > fig-icon[slot="leading"] {
+  &[size="small"] > fig-icon[slot="leading"] {
     margin: calc(-1 * var(--spacer-half));
   }
 
   > fig-tooltip[slot="remove-button"] > fig-button[icon] {
-    --fig-button-control-height: calc(var(--spacer-3) + var(--spacer-1));
+    --fig-button-control-height: var(--fig-chip-size);
     vertical-align: middle;
     width: var(--fig-button-control-height);
+  }
+
+  &:is(:not([variant="variable"]), [selected]:not([selected="false"]))
+    > fig-tooltip[slot="remove-button"] > fig-button[icon] {
     color: var(--figma-color-text-selected);
     &:hover {
       color: var(--figma-color-text-selected-hover);

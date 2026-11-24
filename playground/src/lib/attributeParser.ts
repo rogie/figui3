@@ -3,7 +3,7 @@ import {
   FIG_ICON_SET_24,
 } from "../../../icons/manifest.js";
 import { getExampleSourceMarkup } from "./exampleMarkup";
-import { landscapeUrl } from "./images";
+import { imageUrl, landscapeUrl } from "./images";
 
 export { FIG_ICON_SET_16, FIG_ICON_SET_24 };
 
@@ -633,7 +633,56 @@ export function applyAttributeMutation(
   } else {
     element.setAttribute(mutation.name, mutation.value);
   }
+  if (element.localName === "fig-chip" && mutation.name === "size") {
+    const swatch = element.querySelector(':scope > fig-swatch[slot="leading"]');
+    if (swatch) syncChipSwatchSize(element, swatch);
+  }
 
+  return getExampleSourceMarkup(serializeSourceMarkup(root));
+}
+
+const CHIP_LEADING_SELECTOR = ':scope > :is(fig-icon, fig-swatch)[slot="leading"]';
+export const CHIP_TYPES = ["color", "icon", "image", "text"] as const;
+
+function syncChipSwatchSize(chip: Element, swatch: Element) {
+  if (chip.getAttribute("size") === "small") {
+    swatch.setAttribute("size", "extra-small");
+  } else {
+    swatch.removeAttribute("size");
+  }
+}
+
+export function getChipType(markup: string, fieldIndex: number) {
+  const root = parseSourceRoot(markup);
+  const leading = getTargetElement(root, { fieldIndex, target: "control" })
+    ?.querySelector(CHIP_LEADING_SELECTOR);
+  if (!leading) return "text";
+  if (leading.localName === "fig-icon") return "icon";
+  return /^url\(/i.test(leading.getAttribute("background") ?? "") ? "image" : "color";
+}
+
+export function applyChipTypeMutation(markup: string, fieldIndex: number, type: string) {
+  const root = parseSourceRoot(markup);
+  const chip = getTargetElement(root, { fieldIndex, target: "control" });
+  if (chip?.localName !== "fig-chip" || !CHIP_TYPES.some((option) => option === type)) {
+    return markup;
+  }
+
+  chip.querySelectorAll(CHIP_LEADING_SELECTOR).forEach((leading) => leading.remove());
+  if (type !== "text") {
+    const leading = root.ownerDocument.createElement(type === "icon" ? "fig-icon" : "fig-swatch");
+    leading.setAttribute("slot", "leading");
+    leading.setAttribute("aria-hidden", "true");
+    if (type === "icon") {
+      leading.setAttribute("name", "image");
+    } else {
+      syncChipSwatchSize(chip, leading);
+      leading.setAttribute("padding", "false");
+      leading.setAttribute("background", type === "image" ? `url(${imageUrl(64, 64, 3)})` : "#0D99FF");
+      leading.setAttribute("disabled", "");
+    }
+    chip.prepend(leading);
+  }
   return getExampleSourceMarkup(serializeSourceMarkup(root));
 }
 

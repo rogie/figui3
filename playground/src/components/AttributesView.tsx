@@ -18,6 +18,7 @@ import {
   applyButtonIconMutation,
   applyButtonTypeMutation,
   applyButtonVariantMutation,
+  applyChipTypeMutation,
   applyDialogFooterMutation,
   applyFieldControlMutation,
   applyFieldLabelMutation,
@@ -35,9 +36,11 @@ import {
   applySelectSeparatorStickyMutation,
   applyTooltipActionMutation,
   getChooserPaletteLabelsEnabled,
+  CHIP_TYPES,
   FIG_ICON_COLOR_OPTIONS,
   getFigIconColorOptionLabel,
   getFigIconPlaygroundNames,
+  getChipType,
   getHandleHitArea,
   getHandleHitAreaDebug,
   getHeaderIconEnabled,
@@ -2239,6 +2242,27 @@ export default function AttributesView({
                 </fig-header>
                 <section className="propkit-attributes-content">
                   <AttributePropertyGroup>
+                    {target.controlTag === "fig-chip" &&
+                      "data-playground-chip-type" in target.controlAttributes && (
+                        <fig-field columns="2/5">
+                          <label>Type</label>
+                          <fig-dropdown
+                            aria-label="Type"
+                            full
+                            value={getChipType(markup, target.fieldIndex)}
+                            onChange={(event) => {
+                              const type = event.currentTarget.value;
+                              onMarkupChange(
+                                applyChipTypeMutation(markup, target.fieldIndex, type),
+                              );
+                            }}
+                          >
+                            {CHIP_TYPES.map((type) => (
+                              <option key={type} value={type}>{toSentenceCaseLabel(type)}</option>
+                            ))}
+                          </fig-dropdown>
+                        </fig-field>
+                      )}
                     {target.controlTag === "fig-group" &&
                       (() => {
                         const currentControl = getGroupHeaderControl(

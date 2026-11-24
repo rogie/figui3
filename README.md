@@ -831,6 +831,10 @@ The `defaultValue` property returns the resolved numeric default in the active u
 `leading` and `trailing` slots. Use `selected` for a selection outline
 and selected text. Use `removable` to add a ghost remove button after
 the trailing content. Both attributes accept `"false"` to turn them off.
+The default `size="medium"` is 24 px tall. Use `size="small"` for a
+20 px chip. Use an extra-small swatch when adding a swatch to a small chip.
+Use `variant="variable"` for a translucent border and the default surface.
+Selected variable chips use the same colors and outline as selected default chips.
 
 ```html
 Use <fig-chip label="Landscape" removable>
@@ -1124,7 +1128,9 @@ A comprehensive fill input supporting solid, gradient, image, video, and webcam 
 
 Add `aria-label` to name the generated picker, hex field, and opacity field as one fill control group.
 
-Solid `alpha` is 0–1 (canonical). `opacity` 0–100 is also emitted for compatibility. Gradient values include `css`. Webcam JSON is `{ type, webcam }` — never a live `MediaStream`. Read `webcamStream` or listen for `webcamstream`. Video swatches use `video.poster`, not the mp4 URL.
+Solid fills accept eight-digit hex in `value` and in the color field. For example, `#33669980` displays as `336699` at 50%, while `alpha` retains the exact value `128 / 255`. An explicit `alpha` (0–1) or `opacity` (0–100) overrides the hex alpha. When both are present, `alpha` takes precedence. The emitted value includes the rounded `opacity` percentage for compatibility.
+
+Gradient values include `css`. Webcam JSON is `{ type, webcam }` — never a live `MediaStream`. Read `webcamStream` or listen for `webcamstream`. Video swatches use `video.poster`, not the mp4 URL.
 
 **Events:**
 

@@ -5,6 +5,37 @@ test.beforeEach(async ({ page }) => {
   await bootFigFixture(page);
 });
 
+test("sizes text, leading content, and remove buttons with the size attribute", async ({ page }) => {
+  await page.locator("#fixture-root").evaluate((root) => {
+    root.innerHTML = `<p>
+      <fig-chip label="Text"></fig-chip>
+      <fig-chip label="Icon" removable><fig-icon slot="leading" name="image"></fig-icon></fig-chip>
+      <fig-chip label="Color"><fig-swatch slot="leading" size="extra-small" padding="false" background="#0D99FF" disabled></fig-swatch></fig-chip>
+    </p>`;
+  });
+  const chips = page.locator("fig-chip");
+  const removeButton = chips.nth(1).getByRole("button", { name: "Remove Icon" });
+  const assertHeight = async (height: string) => {
+    for (const chip of await chips.all()) await expect(chip).toHaveCSS("height", height);
+    await expect(removeButton).toHaveCSS("height", height);
+    await expect(removeButton).toHaveCSS("width", height);
+  };
+
+  expect(await chips.first().evaluate((el) => (el as HTMLElementTagNameMap["fig-chip"]).size))
+    .toBe("medium");
+  expect(await chips.first().getAttribute("size")).toBeNull();
+  await assertHeight("24px");
+  await chips.evaluateAll((elements) => {
+    for (const el of elements) (el as HTMLElementTagNameMap["fig-chip"]).size = "small";
+  });
+  await expect(chips.first()).toHaveAttribute("size", "small");
+  await assertHeight("20px");
+  await chips.evaluateAll((elements) => {
+    for (const el of elements) el.setAttribute("size", "medium");
+  });
+  await assertHeight("24px");
+});
+
 test("keeps inline sizing and responds to selection state changes", async ({ page }) => {
   await page.locator("#fixture-root").evaluate((root) => {
     root.innerHTML = `<p>Use <fig-chip label="Brand colors">
@@ -14,8 +45,8 @@ test("keeps inline sizing and responds to selection state changes", async ({ pag
   const chip = page.locator("fig-chip");
   const label = chip.locator("label");
   await expect(chip).toHaveCSS("display", "inline-block");
-  await expect(label).toHaveCSS("padding-inline-start", "4px");
-  await expect(label).toHaveCSS("padding-inline-end", "4px");
+  await expect(label).toHaveCSS("padding-inline-start", "8px");
+  await expect(label).toHaveCSS("padding-inline-end", "8px");
 
   await chip.evaluate((element) => {
     element.querySelector('[slot="trailing"]')?.setAttribute("slot", "leading");
@@ -23,8 +54,8 @@ test("keeps inline sizing and responds to selection state changes", async ({ pag
     (element as HTMLElementTagNameMap["fig-chip"]).selected = true;
   });
   await expect(label).toHaveText("<Palette>");
-  await expect(label).toHaveCSS("padding-inline-start", "4px");
-  await expect(label).toHaveCSS("padding-inline-end", "4px");
+  await expect(label).toHaveCSS("padding-inline-start", "8px");
+  await expect(label).toHaveCSS("padding-inline-end", "8px");
   await expect(chip).toHaveCSS("outline-style", "solid");
   await expect(chip).toHaveCSS("outline-offset", "-1px");
   await chip.evaluate((element) => element.setAttribute("selected", "false"));

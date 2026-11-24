@@ -223,7 +223,7 @@ test.describe("fig.js audit core regressions", () => {
     expect(counts).toEqual({ inputs: 2, changes: 2 });
   });
 
-  test("fig-input-color adds canonical aliases without changing legacy events", async ({
+  test("fig-input-color preserves its event shape and exact picker alpha", async ({
     page,
   }) => {
     const state = await page.evaluate(async () => {
@@ -368,9 +368,9 @@ test.describe("fig.js audit core regressions", () => {
     expect(state.events[3].detail).toEqual(state.events[2].detail);
     expect(state.events[4].detail).toEqual({
       value: "#44556680",
-      rgba: { r: 68, g: 85, b: 102, a: 128 / 255 },
+      rgba: { r: 68, g: 85, b: 102, a: 0.5 },
       color: "#445566",
-      alpha: 128 / 255,
+      alpha: 0.5,
       opacity: 50,
     });
     expect(state.events[5].detail).toEqual(state.events[4].detail);

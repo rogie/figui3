@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.5]
+
+### Added
+
+- Added medium and small sizes and a variable variant to `fig-chip`.
+
+### Changed
+
+- Combined the standalone chip demos into one example with a Type control and size-matched swatches.
+
+### Fixed
+
+- Normalized eight-digit solid hex in fill inputs and synchronized precise opacity changes across the swatch, picker, and events in fill and color inputs.
+
 ## [12.1.4]
 
 ### Added
