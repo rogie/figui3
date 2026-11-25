@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.9]
+
+### Fixed
+
+- Restored native double-click text selection in number inputs inside slotted property rows. Slot-based scrubbing starts only from the number input’s own adornments.
+
 ## [12.1.8]
 
 ### Changed

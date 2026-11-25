@@ -71,6 +71,36 @@ test.describe("fig-property", () => {
     expect(result.labelId).toBeTruthy();
   });
 
+  test("double-click selects a number inside a slotted stack without emitting change", async ({
+    page,
+  }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = `
+        <fig-property label="Width" style="width: 240px">
+          <fig-stack slot="input">
+            <fig-input-number value="125"></fig-input-number>
+          </fig-stack>
+        </fig-property>
+      `;
+      const number = root.querySelector("fig-input-number")!;
+      let changeCount = 0;
+      number.setAttribute("data-change-count", "0");
+      number.addEventListener("change", () => {
+        number.setAttribute("data-change-count", String(++changeCount));
+      });
+    });
+
+    const number = page.locator('fig-property > fig-stack[slot="input"] > fig-input-number');
+    const input = number.locator("input");
+    await expect(input).toHaveValue("125");
+    const x = await input.evaluate((el) => parseFloat(getComputedStyle(el).paddingLeft) + 6);
+    await input.dblclick({ position: { x, y: 8 } });
+
+    await expect(input).toBeFocused();
+    expect(await input.evaluate((el) => [el.selectionStart, el.selectionEnd])).toEqual([0, 3]);
+    await expect(number).toHaveAttribute("data-change-count", "0");
+  });
+
   test("supports a fig-tooltip as a transparent input wrapper", async ({
     page,
   }) => {

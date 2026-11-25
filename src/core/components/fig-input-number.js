@@ -849,7 +849,8 @@ class FigInputNumber extends HTMLElement {
 
   #handleMouseDown(e) {
     if (this.disabled) return;
-    if (e.altKey || e.target.closest("[slot]")) {
+    const adornment = e.target?.closest?.("[slot]");
+    if (e.altKey || adornment?.parentElement === this) {
       this.#isInteracting = true;
       this.#previousUserSelect = this.style.userSelect;
       this.#previousBodyCursor = document.body.style.cursor;

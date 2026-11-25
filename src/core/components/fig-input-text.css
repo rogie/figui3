@@ -17,6 +17,10 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
   color: var(--figma-color-text);
   width: 8.9375rem;
 
+  &:is(fig-input-number) {
+    user-select: text;
+  }
+
   &[full]:not([full="false"]) {
     display: flex;
     flex: 1;
