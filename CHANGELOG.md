@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [13.0.0]
+
+### Added
+
+- Added a Long label playground example and a Trailing control for chips.
+
+### Changed
+
+- Replaced the `fig-chip` `removable` attribute with `trailing="remove"` and the JavaScript `.removable` property with `.trailing`. Use `trailing="select"` for a chevron or omit the attribute for authored slot content alone.
+
+### Fixed
+
+- Aligned inline chips to the label baseline, centered accessories, and truncated long labels with an ellipsis when constrained.
+- Matched the label end spacing for trailing icons, swatches, and ghost buttons.
+
 ## [12.1.10]
 
 ### Added

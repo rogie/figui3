@@ -292,8 +292,8 @@ export interface FigToastElement extends FigDialogElement {
 export interface FigChipElement extends FigHTMLElement {
   size: "small" | "medium";
   label: string;
-  removable: boolean;
   selected: boolean;
+  trailing: "" | "select" | "remove";
 }
 
 export interface FigTagNameMap {

@@ -856,8 +856,9 @@ The `defaultValue` property returns the resolved numeric default in the active u
 
 `<fig-chip>` displays an inline reference with a `label` and optional
 `leading` and `trailing` slots. Use `selected` for a selection outline
-and selected text. Use `removable` to add a ghost remove button after
-the trailing content. Both attributes accept `"false"` to turn them off.
+and selected text. Use `trailing="select"` to add a dropdown chevron or
+`trailing="remove"` to add a ghost remove button. Omit the attribute
+to show only authored slot content.
 The default `size="medium"` is 24 px tall. Use `size="small"` for a
 20 px chip. Use an extra-small swatch when adding a swatch to a small chip.
 Use `variant="secondary"` for a secondary background, neutral hover and pressed
@@ -867,7 +868,7 @@ Use `variant="variable"` for a translucent border and the default surface.
 Selected variable chips use the same colors and outline as selected default chips.
 
 ```html
-Use <fig-chip label="Landscape" removable>
+Use <fig-chip label="Landscape" trailing="remove">
   <fig-icon slot="leading" name="image" aria-hidden="true"></fig-icon>
 </fig-chip> as context.
 ```

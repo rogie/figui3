@@ -193,13 +193,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     variant: { label: "Variant", type: "enum", options: ["default", "secondary", "variable"] },
     label: { label: "Label", type: "string" },
     size: { label: "Size", type: "enum", options: ["medium", "small"] },
-    removable: {
-      label: "Removable",
-      type: "boolean",
-      boolMode: "custom",
-      trueValue: "",
-      falseValue: "false",
-    },
+    trailing: { label: "Trailing", type: "enum", options: ["", "select", "remove"] },
     selected: {
       label: "Selected",
       type: "boolean",

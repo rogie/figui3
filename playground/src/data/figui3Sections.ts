@@ -1290,11 +1290,11 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
         id: "default",
         name: "Inline",
         markup: `<div class="prop-panel">
-  <p style="font-size: var(--text-body-large-font-size); line-height: 1.65em;">Use <fig-chip label="Brand guidelines"></fig-chip> as context.
-    Emphasize <fig-chip label="Ocean blue">
-      <fig-swatch slot="leading" padding="false" background="#0D99FF" disabled aria-hidden="true"></fig-swatch>
-    </fig-chip> from <fig-chip label="Mood board">
-      <fig-swatch slot="leading" padding="false" background="url(${imageUrl(64, 64, 3)})" disabled aria-hidden="true"></fig-swatch>
+  <p style="font-size: var(--text-body-large-font-size); line-height: 1.65em;">Use <fig-chip size="small" label="Brand guidelines"></fig-chip> as context.
+    Emphasize <fig-chip size="small" label="Ocean blue">
+      <fig-swatch slot="leading" size="extra-small" padding="false" background="#0D99FF" disabled aria-hidden="true"></fig-swatch>
+    </fig-chip> from <fig-chip size="small" label="Mood board">
+      <fig-swatch slot="leading" size="extra-small" padding="false" background="url(${imageUrl(64, 64, 3)})" disabled aria-hidden="true"></fig-swatch>
     </fig-chip>.</p>
 </div>`,
       },
@@ -1307,6 +1307,16 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
   <fig-chip label="Ocean blue" selected data-playground-chip-type>
     <fig-swatch slot="leading" padding="false" background="#0D99FF" disabled aria-hidden="true"></fig-swatch>
   </fig-chip>
+</div>`,
+      },
+      {
+        id: "long-label",
+        name: "Long label",
+        description: "A width limit truncates the label while keeping the icon and remove button visible.",
+        markup: `<div class="prop-panel">
+  <p>Use <fig-chip label="Brand guidelines for the spring campaign and product launch" trailing="remove" style="max-inline-size: 12rem;">
+    <fig-icon slot="leading" name="image" aria-hidden="true"></fig-icon>
+  </fig-chip> as context.</p>
 </div>`,
       },
     ],

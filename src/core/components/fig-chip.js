@@ -20,13 +20,13 @@ import {
  * @attr {string} label - The chip text
  * @attr {string} size - "medium" (default, 24px) or "small" (20px)
  * @attr {string} variant - "default", "secondary", or "variable"
- * @attr {boolean} removable - Show a remove button
+ * @attr {string} trailing - "select" for a dropdown chevron or "remove" for a remove button
  * @attr {boolean} selected - Show selected outline and text
  * @fires change - User toggled selection; detail contains the new selected state
  * @fires remove - Cancelable event dispatched before removing the chip
  */
 class FigChip extends HTMLElement {
-  static observedAttributes = ["label", "removable", "selected"];
+  static observedAttributes = ["label", "selected", "trailing"];
 
   #label;
   #selection;
@@ -94,12 +94,13 @@ class FigChip extends HTMLElement {
     this.setAttribute("size", value);
   }
 
-  get removable() {
-    return figBooleanAttribute(this, "removable");
+  get trailing() {
+    const value = this.getAttribute("trailing");
+    return value === "select" || value === "remove" ? value : "";
   }
-  set removable(value) {
-    if (value && value !== "false") this.setAttribute("removable", "");
-    else this.removeAttribute("removable");
+  set trailing(value) {
+    if (value) this.setAttribute("trailing", value);
+    else this.removeAttribute("trailing");
   }
 
   get selected() {
@@ -127,10 +128,21 @@ class FigChip extends HTMLElement {
     this.#label.textContent = this.label;
     this.#selection.setAttribute("aria-label", this.label || "Chip");
     this.#syncSelection();
-    if (!this.removable) {
-      this.#removeTooltip?.remove();
-      return;
+
+    const trailing = this.trailing;
+    if (trailing !== "remove") this.#removeTooltip?.remove();
+
+    const selectChevron = this.querySelector(':scope > fig-icon[data-generated="select-chevron"]');
+    if (trailing !== "select") {
+      selectChevron?.remove();
+    } else if (!selectChevron) {
+      const chevron = createFigIcon("chevron", { size: "small", slot: "trailing" });
+      chevron.setAttribute("data-generated", "select-chevron");
+      chevron.setAttribute("aria-hidden", "true");
+      this.append(chevron);
     }
+
+    if (trailing !== "remove") return;
 
     if (!this.#removeButton) {
       this.#removeButton = figCreateElement("fig-button", {

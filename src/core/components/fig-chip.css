@@ -8,7 +8,8 @@ fig-chip {
   --fig-chip-bg: var(--figma-color-bg-selected);
   --fig-chip-bg-hover: var(--figma-color-bg-selected-hover);
   --fig-chip-bg-pressed: var(--figma-color-bg-selected-pressed);
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   line-height: var(--text-body-medium-line-height);
   white-space: nowrap;
   user-select: none;
@@ -56,18 +57,29 @@ fig-chip {
     line-height: var(--text-body-medium-line-height);
     padding-block: calc((var(--fig-chip-size) - var(--text-body-medium-line-height)) / 2);
     padding-inline: var(--spacer-2);
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &[size="small"]::part(label) {
     padding-inline: var(--spacer-1);
   }
 
-  &:has(> :is([slot="leading"], [slot="trailing"], [slot="remove-button"]))::part(label) {
-    vertical-align: middle;
-  }
-
   &:has(> :is(fig-icon, fig-swatch)[slot="leading"])::part(label) {
     padding-inline-start: var(--spacer-half);
+  }
+
+  &:has(
+    > :is(fig-icon, fig-swatch, fig-button[variant="ghost"])[slot="trailing"],
+    > fig-tooltip[slot="remove-button"] > fig-button[variant="ghost"]
+  )::part(label) {
+    padding-inline-end: var(--spacer-half);
+  }
+
+  &::part(selection) {
+    display: flex;
+    align-self: baseline;
+    min-inline-size: 0;
   }
 
   &::part(selection):focus-visible {
@@ -76,16 +88,20 @@ fig-chip {
   }
 
   > :is([slot="leading"], [slot="trailing"]) {
-    vertical-align: middle;
+    flex-shrink: 0;
   }
 
   &[size="small"] > fig-icon[slot="leading"] {
     margin: calc(-1 * var(--spacer-half));
   }
 
+  &:not([size="small"]) > fig-icon[slot="trailing"][data-generated="select-chevron"] {
+    margin: var(--spacer-1);
+  }
+
   > fig-tooltip[slot="remove-button"] > fig-button[icon] {
     --fig-button-control-height: var(--fig-chip-size);
-    vertical-align: middle;
+    flex: 0 0 auto;
     width: var(--fig-button-control-height);
   }
 

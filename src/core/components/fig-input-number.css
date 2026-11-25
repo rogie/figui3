@@ -9,14 +9,6 @@ fig-input-number > fig-tooltip[data-generated="binding-tooltip"] > fig-chip[data
   min-inline-size: 0;
   margin: var(--spacer-half) auto var(--spacer-half) var(--spacer-1);
 
-  &::part(label) {
-    box-sizing: border-box;
-    max-inline-size: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-  }
-
   &::part(selection):focus-visible {
     outline: none;
   }
