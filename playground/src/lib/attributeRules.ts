@@ -190,7 +190,7 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
   "fig-chip": {
-    variant: { label: "Variant", type: "enum", options: ["default", "variable"] },
+    variant: { label: "Variant", type: "enum", options: ["default", "secondary", "variable"] },
     label: { label: "Label", type: "string" },
     size: { label: "Size", type: "enum", options: ["medium", "small"] },
     removable: {

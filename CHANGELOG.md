@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.10]
+
+### Added
+
+- Added the `secondary` chip variant with neutral colors that switch to the selected palette on selection. Try it in the Chip playground.
+
 ## [12.1.9]
 
 ### Fixed

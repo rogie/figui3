@@ -19,7 +19,7 @@ import {
  * An inline label with optional leading and trailing content.
  * @attr {string} label - The chip text
  * @attr {string} size - "medium" (default, 24px) or "small" (20px)
- * @attr {string} variant - "default" or "variable"
+ * @attr {string} variant - "default", "secondary", or "variable"
  * @attr {boolean} removable - Show a remove button
  * @attr {boolean} selected - Show selected outline and text
  * @fires change - User toggled selection; detail contains the new selected state

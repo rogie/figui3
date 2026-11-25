@@ -35,6 +35,13 @@ fig-chip {
     outline-offset: calc(-1 * var(--figma-focus-outline-width));
   }
 
+  &[variant="secondary"]:not([selected]:not([selected="false"])) {
+    --fig-chip-bg: var(--figma-color-bg-secondary);
+    --fig-chip-bg-hover: var(--figma-color-bg-hover);
+    --fig-chip-bg-pressed: var(--figma-color-bg-pressed);
+    color: var(--figma-color-text);
+  }
+
   &[variant="variable"]:not([selected]:not([selected="false"])) {
     --fig-chip-bg: var(--figma-color-bg);
     --fig-chip-bg-hover: var(--figma-color-bg-hover);
@@ -82,7 +89,7 @@ fig-chip {
     width: var(--fig-button-control-height);
   }
 
-  &:is(:not([variant="variable"]), [selected]:not([selected="false"]))
+  &:is(:not([variant="variable"], [variant="secondary"]), [selected]:not([selected="false"]))
     > fig-tooltip[slot="remove-button"] > fig-button[icon] {
     color: var(--figma-color-text-selected);
     &:hover {

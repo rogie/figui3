@@ -860,6 +860,9 @@ and selected text. Use `removable` to add a ghost remove button after
 the trailing content. Both attributes accept `"false"` to turn them off.
 The default `size="medium"` is 24 px tall. Use `size="small"` for a
 20 px chip. Use an extra-small swatch when adding a swatch to a small chip.
+Use `variant="secondary"` for a secondary background, neutral hover and pressed
+colors, and default text. Selecting a secondary chip applies the selected palette
+and outline.
 Use `variant="variable"` for a translucent border and the default surface.
 Selected variable chips use the same colors and outline as selected default chips.
 
