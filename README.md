@@ -713,12 +713,14 @@ Use `units-disallow=""` if you want the `px` label to be visible.
 While bound, `.value` returns the binding string. The numeric value and units
 remain available to restore when the binding is removed. The owning app
 interprets keys and expressions such as `--spacer-2` or `min-content`.
-Steppers and scrubbing are inactive while bound. Prepend content stays visible.
+Steppers are hidden while bound. Scrubbing by dragging a slot adornment or
+Alt-dragging in the field detaches the binding and adjusts the stored number.
 
 Select the chip and press Delete or Backspace to detach and focus the numeric
 field. The field emits one `change` with the restored value in `detail`,
 the numeric unit in `units`, `binding: null`, and the old key in
-`previousBinding`. Direct binding writes are silent. Use
+`previousBinding`. A scrub emits numeric `input` events and includes the
+same binding metadata in its final `change`. Direct binding writes are silent. Use
 `setBinding(key, { emit: true })` to report a binding chosen in your app UI.
 It emits `change` with the new key in `detail` and `binding`, and the old
 key (or `null`) in `previousBinding`.

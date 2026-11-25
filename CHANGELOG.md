@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.8]
+
+### Changed
+
+- Scrubbing a bound number input detaches the binding and adjusts the stored numeric value using the existing scrub gestures.
+
+### Fixed
+
+- Tabbing to a bound number input or clicking its background selects the binding chip so Delete or Backspace can restore the numeric value immediately.
+
 ## [12.1.7]
 
 ### Added

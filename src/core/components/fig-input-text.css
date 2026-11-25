@@ -207,7 +207,7 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
   }
 }
 
-fig-input-number:not(:has(> fig-tooltip[data-generated="binding-tooltip"])) > [slot],
+fig-input-number > [slot],
 fig-input-text[type="number"] > [slot] {
   cursor: ew-resize !important;
 }

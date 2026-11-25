@@ -28,7 +28,6 @@ fig-input-number:has(> [slot="prepend"]) > fig-tooltip[data-generated="binding-t
 
 fig-input-number:has(> fig-tooltip[data-generated="binding-tooltip"]) > [slot="prepend"] {
   margin-right: 0;
-  cursor: default;
 }
 
 fig-input-number .fig-steppers {

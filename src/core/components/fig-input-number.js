@@ -53,7 +53,7 @@ class FigInputNumber extends HTMLElement {
   #boundBlur;
   #boundKeyDown;
   #boundFocusControl;
-  #boundAdornmentClick;
+  #boundControlClick;
   #units;
   #rawUnits;
   #unitsAllow = [];
@@ -61,6 +61,7 @@ class FigInputNumber extends HTMLElement {
   #unitPosition;
   #precision;
   #isInteracting = false;
+  #scrubPreviousBinding = null;
   #stepperEl = null;
   #stepperPointerId = null;
   #stepperRepeatTimeout = 0;
@@ -266,7 +267,7 @@ class FigInputNumber extends HTMLElement {
     };
     this.#boundStepperWindowBlur = () => this.#stopStepperRepeat();
     this.#boundFocusControl = this.focus.bind(this);
-    this.#boundAdornmentClick = this.#handleAdornmentClick.bind(this);
+    this.#boundControlClick = this.#handleControlClick.bind(this);
   }
 
   connectedCallback() {
@@ -333,8 +334,8 @@ class FigInputNumber extends HTMLElement {
     figNormalizeTextOnlyInputSlots(this);
 
     this.addEventListener("pointerdown", this.#boundMouseDown);
-    this.removeEventListener("click", this.#boundAdornmentClick);
-    this.addEventListener("click", this.#boundAdornmentClick);
+    this.removeEventListener("click", this.#boundControlClick);
+    this.addEventListener("click", this.#boundControlClick);
     this.#startObserver();
     this.input.removeEventListener("change", this.#boundInputChange);
     this.input.addEventListener("change", this.#boundInputChange);
@@ -364,11 +365,13 @@ class FigInputNumber extends HTMLElement {
       this.input.removeEventListener("blur", this.#boundBlur);
       this.input.removeEventListener("keydown", this.#boundKeyDown);
     }
-    this.removeEventListener("click", this.#boundAdornmentClick);
+    this.removeEventListener("click", this.#boundControlClick);
     this.removeEventListener("pointerdown", this.#boundMouseDown);
     window.removeEventListener("pointermove", this.#boundMouseMove);
     window.removeEventListener("pointerup", this.#boundMouseUp);
+    window.removeEventListener("pointercancel", this.#boundMouseUp);
     window.removeEventListener("blur", this.#boundWindowBlur);
+    this.#scrubPreviousBinding = null;
     this.#stopStepperRepeat(false);
     this.#mutationObserver?.disconnect();
     this.#mutationObserver = null;
@@ -482,6 +485,11 @@ class FigInputNumber extends HTMLElement {
         text: binding,
       }, this.#bindingChip);
       this.#bindingChip.addEventListener("change", (event) => event.stopPropagation());
+      this.#bindingChip.addEventListener("focus", (event) => {
+        if (event.composedPath()[0]?.matches?.(":focus-visible")) {
+          event.currentTarget.selected = true;
+        }
+      });
       this.#bindingChip.addEventListener("focusout", (event) => {
         event.currentTarget.removeAttribute("data-prepend-focus");
       });
@@ -526,18 +534,19 @@ class FigInputNumber extends HTMLElement {
     return input;
   }
 
-  #handleAdornmentClick(event) {
+  #handleControlClick(event) {
     const adornment = event.target?.closest?.("[slot]");
-    if (!adornment || adornment.parentElement !== this) return;
-    if (this.#bindingChip && adornment.slot === "prepend") {
+    const clickedAdornment = adornment?.parentElement === this;
+    const clickedPrepend = clickedAdornment && adornment.slot === "prepend";
+    if (this.#bindingChip && (event.target === this || clickedPrepend)) {
       if (!this.disabled) {
         this.#bindingChip.selected = true;
-        this.#bindingChip.setAttribute("data-prepend-focus", "");
+        this.#bindingChip.toggleAttribute("data-prepend-focus", clickedPrepend);
         this.#bindingChip.focus({ preventScroll: true });
       }
       return;
     }
-    this.focus();
+    if (clickedAdornment) this.focus();
   }
 
   #startObserver() {
@@ -816,11 +825,16 @@ class FigInputNumber extends HTMLElement {
   }
 
   #handleMouseMove(e) {
-    if (this.binding) return;
     if (this.disabled) return;
     if (e.buttons === 0) {
       this.#handleMouseUp();
       return;
+    }
+    const binding = this.binding;
+    if (binding) {
+      if (!e.movementX) return;
+      this.#scrubPreviousBinding = binding;
+      this.binding = null;
     }
     let step = (this.step || 1) * e.movementX;
     let numericValue = this.#getNumericValue(this.input.value);
@@ -834,7 +848,7 @@ class FigInputNumber extends HTMLElement {
   }
 
   #handleMouseDown(e) {
-    if (this.disabled || this.binding) return;
+    if (this.disabled) return;
     if (e.altKey || e.target.closest("[slot]")) {
       this.#isInteracting = true;
       this.#previousUserSelect = this.style.userSelect;
@@ -853,6 +867,8 @@ class FigInputNumber extends HTMLElement {
 
   #handleMouseUp(e) {
     const wasInteracting = this.#isInteracting;
+    const previousBinding = this.#scrubPreviousBinding;
+    this.#scrubPreviousBinding = null;
     this.#isInteracting = false;
     this.input.style.cursor = "";
     this.style.cursor = "";
@@ -863,7 +879,7 @@ class FigInputNumber extends HTMLElement {
     window.removeEventListener("pointercancel", this.#boundMouseUp);
     window.removeEventListener("blur", this.#boundWindowBlur);
     if (wasInteracting && !this.binding) {
-      this.#emitNumberEvent("change");
+      this.#emitNumberEvent("change", previousBinding ? { binding: null, previousBinding } : undefined);
     }
   }
 
