@@ -682,6 +682,7 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 | `max` | number | — | Maximum |
 | `step` | number | — | Step increment |
 | `units` | string | — | Unit string (e.g. `"px"`, `"%"`) |
+| `units-allow` | string | — | Comma-separated units the user can switch to by typing |
 | `units-disallow` | string | `"px"` | Comma-separated unit disallow list (e.g. `"px,rem"`) |
 | `unit-position` | string | `"suffix"` | `"suffix"` or `"prefix"` |
 | `transform` | number | — | Display multiplier |
@@ -697,6 +698,15 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 <fig-input-number tabular value="100" units="px"></fig-input-number>
 <fig-input-number value="50" units="%" min="0" max="100"></fig-input-number>
 ```
+
+`input` and `change` carry the numeric value in `event.detail` and the
+configured unit in `event.units`. The unit is `""` when unset. Units hidden by
+`units-disallow` still appear in the event.
+
+With `units="%" units-allow="rem,em,%"`, typing `12rem` and pressing Enter
+or leaving the field sets `units="rem"` and emits `12` with `event.units`
+set to `"rem"`. A bare number or an unlisted unit keeps the current unit.
+Use `units-disallow=""` if you want the `px` label to be visible.
 
 ---
 

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.6]
+
+### Added
+
+- Included configured units on `fig-input-number` input and change events.
+- Added `units-allow` so number inputs can adopt an allowed unit on commit.
+
 ## [12.1.5]
 
 ### Added

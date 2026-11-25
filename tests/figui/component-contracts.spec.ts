@@ -7255,6 +7255,74 @@ test.describe("number input accessibility", () => {
     });
   });
 
+  test("fig-input-number emits configured units alongside its numeric detail", async ({
+    page,
+  }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = '<fig-input-number value="50" default="25" units="%"></fig-input-number>';
+      const events: unknown[] = [];
+      for (const type of ["input", "change"]) {
+        root.addEventListener(type, (event) => {
+          const { detail, units } = event as CustomEvent & { units: string };
+          events.push({ type, detail, units });
+        });
+      }
+      Object.assign(root, { events });
+    });
+    const number = page.locator("fig-input-number");
+    await number.locator("input").press("ArrowUp");
+    await number.evaluate((el) => {
+      el.setAttribute("units", "px");
+      (el as HTMLElementTagNameMap["fig-input-number"]).resetToDefault?.();
+    });
+    await expect(number.locator("input")).toHaveValue("25");
+    const events = await page.locator("#fixture-root").evaluate((root) => Reflect.get(root, "events"));
+    expect(events).toEqual([
+      { type: "input", detail: 51, units: "%" },
+      { type: "change", detail: 51, units: "%" },
+      { type: "input", detail: 25, units: "px" },
+      { type: "change", detail: 25, units: "px" },
+    ]);
+  });
+
+  test("fig-input-number switches to allowed units only on commit", async ({ page }) => {
+    await page.locator("#fixture-root").evaluate((root) => {
+      root.innerHTML = '<fig-input-number value="50" units="%" units-allow="em, rem"></fig-input-number>';
+      const changes: unknown[] = [];
+      root.querySelector("fig-input-number")?.addEventListener("change", (event) => {
+        changes.push([event.detail, event.units]);
+      });
+      Object.assign(root, { changes });
+    });
+    const number = page.locator("fig-input-number");
+    const input = number.locator("input");
+
+    await input.fill("12rem");
+    await expect(number).toHaveAttribute("units", "%");
+    await input.press("Enter");
+    await expect(number).toHaveAttribute("units", "rem");
+    await expect(input).toHaveValue("12rem");
+
+    await input.fill("15vw");
+    await input.blur();
+    await expect(input).toHaveValue("15rem");
+    await input.fill("16");
+    await input.blur();
+    await expect(input).toHaveValue("16rem");
+
+    await number.evaluate((el) => el.setAttribute("units-allow", "EM, px"));
+    await input.fill("-1.5 EM");
+    await input.blur();
+    await expect(number).toHaveAttribute("units", "em");
+    await expect(input).toHaveValue("-1.5em");
+    await input.fill("20px");
+    await input.blur();
+    await expect(number).toHaveAttribute("units", "px");
+    await expect(input).toHaveValue("20");
+    const changes = await page.locator("#fixture-root").evaluate((root) => Reflect.get(root, "changes"));
+    expect(changes).toEqual([[12, "rem"], [15, "rem"], [16, "rem"], [-1.5, "em"], [20, "px"]]);
+  });
+
   test("fig-input-number exposes spinbutton semantics and forwarded names", async ({
     page,
   }) => {

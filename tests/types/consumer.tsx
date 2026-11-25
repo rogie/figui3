@@ -19,6 +19,13 @@ if (slider) {
   slider.max = 100;
 }
 
+document.querySelector("fig-input-number")?.addEventListener("change", (event) => {
+  const units: string = event.units;
+  const value: number | string = event.detail;
+  void units;
+  void value;
+});
+
 const carousel = document.createElement("fig-carousel");
 carousel.goTo(2);
 carousel.first();

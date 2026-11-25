@@ -1100,6 +1100,11 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       label: "Units disallow",
       type: "string",
     },
+    "units-allow": {
+      label: "Units allow",
+      type: "string",
+      placeholder: "rem, em, %",
+    },
     steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
     tabular: { label: "Tabular", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },

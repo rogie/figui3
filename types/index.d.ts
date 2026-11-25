@@ -145,6 +145,10 @@ export interface FigTextInputElement extends FigValueElement<
   focus(options?: FocusOptions): void;
 }
 
+export interface FigNumberInputEvent extends CustomEvent<number | string> {
+  readonly units: string;
+}
+
 export interface FigNumberInputElement extends FigValueElement<
   string,
   string
@@ -155,6 +159,16 @@ export interface FigNumberInputElement extends FigValueElement<
   step?: number;
   precision?: number | null;
   units?: string;
+  addEventListener: ((
+    type: "input" | "change",
+    listener: (this: FigNumberInputElement, event: FigNumberInputEvent) => unknown,
+    options?: boolean | AddEventListenerOptions,
+  ) => void) & FigHTMLElement["addEventListener"];
+  removeEventListener: ((
+    type: "input" | "change",
+    listener: (this: FigNumberInputElement, event: FigNumberInputEvent) => unknown,
+    options?: boolean | EventListenerOptions,
+  ) => void) & FigHTMLElement["removeEventListener"];
   focus(options?: FocusOptions): void;
 }
 

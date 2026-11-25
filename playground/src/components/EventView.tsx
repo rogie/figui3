@@ -38,6 +38,9 @@ export default function EventView() {
           ? envelope.name
           : target.getAttribute("name");
       if (name) payload.name = name;
+      if (tag === "fig-input-number" && "units" in e) {
+        payload.units = e.units;
+      }
       if (typeof envelope?.label === "string") {
         payload.label = envelope.label;
       }

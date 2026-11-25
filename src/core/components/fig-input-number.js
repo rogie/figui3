@@ -27,6 +27,7 @@ import { figNormalizeTextOnlyInputSlots } from "../runtime/input-slots.js";
  * @attr {number} transform - A multiplier for displayed number values
  * @attr {number} precision - Fixed decimal places when set
  * @attr {string} units - Unit string to append/prepend to displayed value (e.g., "%", "°", "$")
+ * @attr {string} units-allow - Comma-separated units that may replace the current unit on commit
  * @attr {string} units-disallow - Comma-separated units to disallow (defaults to "px")
  * @attr {string} unit-position - Position of unit: "suffix" (default) or "prefix"
  * @attr {boolean} steppers - Whether to show spin buttons (defaults to true)
@@ -49,6 +50,7 @@ class FigInputNumber extends HTMLElement {
   #boundAdornmentClick;
   #units;
   #rawUnits;
+  #unitsAllow = [];
   #unitsDisallow;
   #unitPosition;
   #precision;
@@ -75,7 +77,7 @@ class FigInputNumber extends HTMLElement {
   static #STEPPER_REPEAT_DELAY = 350;
   static #STEPPER_REPEAT_INTERVAL = 60;
 
-  #parseUnitsDisallowList(value) {
+  #parseUnitList(value) {
     return (value || "")
       .split(",")
       .map((unit) => unit.trim().toLowerCase())
@@ -181,6 +183,11 @@ class FigInputNumber extends HTMLElement {
     }
   }
 
+  #emitNumberEvent(type) {
+    const event = new CustomEvent(type, { detail: this.value, bubbles: true });
+    this.dispatchEvent(Object.assign(event, { units: this.#rawUnits?.trim() ?? "" }));
+  }
+
   #stopStepperRepeat(commit = true) {
     this.#clearStepperRepeatTimers();
     window.removeEventListener("pointerup", this.#boundStepperPointerEnd);
@@ -188,9 +195,7 @@ class FigInputNumber extends HTMLElement {
     window.removeEventListener("blur", this.#boundStepperWindowBlur);
     this.#stepperPointerId = null;
     if (commit && this.#stepperDidChange) {
-      this.dispatchEvent(
-        new CustomEvent("change", { detail: this.value, bubbles: true }),
-      );
+      this.#emitNumberEvent("change");
     }
     this.#stepperDidChange = false;
   }
@@ -209,9 +214,7 @@ class FigInputNumber extends HTMLElement {
     this.input.value = this.#formatWithUnit(this.value);
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
-    this.dispatchEvent(
-      new CustomEvent("input", { detail: this.value, bubbles: true }),
-    );
+    this.#emitNumberEvent("input");
     return true;
   }
 
@@ -265,7 +268,8 @@ class FigInputNumber extends HTMLElement {
     this.name = this.getAttribute("name") || null;
     this.#rawUnits = this.getAttribute("units") || "";
     const unitsDisallowAttr = this.getAttribute("units-disallow");
-    this.#unitsDisallow = this.#parseUnitsDisallowList(
+    this.#unitsAllow = this.#parseUnitList(this.getAttribute("units-allow"));
+    this.#unitsDisallow = this.#parseUnitList(
       unitsDisallowAttr === null
         ? FigInputNumber.#DEFAULT_UNITS_DISALLOW
         : unitsDisallowAttr,
@@ -395,9 +399,7 @@ class FigInputNumber extends HTMLElement {
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
     for (const type of ["input", "change"]) {
-      this.dispatchEvent(
-        new CustomEvent(type, { detail: this.value, bubbles: true }),
-      );
+      this.#emitNumberEvent(type);
     }
   }
 
@@ -523,6 +525,35 @@ class FigInputNumber extends HTMLElement {
     return value;
   }
 
+  #getAllowedUnitEdit(value) {
+    if (!this.#unitsAllow.length) return null;
+    const text = value.trim();
+    const match = this.#matchAllowedUnit(text);
+    if (match || !this.#units) return match;
+
+    // Focus selects the number, so the old unit can remain beside a typed unit.
+    if (this.#unitPosition === "prefix" && text.startsWith(this.#units)) {
+      return this.#matchAllowedUnit(text.slice(this.#units.length).trim());
+    }
+    if (this.#unitPosition !== "prefix" && text.endsWith(this.#units)) {
+      return this.#matchAllowedUnit(text.slice(0, -this.#units.length).trim());
+    }
+    return null;
+  }
+
+  #matchAllowedUnit(text) {
+    const normalized = text.toLowerCase();
+    const prefix = this.#unitPosition === "prefix";
+    for (const unit of this.#unitsAllow) {
+      if (prefix ? !normalized.startsWith(unit) : !normalized.endsWith(unit)) {
+        continue;
+      }
+      const number = (prefix ? text.slice(unit.length) : text.slice(0, -unit.length)).trim();
+      if (/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(number)) return { number, unit };
+    }
+    return null;
+  }
+
   #formatWithUnit(numericValue) {
     if (
       numericValue === "" ||
@@ -606,6 +637,12 @@ class FigInputNumber extends HTMLElement {
   #handleKeyDown(e) {
     if (this.disabled) return;
 
+    if (e.key === "Enter" && !e.isComposing && this.#unitsAllow.length) {
+      // Blurring commits the native text edit and emits one change event.
+      this.input.blur();
+      return;
+    }
+
     // Only handle arrow up/down
     if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
 
@@ -626,12 +663,8 @@ class FigInputNumber extends HTMLElement {
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
 
-    this.dispatchEvent(
-      new CustomEvent("input", { detail: this.value, bubbles: true }),
-    );
-    this.dispatchEvent(
-      new CustomEvent("change", { detail: this.value, bubbles: true }),
-    );
+    this.#emitNumberEvent("input");
+    this.#emitNumberEvent("change");
   }
 
   #handleInput(e) {
@@ -643,28 +676,26 @@ class FigInputNumber extends HTMLElement {
     }
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
-    this.dispatchEvent(
-      new CustomEvent("input", { detail: this.value, bubbles: true }),
-    );
+    this.#emitNumberEvent("input");
   }
 
   #handleInputChange(e) {
-    e.stopPropagation();
-    let numericValue = this.#getNumericValue(e.target.value);
+    const edit = this.#getAllowedUnitEdit(e.target.value);
+    const numericValue = edit?.number ?? this.#getNumericValue(e.target.value);
+    const unitChanged = edit && edit.unit !== this.#rawUnits.trim().toLowerCase();
     if (numericValue !== "") {
       let val = Number(numericValue) / (this.transform || 1);
       val = this.#sanitizeInput(val, false);
       this.value = val;
-      e.target.value = this.#formatWithUnit(this.value);
     } else {
       this.value = "";
-      e.target.value = "";
     }
+    if (unitChanged) this.setAttribute("units", edit.unit);
+    else e.target.value = this.#formatWithUnit(this.value);
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
-    this.dispatchEvent(
-      new CustomEvent("change", { detail: this.value, bubbles: true }),
-    );
+    if (unitChanged) this.#emitNumberEvent("input");
+    this.#emitNumberEvent("change");
   }
 
   #handleMouseMove(e) {
@@ -681,9 +712,7 @@ class FigInputNumber extends HTMLElement {
     this.input.value = this.#formatWithUnit(this.value);
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
-    this.dispatchEvent(
-      new CustomEvent("input", { detail: this.value, bubbles: true }),
-    );
+    this.#emitNumberEvent("input");
   }
 
   #handleMouseDown(e) {
@@ -716,9 +745,7 @@ class FigInputNumber extends HTMLElement {
     window.removeEventListener("pointercancel", this.#boundMouseUp);
     window.removeEventListener("blur", this.#boundWindowBlur);
     if (wasInteracting) {
-      this.dispatchEvent(
-        new CustomEvent("change", { detail: this.value, bubbles: true }),
-      );
+      this.#emitNumberEvent("change");
     }
   }
 
@@ -769,6 +796,7 @@ class FigInputNumber extends HTMLElement {
       "transform",
       "name",
       "units",
+      "units-allow",
       "units-disallow",
       "unit-position",
       "steppers",
@@ -798,7 +826,7 @@ class FigInputNumber extends HTMLElement {
           this.#syncSpinbuttonAria();
           break;
         case "units-disallow":
-          this.#unitsDisallow = this.#parseUnitsDisallowList(
+          this.#unitsDisallow = this.#parseUnitList(
             newValue === null
               ? FigInputNumber.#DEFAULT_UNITS_DISALLOW
               : newValue,
@@ -807,6 +835,9 @@ class FigInputNumber extends HTMLElement {
           this.input.value = this.#formatWithUnit(this.value);
           this.#syncNativeResetBaseline();
           this.#syncSpinbuttonAria();
+          break;
+        case "units-allow":
+          this.#unitsAllow = this.#parseUnitList(newValue);
           break;
         case "unit-position":
           this.#unitPosition = newValue || "suffix";
