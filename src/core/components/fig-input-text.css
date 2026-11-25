@@ -161,7 +161,8 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
 
   &:focus,
   &:focus-visible,
-  &:has(:is(input, textarea):focus-visible) {
+  &:has(:is(input, textarea):focus-visible),
+  &:has(> fig-tooltip[data-generated="binding-tooltip"] > fig-chip[data-generated="binding-chip"]:focus-within:not([data-prepend-focus])) {
     outline: var(--figma-focus-outline);
     outline-offset: var(--figma-focus-outline-offset);
   }
@@ -206,7 +207,7 @@ License: https://github.com/rogie/figui3/blob/main/LICENSE
   }
 }
 
-fig-input-number > [slot],
+fig-input-number:not(:has(> fig-tooltip[data-generated="binding-tooltip"])) > [slot],
 fig-input-text[type="number"] > [slot] {
   cursor: ew-resize !important;
 }

@@ -83,6 +83,10 @@ class FigChip extends HTMLElement {
     this.setAttribute("label", value);
   }
 
+  focus(options) {
+    this.#selection?.focus(options);
+  }
+
   get size() {
     return this.getAttribute("size") === "small" ? "small" : "medium";
   }

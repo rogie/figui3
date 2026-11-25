@@ -81,7 +81,7 @@ interface Props {
   onPersistImageSource?: (fieldIndex: number, src: string) => void;
   onPersistDialogOpenState?: (fieldIndex: number, isOpen: boolean) => void;
   onPersistSwitchCheckedState?: (fieldIndex: number, isChecked: boolean) => void;
-  onPersistControlValue?: (fieldIndex: number, value: string) => void;
+  onPersistControlValue?: (fieldIndex: number, value: string | null, name?: "value" | "binding") => void;
 }
 
 function isComponentTag(tag: string): boolean {
@@ -525,6 +525,13 @@ export default function ExampleView({
     const handleChange = (event: Event) => {
       const target = event.target as HTMLElement | null;
       const tagName = target?.tagName.toLowerCase();
+      if (target && tagName === "fig-input-number" && "binding" in event) {
+        const fieldIndex = resolveFieldIndex(target);
+        if (fieldIndex >= 0) {
+          onPersistControlValue?.(fieldIndex, target.getAttribute("binding"), "binding");
+        }
+        return;
+      }
       if (!target || !tagName || !VALUE_SYNC_TAGS.has(tagName)) return;
       const interaction = beginInteraction(target);
       if (!interaction) return;

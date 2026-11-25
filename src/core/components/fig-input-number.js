@@ -3,6 +3,7 @@ MIT License
 Copyright (c) 2026 Rogie King
 License: https://github.com/rogie/figui3/blob/main/LICENSE
 */
+import "./fig-chip.js";
 import {
   CustomEvent,
   HTMLElement,
@@ -17,6 +18,8 @@ import { figNormalizeTextOnlyInputSlots } from "../runtime/input-slots.js";
  * A custom numeric input element that uses type="text" with inputmode="decimal".
  * Supports units display and all standard number input attributes.
  * @attr {string} value - The current numeric value
+ * @attr {string} binding - App-owned key or expression that replaces the editable number and supplies the tooltip text
+ * @attr {string} binding-label - Optional display label for the binding
  * @attr {string} placeholder - Placeholder text
  * @attr {string} size - Input size: default or "large"
  * @attr {string} variant - Visual style. Use `ghost` for a borderless control.
@@ -34,6 +37,9 @@ import { figNormalizeTextOnlyInputSlots } from "../runtime/input-slots.js";
  * @attr {string} name - Form field name
  */
 class FigInputNumber extends HTMLElement {
+  #literalValue = "";
+  #bindingChip;
+  #bindingTooltip;
   #nativeResetValue = "";
   #hasNativeResetBaseline = false;
   #unbindFormReset = null;
@@ -96,6 +102,10 @@ class FigInputNumber extends HTMLElement {
   }
 
   #syncSteppers(hasSteppers) {
+    if (this.binding) {
+      if (this.#stepperEl) this.#stopStepperRepeat(false);
+      hasSteppers = false;
+    }
     if (hasSteppers && !this.#stepperEl) {
       this.#stepperEl = document.createElement("span");
       this.#stepperEl.className = "fig-steppers";
@@ -137,11 +147,11 @@ class FigInputNumber extends HTMLElement {
 
     const numericValue = this.input
       ? this.#getNumericValue(this.input.value)
-      : this.value;
+      : this.#literalValue;
     const current =
       numericValue !== "" && numericValue !== null && numericValue !== undefined
         ? Number(numericValue) / (this.transform || 1)
-        : Number(this.value);
+        : Number(this.#literalValue);
     const hasCurrent = Number.isFinite(current);
     const disabled = Boolean(this.disabled);
     const atMin =
@@ -183,9 +193,12 @@ class FigInputNumber extends HTMLElement {
     }
   }
 
-  #emitNumberEvent(type) {
+  #emitNumberEvent(type, bindingChange) {
     const event = new CustomEvent(type, { detail: this.value, bubbles: true });
-    this.dispatchEvent(Object.assign(event, { units: this.#rawUnits?.trim() ?? "" }));
+    this.dispatchEvent(Object.assign(event, {
+      units: this.#rawUnits?.trim() ?? "",
+      ...bindingChange,
+    }));
   }
 
   #stopStepperRepeat(commit = true) {
@@ -203,15 +216,15 @@ class FigInputNumber extends HTMLElement {
   #stepValue(direction) {
     if (this.disabled) return false;
     const step = this.step || 1;
-    const previousValue = this.value;
+    const previousValue = this.#literalValue;
     let numericValue = this.#getNumericValue(this.input.value);
     let value =
       (numericValue !== "" ? Number(numericValue) / (this.transform || 1) : 0) +
       step * direction;
     value = this.#sanitizeInput(value, false);
     if (value === previousValue) return false;
-    this.value = value;
-    this.input.value = this.#formatWithUnit(this.value);
+    this.#literalValue = value;
+    this.input.value = this.#formatWithUnit(this.#literalValue);
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
     this.#emitNumberEvent("input");
@@ -258,10 +271,12 @@ class FigInputNumber extends HTMLElement {
 
   connectedCallback() {
     const valueAttr = this.getAttribute("value");
-    this.value =
-      valueAttr !== null && valueAttr !== "" ? Number(valueAttr) : "";
+    if (!this.#bindingChip) {
+      this.#literalValue =
+        valueAttr !== null && valueAttr !== "" ? Number(valueAttr) : "";
+    }
     if (!this.#hasNativeResetBaseline) {
-      this.#nativeResetValue = this.value;
+      this.#nativeResetValue = this.#literalValue;
       this.#hasNativeResetBaseline = true;
     }
     this.placeholder = this.getAttribute("placeholder") || "";
@@ -293,7 +308,7 @@ class FigInputNumber extends HTMLElement {
 
     const hasSteppers = this.getAttribute("steppers") !== "false";
 
-    this.input = this.#ensureInputControl();
+    if (!this.#bindingChip || !this.input) this.input = this.#ensureInputControl();
     this.#syncInputA11yAttributes();
 
     if (this.getAttribute("min")) {
@@ -336,6 +351,7 @@ class FigInputNumber extends HTMLElement {
     this.#unbindFormReset = figBindFormReset(this, () =>
       this.#syncAfterFormReset(),
     );
+    this.#syncBinding();
   }
 
   disconnectedCallback() {
@@ -388,23 +404,110 @@ class FigInputNumber extends HTMLElement {
     this.default = value;
   }
 
+  get value() {
+    return this.binding ?? this.#literalValue;
+  }
+
+  set value(value) {
+    this.#literalValue = value;
+  }
+
+  get binding() {
+    return this.getAttribute("binding")?.trim() || null;
+  }
+
+  set binding(value) {
+    this.setBinding(value);
+  }
+
+  setBinding(value, { emit = false } = {}) {
+    const previousBinding = this.binding;
+    const binding = value?.trim() || null;
+    if (binding === null) this.removeAttribute("binding");
+    else if (binding !== previousBinding) this.setAttribute("binding", binding);
+    if (emit && previousBinding !== binding) {
+      this.#emitNumberEvent("change", { binding, previousBinding });
+    }
+  }
+
   get isDefault() {
-    return figValuesEqual(this.value, this.default);
+    return !this.binding && figValuesEqual(this.#literalValue, this.default);
   }
 
   resetToDefault() {
     if (this.disabled || this.isDefault) return;
-    this.value = this.default;
-    if (this.input) this.input.value = this.#formatWithUnit(this.value);
+    const previousBinding = this.binding;
+    this.#literalValue = this.default;
+    if (previousBinding) this.binding = null;
+    if (this.input) this.input.value = this.#formatWithUnit(this.#literalValue);
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
     for (const type of ["input", "change"]) {
-      this.#emitNumberEvent(type);
+      this.#emitNumberEvent(type, previousBinding ? { binding: null, previousBinding } : undefined);
     }
   }
 
   focus() {
+    if (this.#bindingChip) {
+      this.#bindingChip.focus();
+      return;
+    }
     this.input.focus();
+  }
+
+  #syncBinding() {
+    const binding = this.binding;
+    if (!binding) {
+      if (this.#bindingChip) {
+        this.input.value = this.#formatWithUnit(this.#literalValue);
+        if (this.contains(this.#bindingTooltip)) this.#bindingTooltip.replaceWith(this.input);
+        else this.insertBefore(this.input, this.querySelector('[slot="append"]'));
+        this.#bindingChip = null;
+        this.#bindingTooltip = null;
+        this.#syncSteppers(this.getAttribute("steppers") !== "false");
+      }
+      return;
+    }
+
+    const label = this.getAttribute("binding-label")?.trim() || binding;
+    if (!this.#bindingChip) {
+      this.#bindingChip = figCreateElement("fig-chip", {
+        "data-generated": "binding-chip",
+        size: "small",
+        variant: "variable",
+        label,
+      });
+      this.#bindingTooltip = figCreateElement("fig-tooltip", {
+        "data-generated": "binding-tooltip",
+        text: binding,
+      }, this.#bindingChip);
+      this.#bindingChip.addEventListener("change", (event) => event.stopPropagation());
+      this.#bindingChip.addEventListener("focusout", (event) => {
+        event.currentTarget.removeAttribute("data-prepend-focus");
+      });
+      this.#bindingChip.addEventListener("keydown", (event) => {
+        if (
+          (event.key !== "Delete" && event.key !== "Backspace") ||
+          event.isComposing || this.disabled || !this.#bindingChip?.selected
+        ) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const previousBinding = this.binding;
+        this.binding = null;
+        this.focus();
+        this.#emitNumberEvent("change", { binding: null, previousBinding });
+      });
+    }
+    if (this.#bindingChip.getAttribute("label") !== label) {
+      this.#bindingChip.setAttribute("label", label);
+    }
+    if (this.#bindingTooltip.text !== binding) this.#bindingTooltip.text = binding;
+    this.#bindingChip.inert = Boolean(this.disabled);
+    if (this.contains(this.input)) this.input.replaceWith(this.#bindingTooltip);
+    else if (!this.contains(this.#bindingTooltip)) {
+      this.insertBefore(this.#bindingTooltip, this.querySelector('[slot="append"]'));
+    }
+    this.#syncSteppers(false);
   }
 
   #ensureInputControl() {
@@ -417,7 +520,7 @@ class FigInputNumber extends HTMLElement {
     input.setAttribute("data-generated", "input-control");
     if (this.name) input.name = this.name;
     input.placeholder = this.placeholder;
-    input.value = this.#formatWithUnit(this.value);
+    input.value = this.#formatWithUnit(this.#literalValue);
     this.insertBefore(input, this.querySelector('[slot="append"]'));
 
     return input;
@@ -426,6 +529,14 @@ class FigInputNumber extends HTMLElement {
   #handleAdornmentClick(event) {
     const adornment = event.target?.closest?.("[slot]");
     if (!adornment || adornment.parentElement !== this) return;
+    if (this.#bindingChip && adornment.slot === "prepend") {
+      if (!this.disabled) {
+        this.#bindingChip.selected = true;
+        this.#bindingChip.setAttribute("data-prepend-focus", "");
+        this.#bindingChip.focus({ preventScroll: true });
+      }
+      return;
+    }
     this.focus();
   }
 
@@ -449,6 +560,11 @@ class FigInputNumber extends HTMLElement {
   }
 
   #syncLightDom() {
+    if (this.binding) {
+      this.#syncBinding();
+      figNormalizeTextOnlyInputSlots(this);
+      return;
+    }
     if (!this.input || !this.contains(this.input)) {
       this.input = this.#ensureInputControl();
       this.input.addEventListener("change", this.#boundInputChange);
@@ -493,10 +609,10 @@ class FigInputNumber extends HTMLElement {
     } else {
       this.input.removeAttribute("aria-valuemax");
     }
-    const value = this.value === "" ? null : Number(this.value);
+    const value = this.#literalValue === "" ? null : Number(this.#literalValue);
     if (Number.isFinite(value)) {
       this.input.setAttribute("aria-valuenow", String(value));
-      this.input.setAttribute("aria-valuetext", this.#formatWithUnit(this.value));
+      this.input.setAttribute("aria-valuetext", this.#formatWithUnit(this.#literalValue));
     } else {
       this.input.removeAttribute("aria-valuenow");
       this.input.removeAttribute("aria-valuetext");
@@ -582,14 +698,14 @@ class FigInputNumber extends HTMLElement {
   #syncAfterFormReset() {
     if (!this.input) return;
     const numericValue = this.#getNumericValue(this.input.value);
-    this.value =
+    this.#literalValue =
       numericValue === ""
         ? ""
         : this.#sanitizeInput(
             Number(numericValue) / (this.transform || 1),
             false,
           );
-    this.input.value = this.#formatWithUnit(this.value);
+    this.input.value = this.#formatWithUnit(this.#literalValue);
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
   }
@@ -624,10 +740,10 @@ class FigInputNumber extends HTMLElement {
     if (numericValue !== "") {
       let val = Number(numericValue) / (this.transform || 1);
       val = this.#sanitizeInput(val, false);
-      this.value = val;
-      e.target.value = this.#formatWithUnit(this.value);
+      this.#literalValue = val;
+      e.target.value = this.#formatWithUnit(this.#literalValue);
     } else {
-      this.value = "";
+      this.#literalValue = "";
       e.target.value = "";
     }
     this.#syncStepperState();
@@ -658,8 +774,8 @@ class FigInputNumber extends HTMLElement {
       (numericValue !== "" ? Number(numericValue) / (this.transform || 1) : 0) +
       delta;
     value = this.#sanitizeInput(value, false);
-    this.value = value;
-    this.input.value = this.#formatWithUnit(this.value);
+    this.#literalValue = value;
+    this.input.value = this.#formatWithUnit(this.#literalValue);
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
 
@@ -670,9 +786,9 @@ class FigInputNumber extends HTMLElement {
   #handleInput(e) {
     let numericValue = this.#getNumericValue(e.target.value);
     if (numericValue !== "") {
-      this.value = Number(numericValue) / (this.transform || 1);
+      this.#literalValue = Number(numericValue) / (this.transform || 1);
     } else {
-      this.value = "";
+      this.#literalValue = "";
     }
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
@@ -680,18 +796,19 @@ class FigInputNumber extends HTMLElement {
   }
 
   #handleInputChange(e) {
+    if (this.binding) return;
     const edit = this.#getAllowedUnitEdit(e.target.value);
     const numericValue = edit?.number ?? this.#getNumericValue(e.target.value);
     const unitChanged = edit && edit.unit !== this.#rawUnits.trim().toLowerCase();
     if (numericValue !== "") {
       let val = Number(numericValue) / (this.transform || 1);
       val = this.#sanitizeInput(val, false);
-      this.value = val;
+      this.#literalValue = val;
     } else {
-      this.value = "";
+      this.#literalValue = "";
     }
     if (unitChanged) this.setAttribute("units", edit.unit);
-    else e.target.value = this.#formatWithUnit(this.value);
+    else e.target.value = this.#formatWithUnit(this.#literalValue);
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
     if (unitChanged) this.#emitNumberEvent("input");
@@ -699,6 +816,7 @@ class FigInputNumber extends HTMLElement {
   }
 
   #handleMouseMove(e) {
+    if (this.binding) return;
     if (this.disabled) return;
     if (e.buttons === 0) {
       this.#handleMouseUp();
@@ -708,15 +826,15 @@ class FigInputNumber extends HTMLElement {
     let numericValue = this.#getNumericValue(this.input.value);
     let value = Number(numericValue) / (this.transform || 1) + step;
     value = this.#sanitizeInput(value, false);
-    this.value = value;
-    this.input.value = this.#formatWithUnit(this.value);
+    this.#literalValue = value;
+    this.input.value = this.#formatWithUnit(this.#literalValue);
     this.#syncStepperState();
     this.#syncSpinbuttonAria();
     this.#emitNumberEvent("input");
   }
 
   #handleMouseDown(e) {
-    if (this.disabled) return;
+    if (this.disabled || this.binding) return;
     if (e.altKey || e.target.closest("[slot]")) {
       this.#isInteracting = true;
       this.#previousUserSelect = this.style.userSelect;
@@ -744,7 +862,7 @@ class FigInputNumber extends HTMLElement {
     window.removeEventListener("pointerup", this.#boundMouseUp);
     window.removeEventListener("pointercancel", this.#boundMouseUp);
     window.removeEventListener("blur", this.#boundWindowBlur);
-    if (wasInteracting) {
+    if (wasInteracting && !this.binding) {
       this.#emitNumberEvent("change");
     }
   }
@@ -787,6 +905,8 @@ class FigInputNumber extends HTMLElement {
   static get observedAttributes() {
     return [
       "value",
+      "binding",
+      "binding-label",
       "default",
       "placeholder",
       "disabled",
@@ -812,16 +932,21 @@ class FigInputNumber extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (this.input) {
       switch (name) {
+        case "binding":
+        case "binding-label":
+          if (this.isConnected) this.#syncBinding();
+          break;
         case "disabled":
           this.disabled = this.input.disabled =
             newValue !== null && newValue !== "false";
           if (this.disabled) this.#stopStepperRepeat();
+          if (this.#bindingChip) this.#bindingChip.inert = this.disabled;
           this.#syncStepperState();
           break;
         case "units":
           this.#rawUnits = newValue || "";
           this.#setUnitsFromAttributes();
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.#literalValue);
           this.#syncNativeResetBaseline();
           this.#syncSpinbuttonAria();
           break;
@@ -832,7 +957,7 @@ class FigInputNumber extends HTMLElement {
               : newValue,
           );
           this.#setUnitsFromAttributes();
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.#literalValue);
           this.#syncNativeResetBaseline();
           this.#syncSpinbuttonAria();
           break;
@@ -841,13 +966,13 @@ class FigInputNumber extends HTMLElement {
           break;
         case "unit-position":
           this.#unitPosition = newValue || "suffix";
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.#literalValue);
           this.#syncNativeResetBaseline();
           this.#syncSpinbuttonAria();
           break;
         case "transform":
           this.transform = Number(newValue) || 1;
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.#literalValue);
           this.#syncNativeResetBaseline();
           this.#syncSpinbuttonAria();
           break;
@@ -858,10 +983,10 @@ class FigInputNumber extends HTMLElement {
           if (value !== "") {
             value = this.#sanitizeInput(value, false);
           }
-          this.value = value;
+          this.#literalValue = value;
           this.#nativeResetValue = value;
           this.#hasNativeResetBaseline = true;
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.#literalValue);
           this.#syncNativeResetBaseline();
           this.#syncStepperState();
           this.#syncSpinbuttonAria();
@@ -890,7 +1015,7 @@ class FigInputNumber extends HTMLElement {
           this.#precision = this.#normalizePrecision(
             newValue,
           );
-          this.input.value = this.#formatWithUnit(this.value);
+          this.input.value = this.#formatWithUnit(this.#literalValue);
           this.#syncNativeResetBaseline();
           this.#syncSpinbuttonAria();
           break;

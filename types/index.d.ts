@@ -147,10 +147,12 @@ export interface FigTextInputElement extends FigValueElement<
 
 export interface FigNumberInputEvent extends CustomEvent<number | string> {
   readonly units: string;
+  readonly binding?: string | null;
+  readonly previousBinding?: string | null;
 }
 
 export interface FigNumberInputElement extends FigValueElement<
-  string,
+  number | string,
   string
 > {
   input: HTMLInputElement;
@@ -159,6 +161,8 @@ export interface FigNumberInputElement extends FigValueElement<
   step?: number;
   precision?: number | null;
   units?: string;
+  binding: string | null;
+  setBinding(binding: string | null, options?: { emit?: boolean }): void;
   addEventListener: ((
     type: "input" | "change",
     listener: (this: FigNumberInputElement, event: FigNumberInputEvent) => unknown,

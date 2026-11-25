@@ -683,6 +683,8 @@ Scalar controls author `default`. Checkbox and switch use `default-checked`. Poi
 | `step` | number | — | Step increment |
 | `units` | string | — | Unit string (e.g. `"px"`, `"%"`) |
 | `units-allow` | string | — | Comma-separated units the user can switch to by typing |
+| `binding` | string | — | App-owned key or expression that replaces the number with a chip and supplies its tooltip text |
+| `binding-label` | string | — | Optional display label for the binding chip. Defaults to the binding value |
 | `units-disallow` | string | `"px"` | Comma-separated unit disallow list (e.g. `"px,rem"`) |
 | `unit-position` | string | `"suffix"` | `"suffix"` or `"prefix"` |
 | `transform` | number | — | Display multiplier |
@@ -707,6 +709,19 @@ With `units="%" units-allow="rem,em,%"`, typing `12rem` and pressing Enter
 or leaving the field sets `units="rem"` and emits `12` with `event.units`
 set to `"rem"`. A bare number or an unlisted unit keeps the current unit.
 Use `units-disallow=""` if you want the `px` label to be visible.
+
+While bound, `.value` returns the binding string. The numeric value and units
+remain available to restore when the binding is removed. The owning app
+interprets keys and expressions such as `--spacer-2` or `min-content`.
+Steppers and scrubbing are inactive while bound. Prepend content stays visible.
+
+Select the chip and press Delete or Backspace to detach and focus the numeric
+field. The field emits one `change` with the restored value in `detail`,
+the numeric unit in `units`, `binding: null`, and the old key in
+`previousBinding`. Direct binding writes are silent. Use
+`setBinding(key, { emit: true })` to report a binding chosen in your app UI.
+It emits `change` with the new key in `detail` and `binding`, and the old
+key (or `null`) in `previousBinding`.
 
 ---
 

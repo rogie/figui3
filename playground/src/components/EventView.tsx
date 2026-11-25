@@ -40,6 +40,8 @@ export default function EventView() {
       if (name) payload.name = name;
       if (tag === "fig-input-number" && "units" in e) {
         payload.units = e.units;
+        if ("binding" in e) payload.binding = e.binding;
+        if ("previousBinding" in e) payload.previousBinding = e.previousBinding;
       }
       if (typeof envelope?.label === "string") {
         payload.label = envelope.label;

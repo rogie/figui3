@@ -378,12 +378,12 @@ export default function App({ mode }: Props) {
   );
 
   const handlePersistControlValue = useCallback(
-    (fieldIndex: number, value: string) => {
+    (fieldIndex: number, value: string | null, name: "value" | "binding" = "value") => {
       setEditableMarkup((currentMarkup) => {
         const next = applyAttributeMutation(currentMarkup, {
           fieldIndex,
           target: "control",
-          name: "value",
+          name,
           value,
         });
         syncURL(next);

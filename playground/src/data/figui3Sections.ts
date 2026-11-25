@@ -1486,6 +1486,16 @@ const figui3BaseSections: Section[] = clusterPlaygroundGroups([
 </div>`,
       },
       {
+        id: "binding",
+        name: "Binding",
+        description: "Select the binding chip and press Delete or Backspace to restore the number.",
+        markup: `<div class="prop-panel">
+  <fig-input-number value="16" units="px" binding="--spacer-2" binding-label="8">
+    <fig-icon slot="prepend" aria-hidden="true">W</fig-icon>
+  </fig-input-number>
+</div>`,
+      },
+      {
         id: "large",
         name: "Large",
         markup: `<div class="prop-panel">

@@ -2096,6 +2096,16 @@ export default function AttributesView({
           );
         };
 
+        const isBindingEntry = ({ name }: RuleEntry) =>
+          target.controlTag === "fig-input-number" &&
+          (name === "binding" || name === "binding-label");
+        const renderControlField = (entry: RuleEntry) => (
+          <fig-field columns="2/5" key={`control-${entry.name}`}>
+            <label>{sentenceCase(entry.rule.label)}</label>
+            {renderControl(entry, "control")}
+          </fig-field>
+        );
+
         return (
           <Fragment key={`${resetKey}/${target.fieldIndex}`}>
             {showFieldControls && target.hasField && target.controlTag !== "fig-group" && !("data-playground-hide-field" in target.controlAttributes) && (
@@ -2819,16 +2829,8 @@ export default function AttributesView({
                           </>
                         );
                       })()}
-                    {visibleControlEntries.flatMap((entry) => {
-                      const field = (
-                        <fig-field
-                          columns="2/5"
-                          key={`control-${entry.name}`}
-                        >
-                          <label>{sentenceCase(entry.rule.label)}</label>
-                          {renderControl(entry, "control")}
-                        </fig-field>
-                      );
+                    {visibleControlEntries.filter((entry) => !isBindingEntry(entry)).flatMap((entry) => {
+                      const field = renderControlField(entry);
 
                       const maxSizeAfterLayout =
                         target.controlTag === "fig-chooser" &&
@@ -3299,6 +3301,7 @@ export default function AttributesView({
                             </fig-field>
                           );
                         })}
+                    {visibleControlEntries.filter(isBindingEntry).map(renderControlField)}
                   </AttributePropertyGroup>
                 </section>
               </div>

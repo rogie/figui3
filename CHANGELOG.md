@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.7]
+
+### Added
+
+- Added app-owned bindings to `fig-input-number`. Bound inputs show a chip with an optional display label and the binding in its tooltip. Select the chip and press Delete or Backspace to restore the numeric value and emit a change event.
+- Added a playground example for number input bindings.
+
+### Changed
+
+- Typed `fig-input-number.value` as `number | string` to reflect its numeric and binding values.
+
+### Fixed
+
+- Synchronized the playground's Steppers toggle with the number input's default and explicit settings.
+
 ## [12.1.6]
 
 ### Added

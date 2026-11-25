@@ -1077,6 +1077,8 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
     readonly: { label: "Readonly", type: "boolean", boolMode: "presence" },
   },
   "fig-input-number": {
+    binding: { label: "Binding", type: "string" },
+    "binding-label": { label: "Binding label", type: "string" },
     default: { label: "Default", type: "number", step: 1 },
     size: {
       label: "Size",
@@ -1105,7 +1107,13 @@ export const controlAttributeRules: Record<string, AttributeRuleSet> = {
       type: "string",
       placeholder: "rem, em, %",
     },
-    steppers: { label: "Steppers", type: "boolean", boolMode: "string" },
+    steppers: {
+      label: "Steppers",
+      type: "boolean",
+      boolMode: "custom",
+      defaultChecked: true,
+      falseValue: "false",
+    },
     tabular: { label: "Tabular", type: "boolean", boolMode: "presence" },
     disabled: { label: "Disabled", type: "boolean", boolMode: "presence" },
   },
